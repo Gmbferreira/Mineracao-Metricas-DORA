@@ -1,0 +1,232 @@
+\documentclass[12pt]{article}
+
+\usepackage{sbc-template}
+\usepackage{graphicx,url}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+
+\sloppy
+
+\title{Mineração de Métricas DORA em Repositórios Open-Source\\ que Utilizam GitHub Actions}
+
+\author{Guilherme Martini Brina Ferreira\inst{1}\\
+        Gabriel Cardoso\inst{1}}
+
+\address{Pontifícia Universidade Católica de Minas Gerais (PUC Minas)\\
+  Belo Horizonte -- MG -- Brasil
+  \email{gmbferreira12@gmail.com, gabriel2004cardoso@gmail.com}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The DevOps Research and Assessment (DORA) metrics have become the de facto
+standard for measuring software delivery performance. This work investigates
+whether those metrics, originally designed for organizations, can be inferred
+from the public activity of open-source projects that adopt GitHub Actions. We
+mine releases, workflow runs and commits over a twelve-month window to compute
+deployment frequency, lead time for changes, change failure rate and failed
+deployment recovery time, plus a sensitivity analysis of the operational
+definitions. This paper presents the context, the seven research questions and
+the informal hypotheses that guide the study before the data are analysed.
+\end{abstract}
+
+\begin{resumo}
+As métricas do \emph{DevOps Research and Assessment} (DORA) tornaram-se o padrão
+de fato para medir o desempenho de entrega de software. Este trabalho investiga
+se essas métricas, originalmente pensadas para organizações, podem ser
+inferidas a partir da atividade pública de projetos open-source que adotam o
+GitHub Actions. Mineramos releases, execuções de workflow e commits ao longo de
+uma janela de doze meses para calcular frequência de deploy, lead time for
+changes, taxa de falha de mudança e tempo de recuperação, além de uma análise de
+sensibilidade das definições operacionais. Este artigo apresenta o contexto, as
+sete questões de pesquisa e as hipóteses informais que orientam o estudo antes
+da análise dos dados.
+\end{resumo}
+
+\section{Introdução}
+
+As métricas DORA (\emph{DevOps Research and Assessment}) consolidaram-se como a
+principal referência de mercado para medir o desempenho de entrega de software.
+Popularizadas pelo livro \emph{Accelerate} \cite{forsgren2018} e atualizadas
+anualmente pelo relatório \emph{Accelerate State of DevOps} \cite{dorastate}, elas
+resumem o desempenho de uma equipe em quatro dimensões: duas de
+\emph{velocidade} --- a frequência de deploy e o tempo de espera das mudanças
+(\emph{lead time for changes}) --- e duas de \emph{estabilidade} --- a taxa de
+falha de mudança (\emph{change failure rate}) e o tempo de recuperação após uma
+falha \cite{doraguide}. A definição dessas métricas é revisada com o tempo: o
+antigo \emph{mean time to restore} (MTTR) passou a ser chamado de
+\emph{failed deployment recovery time} em 2023 e, em 2024, o DORA acrescentou
+uma quinta métrica, a \emph{deployment rework rate} \cite{dorahistory}.
+
+Essas métricas foram originalmente elaboradas a partir de questionários
+respondidos por profissionais de empresas, e não de dados públicos de
+repositórios. O ecossistema open-source, no entanto, tornou-se um objeto de
+estudo atrativo por sua escala e por sua transparência: ferramentas como o
+GitHub Actions expõem, de forma aberta e auditável, a cadência de integração
+contínua, o histórico de releases e as mensagens de commit de milhares de
+projetos. Surge então uma oportunidade relevante: é possível \emph{minerar}
+métricas DORA a partir dessa atividade pública, em vez de depender de
+auto-relato?
+
+A resposta exige cautela. O GitHub \textbf{não registra} ``deploys em produção''
+nem ``falhas em produção''. Um projeto open-source publica \emph{releases}, roda
+\emph{workflows} de CI e recebe \emph{commits}, e é apenas a partir desses
+eventos que as métricas DORA precisam ser \emph{inferidas}. Uma medida indireta
+como essa é um \emph{proxy}: ``release publicada'' representa ``deploy'' e
+``execução de CI que falhou'' representa ``falha''. Proxies podem enganar. Uma
+biblioteca que publica uma release por mês pode não estar ``deployando'' nada em
+produção --- quem implanta são seus usuários. Medir um proxy sem questioná-lo
+ameaça a validade de construto do estudo \cite{wohlin2012}.
+
+Neste trabalho, portanto, a pergunta não é apenas ``qual é o valor da métrica?'',
+mas também ``o quanto podemos confiar nesse valor?''. Para responder a isso,
+mineramos, via API REST do GitHub, releases publicadas, execuções de workflow
+disparadas por \texttt{push} no \emph{default branch} e os commits contidos entre
+releases, em uma janela de observação de doze meses. A partir desses dados
+calculamos as métricas DORA em variantes operacionais obrigatórias e comparamos
+como a classificação de desempenho de um repositório muda quando a definição
+escolhida muda.
+
+O estudo é guiado por sete questões de pesquisa. As quatro primeiras medem,
+respectivamente, a frequência de deploy \textbf{(RQ~01)}, o tempo entre commit e
+deploy \textbf{(RQ~02)}, a taxa de falha das mudanças entregues
+\textbf{(RQ~03)} e o tempo de recuperação após uma falha \textbf{(RQ~04)}. A
+\textbf{RQ~05} investiga a relação entre velocidade e estabilidade, a
+\textbf{RQ~06} busca características de repositório associadas a melhor
+desempenho e a \textbf{RQ~07} quantifica o quanto as conclusões dependem da
+definição operacional adotada (\emph{análise de sensibilidade}). As hipóteses
+informais que orientam cada questão, formuladas antes de qualquer análise dos
+dados, são apresentadas na Seção~\ref{sec:hipoteses}.
+
+As contribuições esperadas são: (i) um pipeline próprio de coleta e cálculo das
+métricas DORA para projetos open-source; (ii) um retrato descritivo do
+desempenho de entrega de repositórios populares sob definições operacionais
+explícitas e comparáveis; e (iii) uma avaliação da robustez dessas conclusões
+frente a escolhas metodológicas alternativas. O restante do artigo está
+organizado da seguinte forma: a Seção~\ref{sec:hipoteses} apresenta as questões
+de pesquisa e as hipóteses; a Metodologia, os Resultados e a Discussão são
+desenvolvidos nas próximas etapas do projeto.
+
+\section{Questões de Pesquisa e Hipóteses}
+\label{sec:hipoteses}
+
+Esta seção enuncia cada questão de pesquisa acompanhada da hipótese informal do
+grupo --- o que se espera encontrar e por quê --- registrada \emph{antes} de
+observar os resultados. As hipóteses são qualitativas e não comprometem a
+análise: servem de referência para a discussão posterior (hipótese
+\emph{versus} resultado) e para explicitar possíveis vieses dos autores.
+
+\subsection*{RQ 01 --- Qual a frequência de deploys dos repositórios populares que usam CI/CD?}
+
+\textbf{Hipótese.} Esperamos uma distribuição fortemente assimétrica, com a
+mediana na faixa \emph{High} (ao menos um deploy por semana e menos de sete),
+tipicamente entre uma e três releases por semana. Uma minoria de projetos
+mantém cadência quase diária (\emph{Elite}, sete ou mais por semana), graças à
+automação de release, enquanto um grupo pequeno publica menos de uma release por
+mês (\emph{Low}). A justificativa é que projetos populares têm processos de
+entrega maduros, mas a maioria não automatiza totalmente a publicação, e muitos
+seguem um ciclo de releases mais conservador.
+
+\subsection*{RQ 02 --- Qual o tempo entre um commit e seu respectivo deploy?}
+
+\textbf{Hipótese.} A variante por release (a) produzirá valores bem maiores que
+a variante por commit (b): esperamos a mediana de (a) na casa de semanas a um
+mês e a de (b) na casa de dias. A razão é estrutural: na variante (a), um único
+commit antigo ``esquecido'' em uma release faz o lead time daquela release
+explodir, e esse valor extremo empurra a mediana para cima em projetos com
+histórico irregular; na variante (b), cada commit contribui individualmente, de
+modo que poucos valores extremos diluem-se no conjunto. Consequentemente,
+muitos repositórios devem migrar para categorias melhores sob a variante (b),
+e a divergência entre (a) e (b) é, ela própria, um resultado a ser discutido.
+
+\subsection*{RQ 03 --- Qual a taxa de falha das mudanças entregues por esses repositórios?}
+
+\textbf{Hipótese.} As duas variantes devem divergir bastante. O proxy de CI (a)
+--- a proporção de execuções de workflow que falharam --- deve ser
+comparativamente alto, com mediana em torno de 20\% a 40\% (faixa
+\emph{Medium}), porque pipelines falham por motivos variados (testes, linters,
+\emph{flakiness}) que não chegam a afetar o usuário. Já o proxy de entrega (b)
+--- releases seguidas de correção em até sete dias --- deve ser baixo, com
+mediana igual ou inferior a 15\% (\emph{Elite}/\emph{High}), pois releases
+corretivas rápidas são relativamente raras e nem toda correção sai como nova
+release. Esperamos que a diferença entre (a) e (b) seja um dos achados centrais
+sobre a distinção entre falha de pipeline e falha de entrega.
+
+\subsection*{RQ 04 --- Qual o tempo de recuperação após uma execução de CI/CD com falha?}
+
+\textbf{Hipótese.} Esperamos medianas curtas, inferiores a um dia e
+provavelmente inferiores a uma hora (faixa \emph{Elite} ou \emph{High}). Uma
+execução de CI que falha costuma ser corrigida por uma re-execução ou um
+\emph{hotfix} de pipeline no mesmo dia, já que o custo de corrigir um pipeline
+quebrado é baixo. Ainda assim, prevemos uma cauda relevante de episódios
+\emph{censurados} --- falhas que não foram resolvidas antes do fim da janela ---
+sobretudo em projetos com manutenção intermitente; a proporção de censura deve
+ser reportada por repositório.
+
+\subsection*{RQ 05 --- Repositórios com maior frequência de deploy apresentam maior ou menor taxa de falha?}
+
+\textbf{Hipótese.} Esperamos uma correlação de Spearman fraca e próxima de zero;
+se houver significância, inclinamo-nos a uma associação levemente negativa (mais
+deploys associados a menor CFR). Essa expectativa é alinhada à tese do DORA de
+que velocidade e estabilidade \emph{não} formam um \emph{trade-off}
+\cite{forsgren2018}. Não descartamos, contudo, que a variante de CFR afete o
+resultado: a correlação com o proxy de CI (a) pode ser diferente da obtida com o
+proxy de entrega (b).
+
+\subsection*{RQ 06 --- Quais características dos repositórios estão associadas a um melhor desempenho DORA?}
+
+\textbf{Hipótese.} Entre os fatores analisados (linguagem, popularidade,
+número de contribuidores, idade e tipo de projeto), acreditamos que o
+\textbf{tipo de projeto} e a \textbf{idade} sejam os mais associados ao
+desempenho. Bibliotecas e \emph{frameworks} tendem a ter releases mais
+espaçadas e \emph{lead time} maior, enquanto aplicações e serviços --- com
+entrega contínua --- tendem a maior frequência de deploy; repositórios mais
+antigos devem apresentar pior desempenho, por acúmulo de dívida técnica e base
+de código maior. Esperamos que a \textbf{linguagem principal} tenha efeito
+pequeno e que, após a correção de Holm para comparações múltiplas, a maioria
+dos efeitos significativos seja de tamanho pequeno a médio.
+
+\subsection*{RQ 07 --- O quanto a classificação DORA de um repositório depende da definição operacional escolhida?}
+
+\textbf{Hipótese.} A classificação deve mostrar-se sensível sobretudo à
+\textbf{unidade de deploy}: alternar entre ``release'', ``release +
+pré-release'' e ``tag'' tende a mover uma parcela relevante (estimamos 20\% a
+40\%) dos repositórios de categoria. A escolha do \emph{lead time} entre as
+variantes (a) e (b) também desloca repositórios, enquanto a troca do proxy de
+CFR deve ter efeito menor na categoria \emph{geral}. Esperamos concordância
+global \emph{moderada} (kappa ponderado entre 0,4 e 0,6), indicando que as
+conclusões das RQ~01 a RQ~06 são apenas parcialmente robustas e que a definição
+operacional precisa ser explicitada em qualquer comparação.
+
+% ---------------------------------------------------------------------------
+% Seções a serem desenvolvidas nas próximas sprints (Lab03S02 e Lab03S03).
+% Mantidas aqui como esqueleto, propositalmente vazias nesta entrega.
+% ---------------------------------------------------------------------------
+% \section{Metodologia}
+%   \subsection{Fonte de dados e funil de seleção}
+%   \subsection{Janela de observação e definições operacionais}
+%   \subsection{Variantes obrigatórias}
+%   \subsection{Protocolo de validação manual}
+%
+% \section{Resultados}
+%   \subsection{RQ 01 a RQ 04 e classificação DORA de referência}
+%   \subsection{RQ 05 e RQ 06}
+%   \subsection{RQ 07 --- análise de sensibilidade}
+%
+% \section{Discussão}
+%
+% \section{Ameaças à Validade}
+%
+% \section{Replicação Cruzada}
+
+\bibliographystyle{sbc}
+\bibliography{referencias}
+
+\end{document}

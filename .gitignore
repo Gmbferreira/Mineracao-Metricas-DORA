@@ -5,3 +5,15 @@ __pycache__/
 .coverage
 data/checkpoints/
 data/cache/
+
+# LaTeX (artigo/)
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.fls
+*.fdb_latexmk
+artigo/*.pdf

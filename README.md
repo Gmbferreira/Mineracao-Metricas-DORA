@@ -94,7 +94,15 @@ pipeline/
 ├── funil.py      tabela do funil (csv e md)
 └── store.py      checkpoints JSONL e retomada
 tests/            testes unitários com fixtures
+artigo/           artigo no template SBC (Introdução e hipóteses)
 ```
+
+## Artigo
+
+O relatório final segue o template da SBC e é escrito aos poucos, uma seção por
+sprint. Esta entrega (Issue #3) traz a Introdução e as hipóteses informais das
+RQ 01 a RQ 07 em `artigo/`. Veja [`artigo/README.md`](artigo/README.md) para
+instruções de Overleaf e compilação.
 
 ## Testes
 
