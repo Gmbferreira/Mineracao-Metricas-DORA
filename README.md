@@ -104,6 +104,8 @@ sprint. Esta entrega (Issue #3) traz a Introdução e as hipóteses informais da
 RQ 01 a RQ 07 em `artigo/`. Veja [`artigo/README.md`](artigo/README.md) para
 instruções de Overleaf e compilação.
 
+Artigo no Overleaf (leitura): <https://www.overleaf.com/read/rxydywpnvjym#6b20e1>
+
 ## Testes
 
 ```bash

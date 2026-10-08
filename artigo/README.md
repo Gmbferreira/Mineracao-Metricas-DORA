@@ -4,6 +4,8 @@ Documento do relatório final da disciplina, escrito aos poucos (uma seção por
 sprint), no template da SBC. Esta sprint entrega a **Introdução** e as
 **hipóteses informais** das RQ 01 a RQ 07 (Issue #3).
 
+Artigo no Overleaf (leitura): <https://www.overleaf.com/read/rxydywpnvjym#6b20e1>
+
 ## Arquivos
 
 | Arquivo | Papel |
