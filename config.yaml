@@ -1,0 +1,34 @@
+janela:
+  inicio: "2025-10-02"
+  fim: "2026-10-02"
+
+alvo_qualificados: 100
+ordem_varredura: estrelas_desc
+limite_candidatos: 0
+
+cache_dir: data/cache
+rede:
+  timeout: 30
+  backoff_base: 1
+  backoff_cap: 60
+  backoff_max_tentativas: 6
+
+busca:
+  estrelas_min: 1000
+  per_page: 100
+  max_resultados_por_faixa: 1000
+  max_paginas_por_faixa: 30
+  faixas:
+    - [1000, 1999]
+    - [2000, 4999]
+    - [5000, 9999]
+    - [10000, 49999]
+    - [50000, null]
+  pre_filtros:
+    fork: false
+    archived: false
+    pushed_apos_inicio: true
+
+filtros:
+  releases_min: 5
+  runs_min: 50

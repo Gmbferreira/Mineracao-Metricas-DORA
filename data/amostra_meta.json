@@ -1,0 +1,14 @@
+{
+  "gerado_em": "2026-10-08T17:28:32",
+  "janela_inicio": "2025-10-02",
+  "janela_fim": "2026-10-02",
+  "alvo_qualificados": 100,
+  "n_repositorios": 100,
+  "ordem_varredura": "estrelas_desc",
+  "quartis_contribuidores": {
+    "q1": 302.25,
+    "q2": 666.0,
+    "q3": 1631.0
+  },
+  "criterio_quartis": "percentis 25/50/75 com interpolacao linear; valores iguais ao limite ficam no grupo inferior"
+}

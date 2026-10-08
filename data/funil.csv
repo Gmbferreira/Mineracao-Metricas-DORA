@@ -1,0 +1,7 @@
+etapa,entrada,saida,descartados,motivo
+"Candidatos identificados (stars >1000, pre-filtros)",,37372,,busca fatiada por faixas de estrelas
+Candidatos escaneados,37372,207,37165,varredura parcial: parada ao atingir o alvo de 100 (ordem: estrelas decrescentes)
+E1 - utiliza GitHub Actions,207,196,11,total_count de workflows = 0
+E2 - >=50 runs de push no default branch na janela,196,137,59,menos de 50 runs de push na janela
+E3 - >=5 releases publicadas na janela,137,100,37,menos de 5 releases publicadas na janela
+Amostra final com metadados completos,100,100,0,contribuidores/idade coletados para todos
