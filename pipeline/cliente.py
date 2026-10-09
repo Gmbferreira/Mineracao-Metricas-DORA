@@ -58,6 +58,8 @@ class ClienteGitHub:
                 "Exporte a variavel antes de rodar o pipeline."
             )
         self.sessao = requests.Session()
+        adaptador = requests.adapters.HTTPAdapter(pool_connections=4, pool_maxsize=64)
+        self.sessao.mount("https://", adaptador)
         self.sessao.headers.update(
             {
                 "Authorization": f"Bearer {self.token}",
@@ -116,13 +118,15 @@ class ClienteGitHub:
         self._dormir_backoff(tentativa)
         return True
 
-    def _bloco_para_cache(self, url, params, resposta):
+    def _bloco_para_cache(self, url, params, resposta, reduzir=None):
         cabecalhos = {
             chave: resposta.headers[chave]
             for chave in CABECALHOS_CACHE
             if chave in resposta.headers
         }
         dados = _json_ou_texto(resposta)
+        if reduzir is not None:
+            dados = reduzir(dados)
         return {
             "url": url,
             "params": dict(params or {}),
@@ -132,7 +136,8 @@ class ClienteGitHub:
             "salvo_em": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
 
-    def get(self, caminho, params=None, busca=False, aceitar=(), forcar=False):
+    def get(self, caminho, params=None, busca=False, aceitar=(), forcar=False,
+            reduzir=None):
         url = caminho if caminho.startswith("http") else API + caminho
         recurso = "search" if busca else "core"
         grupo_url = chave = None
@@ -157,16 +162,16 @@ class ClienteGitHub:
             self._chamadas += 1
             self._atualizar_limites(resposta)
             if resposta.status_code == 200:
+                bloco = None
+                if self.cache or reduzir is not None:
+                    bloco = self._bloco_para_cache(url, params, resposta, reduzir)
                 if self.cache:
                     if chave is None:
                         grupo_url = self.cache.grupo(url)
                         chave = self.cache.chave(url, params)
-                    self.cache.salvar(
-                        grupo_url,
-                        url,
-                        chave,
-                        self._bloco_para_cache(url, params, resposta),
-                    )
+                    self.cache.salvar(grupo_url, url, chave, bloco)
+                if reduzir is not None:
+                    return RespostaCache(bloco)
                 return resposta
             if self._esperar_cota(resposta, tentativa):
                 continue

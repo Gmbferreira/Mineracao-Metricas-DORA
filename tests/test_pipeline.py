@@ -396,6 +396,33 @@ def test_pausa_preventiva_antes_da_proxima_requisicao(monkeypatch, tmp_path):
     assert cliente.chamadas == 2
 
 
+def test_reduzir_guarda_so_o_resumo_no_cache(monkeypatch, tmp_path):
+    resposta = RespostaFalsa(
+        200, {"total_count": 1, "pesado": "x" * 1000}, _cabecalhos_core()
+    )
+    cliente, _ = cliente_fake(monkeypatch, [resposta], cache_dir=str(tmp_path))
+    reduzir = lambda dados: {"total_count": dados["total_count"]}
+    primeira = cliente.get("/repos/a/b/actions/runs", {"page": 1}, reduzir=reduzir)
+    segunda = cliente.get("/repos/a/b/actions/runs", {"page": 1}, reduzir=reduzir)
+    assert primeira.json() == {"total_count": 1}
+    assert segunda.json() == {"total_count": 1}
+    assert cliente.chamadas == 1
+
+
+def test_reduzir_sem_cache(monkeypatch):
+    resposta = RespostaFalsa(200, {"a": 1, "b": 2}, _cabecalhos_core())
+    cliente, _ = cliente_fake(monkeypatch, [resposta], cache_dir=None)
+    obtida = cliente.get("/repos/a/b/x", reduzir=lambda dados: {"a": dados["a"]})
+    assert obtida.json() == {"a": 1}
+
+
+def test_cache_rotulo_longo_e_cortado(tmp_path):
+    cache = CacheRespostas(str(tmp_path))
+    url = "https://api.github.com/repos/a/b/compare/" + "t" * 200 + "..." + "u" * 200
+    caminho = cache._caminho(cache.grupo(url), url, "abc")
+    assert len(caminho.split("repos__a__b")[1]) < 90
+
+
 def test_cache_chave_canonica(tmp_path):
     cache = CacheRespostas(str(tmp_path))
     url = "https://api.github.com/search/repositories"
@@ -413,3 +440,37 @@ def test_resposta_cache_serializa_texto():
     resposta = RespostaCache({"status_code": 200, "headers": {}, "dados": '{"x": 1}'})
     assert resposta.json() == {"x": 1}
     assert resposta.status_code == 200
+
+
+def test_substituir_tenta_de_novo_se_o_arquivo_estiver_preso(monkeypatch, tmp_path):
+    from pipeline import cache as modulo_cache
+
+    origem = tmp_path / "a.tmp"
+    origem.write_text("x", encoding="utf-8")
+    destino = tmp_path / "a.json"
+    falhas = []
+    replace_real = modulo_cache.os.replace
+
+    def replace_instavel(a, b):
+        if len(falhas) < 2:
+            falhas.append(1)
+            raise PermissionError("WinError 32")
+        replace_real(a, b)
+
+    monkeypatch.setattr(modulo_cache.os, "replace", replace_instavel)
+    monkeypatch.setattr(modulo_cache.time, "sleep", lambda s: None)
+    modulo_cache.substituir(str(origem), str(destino))
+    assert destino.read_text(encoding="utf-8") == "x"
+    assert len(falhas) == 2
+
+
+def test_substituir_desiste_depois_das_tentativas(monkeypatch, tmp_path):
+    from pipeline import cache as modulo_cache
+
+    def sempre_preso(a, b):
+        raise PermissionError("WinError 32")
+
+    monkeypatch.setattr(modulo_cache.os, "replace", sempre_preso)
+    monkeypatch.setattr(modulo_cache.time, "sleep", lambda s: None)
+    with pytest.raises(PermissionError):
+        modulo_cache.substituir("a", "b", tentativas=3)

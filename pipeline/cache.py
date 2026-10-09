@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import time
 import urllib
 
 API = "https://api.github.com"
@@ -38,7 +39,9 @@ class CacheRespostas:
         return hashlib.sha1(f"{url}?{consulta}".encode("utf-8")).hexdigest()[:16]
 
     def _caminho(self, grupo_url, url, chave):
-        etiqueta = rotulo(url)
+        # o hash ja identifica a resposta; cortar o rotulo evita estourar o
+        # limite de caminho do Windows com nomes de tag longos no compare
+        etiqueta = rotulo(url)[:60]
         nome = f"{etiqueta}__{chave}.json" if etiqueta else f"{chave}.json"
         return os.path.join(self.diretorio, grupo_url, nome)
 
@@ -55,4 +58,17 @@ class CacheRespostas:
         temporario = caminho + ".tmp"
         with open(temporario, "w", encoding="utf-8") as f:
             json.dump(conteudo, f, ensure_ascii=False)
-        os.replace(temporario, caminho)
+        substituir(temporario, caminho)
+
+
+def substituir(temporario, caminho, tentativas=8, espera=0.25):
+    # no Windows o antivirus ou o indexador podem segurar o arquivo recem
+    # gravado por alguns instantes; os.replace falha com WinError 32
+    for tentativa in range(tentativas):
+        try:
+            os.replace(temporario, caminho)
+            return
+        except PermissionError:
+            if tentativa == tentativas - 1:
+                raise
+            time.sleep(espera * (2 ** tentativa))
