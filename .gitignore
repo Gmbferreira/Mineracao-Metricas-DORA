@@ -5,6 +5,7 @@ __pycache__/
 .coverage
 data/checkpoints/
 data/cache/
+data/coleta/
 
 # LaTeX (artigo/)
 *.aux

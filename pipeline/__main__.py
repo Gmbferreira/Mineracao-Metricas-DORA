@@ -5,11 +5,15 @@ import json
 import os
 import time
 
-from pipeline import busca, config, funil, metadados, selecao, store
+from pipeline import busca, coleta, config, consolidacao, funil, metadados, selecao, store
 from pipeline.cliente import ClienteGitHub
 
+ETAPAS = ("selecao", "coleta", "metricas")
 DIR_DADOS = "data"
 DIR_CK = os.path.join(DIR_DADOS, "checkpoints")
+DIR_COLETA = os.path.join(DIR_DADOS, "coleta")
+ARQ_METRICAS = os.path.join(DIR_DADOS, "metricas.csv")
+ARQ_RELEASES = os.path.join(DIR_DADOS, "releases.csv")
 ARQ_AMOSTRA = os.path.join(DIR_DADOS, "amostra.csv")
 ARQ_AMOSTRA_META = os.path.join(DIR_DADOS, "amostra_meta.json")
 ARQ_FUNIL_CSV = os.path.join(DIR_DADOS, "funil.csv")
@@ -182,23 +186,7 @@ def gerar_funil(cfg, folhas, identificados, e1, e2, e3, qualificados, amostra, a
     return linhas
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        prog="pipeline",
-        description="Selecao de repositorios, metadados e funil (Issue #1).",
-    )
-    parser.add_argument("--config", default="config.yaml")
-    parser.add_argument("--smoke", action="store_true",
-                        help="20 candidatos, 3 qualificados (teste de fumaca)")
-    parser.add_argument("--max-candidatos", type=int, default=None,
-                        help="limite de candidatos escaneados nesta execucao")
-    parser.add_argument("--reiniciar", action="store_true",
-                        help="apaga os checkpoints e recomeca do zero")
-    parser.add_argument("--forcar-atualizacao", action="store_true",
-                        help="ignora o cache de respostas nesta execucao")
-    args = parser.parse_args()
-
-    cfg = config.carregar(args.config)
+def executar_selecao(cliente, cfg, args):
     alvo = cfg.alvo_qualificados
     limite = cfg.limite_candidatos or None
     if args.smoke:
@@ -208,14 +196,6 @@ def main():
         limite = args.max_candidatos
 
     store.preparar(DIR_CK, cfg, reiniciar=args.reiniciar)
-    cliente = ClienteGitHub(
-        cache_dir=cfg.cache_dir,
-        forcar_global=args.forcar_atualizacao,
-        timeout=cfg.timeout,
-        backoff_base=cfg.backoff_base,
-        backoff_cap=cfg.backoff_cap,
-        backoff_max_tentativas=cfg.backoff_max_tentativas,
-    )
 
     print(
         f"janela {cfg.janela_inicio}..{cfg.janela_fim} | alvo={alvo} | "
@@ -256,6 +236,97 @@ def main():
         f"tempo: {time.time() - inicio:.0f}s",
         flush=True,
     )
+
+
+def executar_coleta(cliente, cfg, args):
+    amostra = coleta.ler_amostra(ARQ_AMOSTRA)
+    total = min(len(amostra), args.limite_repos or len(amostra))
+    print(f"\ncoleta de releases, commits e runs: {total} repositorios", flush=True)
+    inicio = time.time()
+    coletados, erros = coleta.coletar_amostra(
+        cliente, cfg, amostra, DIR_COLETA, limite=args.limite_repos,
+        paralelo=args.paralelo,
+    )
+    print(
+        f"coleta concluida: {len(coletados)} ok, {len(erros)} com erro | "
+        f"chamadas de API: {cliente.chamadas} | tempo: {time.time() - inicio:.0f}s",
+        flush=True,
+    )
+    if erros:
+        print("rode o mesmo comando de novo para tentar os repositorios com erro",
+              flush=True)
+
+
+def executar_metricas(cfg, args):
+    amostra = coleta.ler_amostra(ARQ_AMOSTRA)
+    if args.limite_repos:
+        amostra = amostra[: args.limite_repos]
+    coletados = []
+    for linha in amostra:
+        dados = coleta.carregar(DIR_COLETA, linha["full_name"], cfg)
+        if dados is not None:
+            coletados.append(dados)
+    metricas, releases = consolidacao.consolidar(
+        coletados, cfg.janela_inicio, cfg.janela_fim, ARQ_METRICAS, ARQ_RELEASES
+    )
+    faltando = len(amostra) - len(coletados)
+    print(
+        f"\nmetricas: {ARQ_METRICAS} ({len(metricas)} repositorios"
+        + (f", {faltando} ainda sem coleta" if faltando else "")
+        + f") e {ARQ_RELEASES} ({len(releases)} releases)",
+        flush=True,
+    )
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="pipeline",
+        description=(
+            "Selecao de repositorios, coleta de releases, commits e workflow "
+            "runs, e calculo das metricas DORA."
+        ),
+    )
+    parser.add_argument("--config", default="config.yaml")
+    parser.add_argument("--etapas", default=",".join(ETAPAS),
+                        help="etapas a executar, separadas por virgula "
+                             f"(padrao: {','.join(ETAPAS)})")
+    parser.add_argument("--smoke", action="store_true",
+                        help="20 candidatos, 3 qualificados (teste de fumaca)")
+    parser.add_argument("--max-candidatos", type=int, default=None,
+                        help="limite de candidatos escaneados nesta execucao")
+    parser.add_argument("--limite-repos", type=int, default=None,
+                        help="coleta e metricas so dos N primeiros da amostra")
+    parser.add_argument("--paralelo", type=int, default=4,
+                        help="repositorios coletados ao mesmo tempo na coleta "
+                             "(padrao: 4; use 1 para coleta sequencial)")
+    parser.add_argument("--reiniciar", action="store_true",
+                        help="apaga os checkpoints e recomeca do zero")
+    parser.add_argument("--forcar-atualizacao", action="store_true",
+                        help="ignora o cache de respostas nesta execucao")
+    args = parser.parse_args()
+
+    etapas = [etapa.strip() for etapa in args.etapas.split(",") if etapa.strip()]
+    invalidas = [etapa for etapa in etapas if etapa not in ETAPAS]
+    if invalidas:
+        parser.error(f"etapa desconhecida: {', '.join(invalidas)}")
+
+    cfg = config.carregar(args.config)
+    cliente = None
+    if "selecao" in etapas or "coleta" in etapas:
+        cliente = ClienteGitHub(
+            cache_dir=cfg.cache_dir,
+            forcar_global=args.forcar_atualizacao,
+            timeout=cfg.timeout,
+            backoff_base=cfg.backoff_base,
+            backoff_cap=cfg.backoff_cap,
+            backoff_max_tentativas=cfg.backoff_max_tentativas,
+        )
+    if "selecao" in etapas:
+        executar_selecao(cliente, cfg, args)
+    if "coleta" in etapas:
+        executar_coleta(cliente, cfg, args)
+    if "metricas" in etapas:
+        executar_metricas(cfg, args)
 
 
 if __name__ == "__main__":
