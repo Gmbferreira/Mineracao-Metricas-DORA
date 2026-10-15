@@ -29,3 +29,21 @@ class ClienteFalso:
         if resposta.status_code == 200 and reduzir is not None:
             return RespostaFalsa(200, reduzir(resposta.json()), resposta.headers)
         return resposta
+
+
+def runs_por_intervalo(runs, teto=None):
+    """Responde a /actions/runs filtrando `runs` pelo intervalo `created`, como a API.
+
+    Com `teto`, o `total_count` de intervalos maiores que o teto vem certo, mas a
+    pagina traz so os primeiros (igual a API, que nao entrega mais que o teto).
+    """
+    def responder(params):
+        inicio, fim = params["created"].split("..")
+        dentro = [run for run in runs if inicio <= run["created_at"] <= fim]
+        por_pagina = params.get("per_page", 100)
+        pagina = params.get("page", 1)
+        visiveis = dentro if teto is None else dentro[:teto]
+        trecho = visiveis[(pagina - 1) * por_pagina: pagina * por_pagina]
+        return RespostaFalsa(200, {"total_count": len(dentro), "workflow_runs": trecho})
+
+    return responder

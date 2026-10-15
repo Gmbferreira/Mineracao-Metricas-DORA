@@ -1,7 +1,7 @@
 import datetime as dt
 
 from pipeline import runs as coleta
-from tests.falsos import ClienteFalso, RespostaFalsa
+from tests.falsos import ClienteFalso, RespostaFalsa, runs_por_intervalo
 
 UTC = dt.timezone.utc
 CAMINHO = "/repos/o/r/actions/runs"
@@ -138,8 +138,45 @@ def test_coletar_runs_filtra_push_no_default_branch_e_remove_repetidos():
     cliente = ClienteFalso({CAMINHO: resposta})
     resultado = coleta.coletar_runs(cliente, "o/r", "main", dt.date(2026, 1, 1), dt.date(2026, 2, 15))
     assert [run["id"] for run in resultado["runs"]] == [1, 2]
-    assert resultado["intervalos"] == 2
+    assert resultado["intervalos"] == 1
     assert resultado["acesso"]
+
+
+def _runs_espalhados(quantidade):
+    runs = []
+    for i in range(quantidade):
+        run = _run(i + 1)
+        dia = 1 + i % 28
+        run["created_at"] = f"2026-0{1 + i % 2}-{dia:02d}T{i % 24:02d}:00:00Z"
+        runs.append(run)
+    return runs
+
+
+def test_janela_inteira_quando_cabe_no_teto():
+    cliente = ClienteFalso({CAMINHO: runs_por_intervalo(_runs_espalhados(250))})
+    resultado = coleta.coletar_runs(cliente, "o/r", "main", dt.date(2026, 1, 1), dt.date(2026, 2, 28))
+    assert len(resultado["runs"]) == 250
+    assert resultado["intervalos"] == 1
+    consultas = {params["created"] for _, params in cliente.chamadas}
+    assert consultas == {"2026-01-01T00:00:00Z..2026-02-28T23:59:59Z"}
+
+
+def test_divide_em_meses_quando_passa_do_teto():
+    runs = _runs_espalhados(250)
+    cliente = ClienteFalso({CAMINHO: runs_por_intervalo(runs, teto=200)})
+    blocos = coleta.intervalos_de_busca(cliente, "o/r", "main", dt.date(2026, 1, 1),
+                                        dt.date(2026, 2, 28), teto=200)
+    assert len(blocos) == 2
+    resultado = coleta.coletar_runs(cliente, "o/r", "main", dt.date(2026, 1, 1),
+                                    dt.date(2026, 2, 28), teto=200)
+    assert len(resultado["runs"]) == 250
+    assert resultado["intervalos"] == 2
+
+
+def test_intervalos_de_busca_sem_acesso_usa_meses():
+    cliente = ClienteFalso({CAMINHO: RespostaFalsa(404, {})})
+    blocos = coleta.intervalos_de_busca(cliente, "o/r", "main", dt.date(2026, 1, 1), dt.date(2026, 2, 28))
+    assert len(blocos) == 2
 
 
 def test_coletar_runs_sem_default_branch():

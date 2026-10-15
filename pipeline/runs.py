@@ -112,18 +112,35 @@ def buscar_intervalo(cliente, nome, branch, inicio, fim, per_page=100, teto=TETO
     return {"runs": runs, "intervalos": 1, "no_teto": int(total > teto), "acesso": True}
 
 
-def coletar_runs(cliente, nome, branch, inicio, fim, per_page=100, paralelo=1):
+def intervalos_de_busca(cliente, nome, branch, inicio, fim, per_page=100, teto=TETO_API):
+    """A janela inteira, se ela cabe no teto; senao, os meses de calendario.
+
+    So repositorio muito ativo precisa da divisao por mes. Nos outros, uma
+    consulta da janela toda traz os mesmos runs com bem menos chamadas (a
+    primeira pagina dela fica no cache e e reaproveitada).
+    """
+    meses = intervalos_mensais(inicio, fim)
+    janela = (meses[0][0], meses[-1][1])
+    sonda = _pagina(cliente, nome, branch, janela[0], janela[1], 1, per_page)
+    if sonda.status_code == 200 and int(sonda.json().get("total_count", 0)) <= teto:
+        return [janela]
+    return meses
+
+
+def coletar_runs(cliente, nome, branch, inicio, fim, per_page=100, paralelo=1,
+                 teto=TETO_API):
     if not branch:
         return {"runs": [], "intervalos": 0, "intervalos_no_teto": 0, "acesso": False}
     vistos = {}
     intervalos = 0
     no_teto = 0
     acesso = True
-    meses = intervalos_mensais(inicio, fim)
+    blocos = intervalos_de_busca(cliente, nome, branch, inicio, fim, per_page, teto)
     with ThreadPoolExecutor(max_workers=max(1, paralelo)) as executor:
         parciais = list(executor.map(
-            lambda mes: buscar_intervalo(cliente, nome, branch, mes[0], mes[1], per_page),
-            meses,
+            lambda bloco: buscar_intervalo(cliente, nome, branch, bloco[0], bloco[1],
+                                           per_page, teto),
+            blocos,
         ))
     for parcial in parciais:
         intervalos += parcial["intervalos"]

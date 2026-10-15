@@ -3,7 +3,7 @@ import datetime as dt
 import json
 
 from pipeline import coleta, consolidacao
-from tests.falsos import ClienteFalso, RespostaFalsa
+from tests.falsos import ClienteFalso, RespostaFalsa, runs_por_intervalo
 
 
 class Cfg:
@@ -42,11 +42,6 @@ def _cliente():
     runs = [_run(1, "09:00", "success"), _run(2, "10:00", "failure"),
             _run(3, "12:00", "success")]
 
-    def responder_runs(params):
-        if params["created"].startswith("2026-03-01"):
-            return RespostaFalsa(200, {"total_count": 3, "workflow_runs": runs})
-        return RespostaFalsa(200, {"total_count": 0, "workflow_runs": []})
-
     return ClienteFalso({
         "/repos/o/r/releases": RespostaFalsa(200, [
             _release("v2", "2026-03-15T00:00:00Z"),
@@ -63,7 +58,7 @@ def _cliente():
                                         "message": "fix: y"}},
             ],
         }),
-        "/repos/o/r/actions/runs": responder_runs,
+        "/repos/o/r/actions/runs": runs_por_intervalo(runs),
     })
 
 
