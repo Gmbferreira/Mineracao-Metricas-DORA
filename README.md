@@ -2,7 +2,8 @@
 
 Pipeline que seleciona repositórios populares com GitHub Actions, coleta
 releases, commits entre releases e workflow runs do default branch, e calcula
-as métricas DORA (Issues #1, #2, #4, #5 e #6 do GitHub Projects).
+as métricas DORA (Issues #1, #2, #4, #5 e #6 do GitHub Projects). Na Sprint 02
+entram a amostra final, o CFR (b) e a validação manual (Issues #7 a #13).
 
 [![testes](https://github.com/Gmbferreira/Mineracao-Metricas-DORA/actions/workflows/testes.yml/badge.svg)](https://github.com/Gmbferreira/Mineracao-Metricas-DORA/actions/workflows/testes.yml)
 
@@ -33,8 +34,8 @@ O comando roda três etapas em sequência:
    `data/amostra.csv` e o funil (Issue #1);
 2. **coleta** — para cada repositório da amostra, coleta releases, commits
    entre releases e workflow runs (Issues #4 e #5);
-3. **metricas** — calcula as métricas e grava `data/metricas.csv` e
-   `data/releases.csv` (Issue #6).
+3. **metricas** — calcula as métricas e grava o dataset final
+   `data/dataset.csv` e `data/releases.csv` (Issues #6 e #7).
 
 Opções:
 
@@ -89,8 +90,9 @@ deram erro.
   (anos até o fim da janela) e número de contribuidores (com quartis
   calculados sobre a amostra final).
 - **Ordem de varredura:** estrelas decrescentes, parando ao atingir o alvo de
-  100 repositórios (Sprint 01). A varredura é parcial por definição e continua
-  na Sprint 02 até o alvo de 300+.
+  300 repositórios (amostra final da Sprint 02; na Sprint 01 o alvo era 100). A
+  varredura é parcial por definição, e o funil mostra quantos candidatos
+  ficaram sem olhar.
 
 ## Coleta de releases e commits (Issue #4)
 
@@ -134,6 +136,7 @@ dicionários, então os testes não dependem da API.
 | Lead time (a) por release | `published_at` da release − data de autor do commit mais antigo incluído nela; mediana entre as releases |
 | Lead time (b) por commit | `published_at` da release − data de autor de cada commit; mediana de todos os commits de todas as releases |
 | CFR (a) proxy de CI | runs com falha ÷ (falhas + sucessos). Falha: `failure`, `timed_out`, `startup_failure`. Sucesso: `success`. O resto é ignorado |
+| CFR (b) proxy de entrega | releases que falharam ÷ releases avaliadas. A release falha quando a próxima release da mesma linha sai em até 7 dias e é corretiva. Releases dos últimos 7 dias da janela ficam fora (censura) |
 | Tempo de recuperação | por workflow, em ordem de criação: o episódio começa na primeira falha após um sucesso e termina no próximo sucesso. Duração = `updated_at` do sucesso − `run_started_at` da primeira falha. Mediana dos episódios de todos os workflows |
 | Classificação DORA (C1) | faixas da tabela de referência do enunciado com deployment frequency, lead time (a), CFR (a) e recuperação; geral = mediana das notas, arredondada para baixo |
 
@@ -152,6 +155,35 @@ Decisões tomadas onde o enunciado deixa margem:
   fica sem classe, e a classe geral usa a mediana das métricas disponíveis
   (`metricas_classificadas` diz quantas foram usadas).
 
+### Heurística de release corretiva (Issue #9)
+
+Fica em `metricas/corretiva.py`. A tag é separada em **linha** (o prefixo, que
+em monorepos identifica o pacote: `vite@7.1.0` e `create-vite@8.0.1` são linhas
+diferentes) e **versão** SemVer. Dois sinais são usados:
+
+- **patch**: o terceiro número da versão é maior que zero (`2.3.1`);
+- **mensagens**: algum commit desde a release anterior tem `fix`, `hotfix`,
+  `bugfix` ou `revert` na mensagem. Commits `fix(deps)` de atualização de
+  dependência não contam.
+
+Como o enunciado pede para validar a heurística contra o consenso da
+amostra-ouro, deixei cinco versões prontas para comparar: só patch, só
+mensagens, patch **e** mensagens, patch **ou** mensagens, e patch com a maioria
+dos commits sendo correção. Até a validação, o dataset usa `patch e mensagens`.
+Depois dela, fica a versão com melhor F1 (a escolhida aparece em
+`data/dataset_meta.json`).
+
+"Fix" é a palavra mais comum no começo das mensagens de commit da amostra
+(cerca de 20%), então "ter algum commit de fix" sozinho tende a marcar quase
+toda release como corretiva. Por isso testo também as versões que combinam os
+dois sinais.
+
+## Validação manual (Issues #8 a #12)
+
+O passo a passo está em [`validacao/README.md`](validacao/README.md): sorteio
+da amostra-ouro com semente fixa, planilha de cada avaliador, consenso e
+avaliação da heurística com precisão, recall e F1.
+
 ## Saídas
 
 | Arquivo | Conteúdo |
@@ -159,67 +191,16 @@ Decisões tomadas onde o enunciado deixa margem:
 | `data/amostra.csv` | Amostra final com os metadados de cada repositório |
 | `data/amostra_meta.json` | Janela, alvo, limites dos quartis e critério de cálculo |
 | `data/funil.csv`, `data/funil.md` | Tabela do funil de seleção (candidatos → amostra) |
-| `data/metricas.csv` | Uma linha por repositório com as métricas e a classificação DORA |
+| `data/dataset.csv` | Dataset final: uma linha por repositório com metadados, quartis, métricas em todas as variantes e a classificação DORA |
+| `data/dataset_meta.json` | Janela, limites dos quartis e versão da heurística usada no CFR (b) |
 | `data/releases.csv` | Uma linha por release avaliada, com o resultado do compare e o lead time (a) |
+| `data/DICIONARIO.md` | Dicionário de dados de todos os CSVs |
 | `data/coleta/` | Um JSON por repositório com releases, commits e runs coletados (gitignorado; base para as próximas sprints) |
 | `data/checkpoints/` | JSONL por etapa (gitignorado; permite retomada) |
 | `data/cache/` | Respostas da API em JSON (gitignorado; evita repetir chamadas) |
 
-### Situação da coleta (Sprint 01)
-
-A seleção chegou aos 100 repositórios (`data/amostra.csv`). Nesta sprint, a
-coleta de releases, commits e runs e as métricas cobrem **48 desses 100**
-(`data/metricas.csv`). Os repositórios mais ativos têm dezenas de milhares de
-runs por ano (ex.: `NousResearch/hermes-agent` com 46 mil) e consomem mais
-chamadas do que a cota de 5.000 por hora de um token. Os 52 restantes serão
-coletados na Sprint 02 com o mesmo comando, que continua de onde parou sem
-repetir as chamadas já feitas.
-
-### Colunas de `data/metricas.csv`
-
-| Coluna | Tipo | Unidade | Origem / fórmula |
-|---|---|---|---|
-| `full_name` | texto | — | `owner/repo` |
-| `default_branch` | texto | — | campo `default_branch` da API |
-| `releases_janela` | inteiro | releases | releases com `draft=false`, `prerelease=false` e `published_at` na janela |
-| `deployment_frequency_semana` | decimal | releases/semana | `releases_janela` ÷ semanas da janela |
-| `lead_time_a_horas` | decimal | horas | mediana do lead time por release (variante a) |
-| `lead_time_b_horas` | decimal | horas | mediana do lead time por commit (variante b) |
-| `releases_avaliadas` | inteiro | releases | releases que entraram no lead time |
-| `releases_sem_anterior` | inteiro | releases | primeira release da história, sem anterior |
-| `releases_compare_falho` | inteiro | releases | compare com 404, 422 ou erro |
-| `releases_sem_commits` | inteiro | releases | compare sem commits novos |
-| `releases_commits_truncados` | inteiro | releases | compare que passou do limite de 100 páginas (10 mil commits) |
-| `commits_avaliados` | inteiro | commits | commits usados na variante (b) |
-| `commits_data_invalida` | inteiro | commits | commits com data de autor depois da release |
-| `runs_total` | inteiro | runs | workflow runs de push no default branch na janela |
-| `runs_sucesso`, `runs_falha`, `runs_ignorados` | inteiro | runs | classificação pelo campo `conclusion` |
-| `cfr_a` | decimal | fração (0–1) | `runs_falha` ÷ (`runs_falha` + `runs_sucesso`) |
-| `recuperacao_horas` | decimal | horas | mediana dos episódios de falha recuperados |
-| `episodios`, `episodios_censurados` | inteiro | episódios | total de episódios e quantos não terminaram na janela |
-| `proporcao_censurados` | decimal | fração (0–1) | `episodios_censurados` ÷ `episodios` |
-| `falhas_sem_inicio` | inteiro | runs | falhas antes do primeiro sucesso de cada workflow |
-| `intervalos_runs`, `intervalos_no_teto` | inteiro | consultas | intervalos de data consultados e quantos ficaram no teto de 1000 |
-| `classe_frequencia`, `classe_lead_time`, `classe_cfr`, `classe_recuperacao` | texto | Elite/High/Medium/Low | faixas da tabela de referência |
-| `classe_geral` | texto | Elite/High/Medium/Low | mediana das notas, arredondada para baixo (combinação C1) |
-| `metricas_classificadas` | inteiro | métricas | quantas das 4 métricas tinham valor |
-
-Campo vazio quer dizer que a métrica não pôde ser calculada (ex.: nenhum
-episódio de falha recuperado).
-
-### Colunas de `data/releases.csv`
-
-| Coluna | Tipo | Unidade | Origem / fórmula |
-|---|---|---|---|
-| `full_name` | texto | — | `owner/repo` |
-| `tag_name`, `tag_anterior` | texto | — | tag da release e da release anterior usada no compare |
-| `published_at` | data/hora UTC | — | campo `published_at` da release |
-| `status_compare` | texto | — | `ok`, `sem_anterior`, `404`, `422` ou `erro` |
-| `total_commits` | inteiro | commits | `total_commits` do compare |
-| `commits_coletados` | inteiro | commits | commits efetivamente baixados |
-| `truncado` | 0/1 | — | 1 se o compare passou do limite de páginas |
-| `lead_time_horas` | decimal | horas | lead time (a) da release |
-| `html_url` | texto | — | página da release no GitHub |
+O significado de cada coluna (tipo, unidade e fórmula) está em
+[`data/DICIONARIO.md`](data/DICIONARIO.md).
 
 ## Estrutura
 
@@ -237,14 +218,18 @@ pipeline/
 ├── releases.py   releases e commits entre releases (compare)
 ├── runs.py       workflow runs com divisão da janela por mês
 ├── coleta.py     coleta por repositório da amostra, com retomada
-└── consolidacao.py  metricas.csv e releases.csv
+└── consolidacao.py  dataset.csv, quartis e releases.csv
 metricas/
 ├── comum.py      datas e mediana
 ├── frequencia.py deployment frequency
 ├── lead_time.py  lead time (a) e (b)
-├── cfr.py        CFR (a)
+├── cfr.py        CFR (a) e CFR (b)
+├── corretiva.py  heurística de release corretiva (versões avaliadas)
 ├── recuperacao.py episódios de falha e tempo de recuperação
 └── classificacao.py faixas DORA e classificação geral
+validacao/
+├── sorteio.py    sorteio da amostra-ouro e planilhas de rotulagem
+└── avaliacao.py  precisão, recall e F1 da heurística contra o consenso
 tests/            testes unitários com fixtures
 .github/workflows/testes.yml  CI: pytest com cobertura mínima de 80% em metricas/
 artigo/           artigo no template SBC (Introdução e hipóteses)
@@ -271,6 +256,12 @@ enunciado (release `v1.1` com lead time de 13 dias e o episódio de falha de
 1h20), e casos de borda: release sem commits novos, falha nunca recuperada
 (censurada), repositório com uma única release, runs `cancelled` e compare com
 404. A coleta é testada com um cliente falso, sem acessar a rede.
+
+Na Sprint 02 entraram os testes da heurística de release corretiva e do CFR (b)
+(com o exemplo `v2.3.0 → v2.3.1` do enunciado, monorepos, prazo de 7 dias e
+censura no fim da janela), do sorteio (mesmo resultado com a mesma semente e
+planilha sem a saída da heurística) e da avaliação (o exemplo de precisão 0,75
+e recall 0,60 da seção 6).
 
 O GitHub Actions roda os testes a cada push e pull request
 (`.github/workflows/testes.yml`) e falha se a cobertura do pacote `metricas`
