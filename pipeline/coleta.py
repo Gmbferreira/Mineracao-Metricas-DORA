@@ -8,6 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pipeline import releases, runs
 from pipeline.cache import substituir
 
+PARALELO_INTERNO = 3
+
 
 def arquivo_repo(dir_coleta, nome):
     return os.path.join(dir_coleta, nome.replace("/", "__") + ".json")
@@ -43,6 +45,10 @@ def ler_amostra(caminho):
 
 
 def coletar_repo(cliente, cfg, nome, default_branch, paralelo=1):
+    # dentro de um repositorio, no maximo 3 requisicoes ao mesmo tempo: com
+    # varios repositorios em paralelo, isso fica abaixo do limite de
+    # requisicoes simultaneas do GitHub
+    paralelo = min(paralelo, PARALELO_INTERNO)
     coletadas = releases.coletar_releases(
         cliente, nome, cfg.janela_inicio, cfg.janela_fim, paralelo=paralelo
     )
