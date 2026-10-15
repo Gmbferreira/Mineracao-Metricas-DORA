@@ -44,7 +44,7 @@ Opções:
 | `--config caminho` | Arquivo de configuração (padrão: `config.yaml`) |
 | `--etapas lista` | Etapas a executar, separadas por vírgula (padrão: `selecao,coleta,metricas`). Ex.: `--etapas coleta,metricas` reaproveita a `data/amostra.csv` existente |
 | `--limite-repos N` | Coleta e métricas só dos N primeiros repositórios da amostra (útil para testar) |
-| `--paralelo N` | Quantos repositórios são coletados ao mesmo tempo (padrão: 4). Dentro de cada um, os meses de runs e os compares também rodam em paralelo. Use `1` para coleta sequencial |
+| `--paralelo N` | Quantos repositórios são coletados ao mesmo tempo (padrão: 4). Dentro de cada um, os meses de runs e os compares também rodam em paralelo, com no máximo 3 requisições por vez. Use `1` para coleta sequencial |
 | `--smoke` | Teste de fumaça da seleção: 20 candidatos, alvo de 3 qualificados |
 | `--max-candidatos N` | Limite de candidatos escaneados nesta execução |
 | `--reiniciar` | Apaga os checkpoints em `data/checkpoints/` e recomeça |
@@ -105,10 +105,19 @@ deram erro.
   dentro da janela. A release anterior é a release válida imediatamente antes
   dela pela data de publicação, mesmo que fora da janela. A primeira release da
   história do repositório não tem anterior e fica fora do lead time.
-- **Commits incluídos:** `GET /repos/{owner}/{repo}/compare/{anterior}...{R}`
-  paginado com `per_page=100` e `page` até `total_commits` (o endpoint sem
-  paginação para em 250). Tags com `/` ou outros caracteres especiais são
-  codificadas na URL.
+- **Commits incluídos:** o compare entre a release anterior e a release R.
+  Na Sprint 01 ele saía todo do REST
+  (`GET /repos/{owner}/{repo}/compare/{anterior}...{R}`, paginado com
+  `per_page=100` e `page` até `total_commits`). O compare era 61% das chamadas
+  da coleta, então na Sprint 02 ele passou a sair primeiro da API GraphQL
+  (objeto `Comparison`), que tem uma cota própria de 5.000 pontos por hora e
+  deixa a cota REST para os workflow runs. A GraphQL devolve os mesmos commits
+  do REST, na mesma ordem, mas só os 1.000 mais recentes; quando o compare é
+  maior que isso, os mais antigos vêm das primeiras páginas do REST. Antes de
+  trocar, comparei os dois em 150 pares de releases sorteados entre os
+  repositórios já coletados (8 deles com mais de 1.000 commits): os 150 deram
+  os mesmos commits, as mesmas datas de autor e as mesmas mensagens. Se a
+  GraphQL responder com erro, o compare sai todo pelo REST, como antes.
 - **Erros no compare:** `404` (tag apagada ou reescrita) e `422` são
   registrados no `status_compare` da release, que fica fora do lead time e é
   contada em `releases_compare_falho`. Um erro persistente (5xx após o
@@ -118,10 +127,13 @@ deram erro.
 
 - `GET /repos/{owner}/{repo}/actions/runs` com `branch=<default_branch>`,
   `event=push` e `exclude_pull_requests=true`.
-- A janela é dividida em meses de calendário (`created=AAAA-MM-DDTHH:MM:SSZ..`).
-  Se um mês passa do teto de 1000 resultados da API, o intervalo é dividido ao
-  meio até caber (chega a horas nos repositórios mais ativos). Se um intervalo
-  de 1 minuto ainda passar do teto, ele é contado em `intervalos_no_teto`.
+- Primeiro vai uma consulta da janela inteira. Se ela tem até 1.000 runs (o
+  teto da API com filtros), a coleta usa essa consulta e pronto. Senão, a
+  janela é dividida em meses de calendário (`created=AAAA-MM-DDTHH:MM:SSZ..`),
+  como o enunciado pede para repositórios muito ativos. Se um mês passa do
+  teto, o intervalo é dividido ao meio até caber (chega a horas nos
+  repositórios mais ativos). Se um intervalo de 1 minuto ainda passar do teto,
+  ele é contado em `intervalos_no_teto`.
 - Os runs são filtrados de novo no código (`event = push` e
   `head_branch = default_branch`) e repetidos são removidos pelo `id`.
 
@@ -202,6 +214,18 @@ avaliação da heurística com precisão, recall e F1.
 O significado de cada coluna (tipo, unidade e fórmula) está em
 [`data/DICIONARIO.md`](data/DICIONARIO.md).
 
+### Situação da coleta (Sprint 02)
+
+A amostra final tem 300 repositórios, e a coleta terminou para todos, sem
+nenhum erro: 21.203 releases na janela e cerca de 3 milhões de workflow runs.
+A última rodada, depois da troca do compare para a GraphQL, usou 23.210
+chamadas REST e 13.510 GraphQL em cerca de 5 horas. Os 100 repositórios da
+Sprint 01 continuam com exatamente os mesmos valores.
+
+O CFR (b) do dataset ainda usa a versão `patch e mensagens` da heurística.
+Depois da validação com a amostra-ouro (Issue #9), o dataset é gerado de novo
+com a versão escolhida.
+
 ## Estrutura
 
 ```
@@ -279,5 +303,9 @@ ficar abaixo de 80%.
   data pode estar em outro branch, e o compare traz muitos commits antigos.
   Isso infla principalmente a variante (b) do lead time.
 - A data do commit é a data de autor; rebase e squash merge podem distorcê-la.
+- Alguns repositórios publicam muitas releases de uma vez. O `expo/expo`
+  publicou as 267 releases da janela entre 29/09 e 01/10/2026: isso infla a
+  frequência de deploy e deixa o CFR (b) sem valor, porque todas caem nos
+  últimos 7 dias da janela e são censuradas.
 - O tempo de recuperação usa o estado final de cada run. Se um run com falha
   foi reexecutado com sucesso, a API mostra só a última tentativa.

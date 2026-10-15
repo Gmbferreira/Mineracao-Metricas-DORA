@@ -74,7 +74,7 @@ ao limite fica no grupo de baixo. Os limites estão em `data/dataset_meta.json`.
 | `releases_sem_anterior` | inteiro | releases | primeira release da história do repositório (sem anterior para comparar) |
 | `releases_compare_falho` | inteiro | releases | `compare` com 404, 422 ou erro; ficam fora do lead time |
 | `releases_sem_commits` | inteiro | releases | `compare` sem nenhum commit novo |
-| `releases_commits_truncados` | inteiro | releases | `compare` que passou do limite de 100 páginas (10 mil commits) |
+| `releases_commits_truncados` | inteiro | releases | `compare` em que nem todos os commits foram baixados: acima de 10 mil commits (100 páginas do REST), ou de 11 mil quando os 1.000 mais recentes vieram da GraphQL |
 | `commits_avaliados` | inteiro | commits | commits usados na variante (b) |
 | `commits_data_invalida` | inteiro | commits | commits com data de autor depois da publicação da release (descartados) |
 
@@ -137,7 +137,7 @@ Uma linha por release da janela (sem draft e sem pré-release).
 | `status_compare` | texto | — | `ok`, `sem_anterior`, `404`, `422` ou `erro` |
 | `total_commits` | inteiro | commits | `total_commits` do `compare` |
 | `commits_coletados` | inteiro | commits | commits efetivamente baixados |
-| `truncado` | 0 ou 1 | — | 1 se o `compare` passou do limite de páginas |
+| `truncado` | 0 ou 1 | — | 1 se nem todos os commits do `compare` foram baixados (ver `releases_commits_truncados`) |
 | `lead_time_horas` | decimal | horas | lead time (a) da release |
 | `html_url` | texto | — | página da release no GitHub |
 
