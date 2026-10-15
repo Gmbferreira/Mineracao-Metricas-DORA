@@ -1,8 +1,9 @@
 # Artigo (template SBC)
 
 Documento do relatório final da disciplina, escrito aos poucos (uma seção por
-sprint), no template da SBC. Esta sprint entrega a **Introdução** e as
-**hipóteses informais** das RQ 01 a RQ 07 (Issue #3).
+sprint), no template da SBC. Esta sprint entrega a **Metodologia** --- fonte de
+dados e funil de seleção, janela de observação e definições operacionais,
+variantes obrigatórias das métricas e protocolo de validação manual (Issue #13).
 
 Artigo no Overleaf (leitura): <https://www.overleaf.com/read/rxydywpnvjym#6b20e1>
 
@@ -39,10 +40,14 @@ pdflatex main
 
 ## Escopo desta entrega
 
-- `main.tex` contém a Introdução e a seção de hipóteses (RQ 01 a RQ 07).
-- As seções de Metodologia, Resultados, Discussão, Ameaças à Validade e
-  Replicação Cruzada estão comentadas no fim de `main.tex`, como esqueleto para
-  as próximas sprints.
+- `main.tex` contém a Introdução, a seção de hipóteses (RQ 01 a RQ 07) e a
+  Metodologia (fonte de dados e funil de seleção, janela e definições
+  operacionais, variantes obrigatórias e protocolo de validação manual).
+- As seções de Resultados, Discussão, Ameaças à Validade e Replicação Cruzada
+  estão comentadas no fim de `main.tex`, como esqueleto para as próximas
+  sprints.
+- A Metodologia descreve o protocolo e as definições, sem apresentar números de
+  resultado (kappa, F1, distribuições), que ficam para a sprint de análise.
 - As hipóteses são informais e foram redigidas **antes** da análise dos dados,
   conforme exigido pela disciplina.
 

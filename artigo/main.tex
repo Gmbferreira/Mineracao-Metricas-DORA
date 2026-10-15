@@ -34,7 +34,9 @@ mine releases, workflow runs and commits over a twelve-month window to compute
 deployment frequency, lead time for changes, change failure rate and failed
 deployment recovery time, plus a sensitivity analysis of the operational
 definitions. This paper presents the context, the seven research questions and
-the informal hypotheses that guide the study before the data are analysed.
+the informal hypotheses that guide the study, and describes the methodology:
+the data source, the selection funnel, the operational definitions of the
+metrics and the manual validation protocol.
 \end{abstract}
 
 \begin{resumo}
@@ -46,8 +48,9 @@ GitHub Actions. Mineramos releases, execuções de workflow e commits ao longo d
 uma janela de doze meses para calcular frequência de deploy, lead time for
 changes, taxa de falha de mudança e tempo de recuperação, além de uma análise de
 sensibilidade das definições operacionais. Este artigo apresenta o contexto, as
-sete questões de pesquisa e as hipóteses informais que orientam o estudo antes
-da análise dos dados.
+sete questões de pesquisa e as hipóteses informais que orientam o estudo, e
+descreve a metodologia: a fonte de dados, o funil de seleção, as definições
+operacionais das métricas e o protocolo de validação manual.
 \end{resumo}
 
 \section{Introdução}
@@ -111,8 +114,10 @@ desempenho de entrega de repositórios populares sob definições operacionais
 explícitas e comparáveis; e (iii) uma avaliação da robustez dessas conclusões
 frente a escolhas metodológicas alternativas. O restante do artigo está
 organizado da seguinte forma: a Seção~\ref{sec:hipoteses} apresenta as questões
-de pesquisa e as hipóteses; a Metodologia, os Resultados e a Discussão são
-desenvolvidos nas próximas etapas do projeto.
+de pesquisa e as hipóteses; a Seção~\ref{sec:metodologia} descreve a metodologia
+--- fonte de dados, funil de seleção, definições operacionais e protocolo de
+validação manual; os Resultados e a Discussão serão desenvolvidos nas próximas
+etapas do projeto.
 
 \section{Questões de Pesquisa e Hipóteses}
 \label{sec:hipoteses}
@@ -205,24 +210,250 @@ global \emph{moderada} (kappa ponderado entre 0,4 e 0,6), indicando que as
 conclusões das RQ~01 a RQ~06 são apenas parcialmente robustas e que a definição
 operacional precisa ser explicitada em qualquer comparação.
 
-% ---------------------------------------------------------------------------
-% Link do repositório e do GitHub Projects do grupo (exigido pela disciplina).
-% ---------------------------------------------------------------------------
-\section*{Link do Repositório e do GitHub Projects}
+\section{Metodologia}
+\label{sec:metodologia}
 
-\noindent Repositório: \url{https://github.com/Gmbferreira/Mineracao-Metricas-DORA}\\
-GitHub Projects: \url{https://github.com/users/Gmbferreira/projects/2/views/1}
+Esta seção descreve como os dados foram obtidos e o que foi medido: a fonte de
+dados e o funil de seleção dos repositórios, a janela de observação e as
+definições operacionais, as variantes obrigatórias das métricas e o protocolo de
+validação manual.
+
+\subsection{Fonte de dados e funil de seleção}
+\label{sec:fonte}
+
+Os dados provêm da API REST do GitHub \cite{githubrest}, acessada por um cliente
+HTTP próprio escrito em Python, sem bibliotecas de terceiros para a API. O token
+de acesso é lido de uma variável de ambiente e nunca é gravado em disco. Toda
+resposta é guardada em cache local e a execução é retomável por checkpoints:
+interrompida a coleta (rate limit, queda de rede ou \texttt{Ctrl+C}), o mesmo
+comando continua de onde parou sem repetir requisições já feitas. Quando a cota
+horária se esgota, o cliente pausa até a renovação e repete erros temporários
+(5xx) com espera exponencial. A seleção inteira roda com um único comando
+(\texttt{python -m pipeline --config config.yaml}).
+
+A busca de candidatos usa os pré-filtros \texttt{stars:>=1000},
+\texttt{fork:false}, \texttt{archived:false} e \texttt{pushed:>=2025-10-02}. Como
+a API de busca devolve no máximo 1.000 resultados por consulta, a busca é
+fatiada por faixas de estrelas e percorrida em ordem decrescente de estrelas.
+Cada candidato passa por três etapas de elegibilidade, avaliadas dentro da
+janela: \textbf{E1}, ter ao menos um workflow registrado no GitHub Actions
+(\texttt{total\_count} $> 0$); \textbf{E2}, ter ao menos 50 workflow runs
+disparados por \texttt{push} no \emph{default branch}; e \textbf{E3}, ter ao
+menos 5 releases publicadas (\texttt{draft = false} e
+\texttt{prerelease = false}). A Tabela~\ref{tab:funil} resume o funil de
+seleção.
+
+A varredura de candidatos é \emph{parcial por definição}: ela percorre os
+repositórios em ordem decrescente de estrelas e para ao atingir o alvo de 300
+repositórios qualificados, deixando a maior parte dos candidatos identificados
+sem exame. O funil existe justamente para tornar esse corte explícito e
+auditável.
+
+\begin{table}[t]
+  \centering
+  \caption{Funil de seleção da amostra final (gerado automaticamente pela etapa
+    de seleção do pipeline).}
+  \label{tab:funil}
+  \footnotesize
+  \begin{tabular}{@{}p{4.4cm}rrrp{3.8cm}@{}}
+    \toprule
+    Etapa & Entrada & Saída & Descartados & Motivo \\
+    \midrule
+    Candidatos identificados (pré-filtros) & --- & 37.388 & --- & busca fatiada por faixas de estrelas \\
+    Candidatos escaneados & 37.388 & 646 & 36.742 & varredura parcial: parada ao atingir o alvo de 300 \\
+    E1 --- utiliza GitHub Actions & 646 & 611 & 35 & \texttt{total\_count} de workflows = 0 \\
+    E2 --- $\geq$ 50 runs de push na janela & 611 & 425 & 186 & menos de 50 runs de push na janela \\
+    E3 --- $\geq$ 5 releases na janela & 425 & 300 & 125 & menos de 5 releases publicadas na janela \\
+    Amostra final com metadados completos & 300 & 300 & 0 & metadados coletados para todos \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Para cada repositório da amostra final coletamos os metadados de contexto
+(estrelas, linguagem principal, data de criação convertida em idade até o fim da
+janela e número de contribuidores) e calculamos seus quartis, usados como
+fatores na RQ~06. O dicionário de dados do repositório documenta cada coluna dos
+CSVs gerados, com tipo, unidade e fórmula de origem.
+
+\subsection{Janela de observação e definições operacionais}
+\label{sec:definicoes}
+
+A janela de observação vai de 2025-10-02 a 2026-10-02 (12 meses, datas
+inclusivas), fixada no início da disciplina e igual para todos os grupos, de
+modo que os resultados sejam comparáveis entre eles. Só entram no cálculo
+releases publicadas e workflow runs criados dentro da janela. As regras comuns a
+todas as métricas são:
+
+\begin{itemize}
+  \item \textbf{Branch de referência:} apenas o \emph{default branch} do
+    repositório (campo \texttt{default\_branch} da API).
+  \item \textbf{Deploy:} uma release publicada no GitHub, isto é, com
+    \texttt{draft = false} e \texttt{prerelease = false}. Pré-releases e tags sem
+    release ficam fora da definição principal e entram como variantes na RQ~07.
+  \item \textbf{Data de um commit:} \texttt{commit.author.date}, que registra
+    quando a mudança foi escrita; rebase e \emph{squash merge} podem distorcê-la
+    (tratada como ameaça à validade).
+  \item \textbf{Execuções de CI:} apenas workflow runs disparados por
+    \texttt{push} no \emph{default branch}. Execuções agendadas ou manuais não
+    representam mudanças entregues.
+  \item \textbf{Sucesso, falha e ignorados:} o campo \texttt{conclusion}
+    classifica cada run --- \texttt{success} é sucesso; \texttt{failure},
+    \texttt{timed\_out} e \texttt{startup\_failure} são falha; \texttt{cancelled},
+    \texttt{skipped}, \texttt{neutral}, \texttt{action\_required},
+    \texttt{stale} e valores vazios são ignorados e não entram em nenhum cálculo.
+  \item \textbf{Censura:} se o evento que encerra uma medição não ocorre antes do
+    fim da janela (uma falha ainda não corrigida, por exemplo), o caso não é
+    descartado: é registrado como censurado e sua proporção é reportada.
+    Descartá-los faria os projetos parecerem mais rápidos do que são.
+\end{itemize}
+
+Com essas regras, a \textbf{frequência de deploy} é o número de releases
+avaliadas na janela dividido pelo número de semanas da janela
+($365 \div 7 \approx 52{,}1$). O \textbf{tempo de recuperação} é calculado por
+workflow, em ordem cronológica: um episódio de falha começa na primeira falha
+após um sucesso e termina na próxima execução bem-sucedida do mesmo workflow; a
+duração do episódio é a diferença entre o \texttt{updated\_at} do sucesso e o
+\texttt{run\_started\_at} da primeira falha. O valor do repositório é a mediana
+dos episódios de todos os seus workflows, excluídos os censurados.
+
+A classificação de cada repositório segue as faixas fixas da
+Tabela~\ref{tab:faixas}, \emph{adaptadas} dos relatórios \emph{Accelerate State
+of DevOps} \cite{dorastate} e acordadas para toda a disciplina, de modo que os
+resultados dos grupos sejam comparáveis. A classe geral recebe 4 pontos a
+\emph{Elite}, 3 a \emph{High}, 2 a \emph{Medium} e 1 a \emph{Low} em cada uma
+das quatro métricas, e é a mediana desses quatro pontos, arredondada para baixo
+(notas 4, 3, 3, 1 $\rightarrow$ mediana 3 $\rightarrow$ \emph{High}). Métrica
+sem valor (um repositório sem episódio de falha recuperado, por exemplo) fica
+sem classe, e a classe geral usa apenas as métricas disponíveis.
+
+\begin{table}[t]
+  \centering
+  \caption{Faixas de classificação DORA usadas neste estudo (adaptadas dos
+    relatórios DORA e fixadas para toda a disciplina).}
+  \label{tab:faixas}
+  \footnotesize
+  \begin{tabular}{@{}p{2.6cm}p{2.6cm}p{2.6cm}p{2.6cm}p{2.6cm}@{}}
+    \toprule
+    Métrica & Elite & High & Medium & Low \\
+    \midrule
+    Frequência de deploy & $\geq$ 7/semana & $\geq$ 1 e $<$ 7/semana & $\geq$ 1/mês e $<$ 1/semana & $<$ 1/mês \\
+    \emph{Lead time} (mediana) & $<$ 1 dia & 1 dia a $<$ 1 semana & 1 semana a $<$ 30 dias & $\geq$ 30 dias \\
+    Taxa de falha & $\leq$ 15\% & $>$ 15\% e $\leq$ 30\% & $>$ 30\% e $\leq$ 45\% & $>$ 45\% \\
+    Recuperação (mediana) & $<$ 1 hora & 1 hora a $<$ 1 dia & 1 dia a $<$ 1 semana & $\geq$ 1 semana \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Variantes obrigatórias}
+\label{sec:variantes}
+
+Duas métricas têm definições variantes obrigatórias, porque o valor muda quando
+a regra muda. Calculá-las separadamente faz parte do estudo: a comparação entre
+variantes é justamente a RQ~07.
+
+\textbf{Lead time for changes.} Na variante \emph{(a) por release}, cada release
+R da janela é comparada à release anterior (mesmo que ela esteja fora da
+janela): o lead time de R é a diferença entre sua publicação e a data de autor
+do commit mais antigo incluído em R, e o valor do repositório é a mediana
+desses valores entre suas releases. Na variante \emph{(b) por commit}, cada
+commit de cada release contribui com a diferença entre a publicação da release e
+a data de autor do próprio commit, e o valor do repositório é a mediana de
+\emph{todos} os commits de \emph{todas} as suas releases. As duas divergem
+estruturalmente: na (a), um único commit antigo ``esquecido'' em uma release faz
+o lead time daquela release explodir e puxa a mediana para cima; na (b), esses
+valores extremos se diluem no conjunto. Releases sem anterior, com
+\texttt{compare} infrutífero (tag apagada, erro 404 ou 422) ou sem commits novos
+ficam fora do cálculo e são contabilizadas; commits com data de autor posterior à
+publicação (lead time negativo) são descartados.
+
+\textbf{Change failure rate.} A variante \emph{(a), proxy de CI}, é a proporção
+de workflow runs com falha sobre falhas mais sucessos, usando o mapeamento de
+\texttt{conclusion} da Seção~\ref{sec:definicoes}; ela mede falha de
+\emph{pipeline}, que não é a mesma coisa que falha em produção --- pipelines
+falham por testes, \emph{linters} e \emph{flakiness} que não afetam o usuário. A
+variante \emph{(b), proxy de entrega}, considera uma release R falha se a
+próxima release da \emph{mesma linha} (mesmo prefixo de tag: em monorepos,
+\texttt{vite@7.1.0} e \texttt{create-vite@8.0.1} são linhas diferentes) for
+publicada em até 7 dias e for corretiva; o CFR do repositório é a proporção de
+releases avaliadas que falharam. Releases publicadas nos últimos 7 dias da
+janela não podem ser avaliadas --- ainda não se sabe se haverá correção --- e
+ficam fora do denominador (censura).
+
+\textbf{Release corretiva.} O proxy de entrega depende de identificar releases
+cujo objetivo principal é corrigir um defeito recente. A heurística automática
+separa a tag em \emph{linha} (o prefixo) e versão SemVer \cite{semver} e marca a
+release como corretiva quando, desde a release anterior, (i) apenas o número de
+\emph{patch} da versão mudou (\texttt{2.3.0} $\rightarrow$ \texttt{2.3.1}) e/ou
+(ii) algum commit tem \texttt{fix}, \texttt{hotfix}, \texttt{bugfix} ou
+\texttt{revert} na mensagem (atualizações de dependência do tipo
+\texttt{fix(deps)} não contam). Como ``fix'' é a palavra mais comum no começo
+das mensagens de commit da amostra (cerca de 20\%), cinco versões da heurística
+são mantidas --- só patch, só mensagens, patch \emph{e} mensagens, patch
+\emph{ou} mensagens e patch com maioria de commits de correção --- e a escolha
+entre elas é feita pela validação manual (Seção~\ref{sec:validacao}).
+
+\textbf{Unidade de deploy.} Além da release principal, a RQ~07 alterna entre
+duas outras unidades: a soma de releases e pré-releases, e a tag apontada para um
+commit (datada pelo commit apontado). Combinando unidade de deploy, escolha do
+\emph{lead time} e escolha do proxy de CFR, a análise de sensibilidade compara ao
+menos três definições: C1 (referência: release, (a) e (a)), C2 (release +
+pré-release, (b) e (b)) e C3 (tag, (b) e (a)).
+
+\subsection{Protocolo de validação manual}
+\label{sec:validacao}
+
+Heurísticas automáticas podem errar, e o único modo de medir esse erro é
+compará-las com o julgamento humano. O conjunto rotulado por humanos e usado
+como referência é a \emph{amostra-ouro} (\emph{gold standard}). O protocolo tem
+cinco passos.
+
+\begin{enumerate}
+  \item \textbf{Sorteio.} 60 repositórios são sorteados da amostra final com
+    semente fixa (42) documentada no código, de modo que o sorteio seja
+    reproduzível; de cada repositório, sorteam-se 5 releases que tenham release
+    anterior, para a planilha exibir o link da lista de commits entre as duas.
+    As saídas são \texttt{amostra\_ouro.csv} e \texttt{releases\_ouro.csv}.
+  \item \textbf{Rotulação independente.} Cada integrante do grupo preenche a
+    própria planilha (\texttt{rotulos\_<avaliador>.xlsx}) sem consultar os
+    demais e \emph{sem ver a saída da heurística}. Três dimensões são rotuladas:
+    (i) o tipo do projeto (biblioteca/framework, aplicação/serviço, ferramenta
+    CLI ou outro); (ii) se as releases do repositório representam entregas reais
+    ao usuário (sim, não ou incerto); e (iii) se cada uma das 5 releases é
+    corretiva (sim ou não), lendo as release notes e a lista de commits. As
+    colunas de resposta só aceitam os valores de uma lista fixa, e cada linha
+    traz links diretos para a release e para os commits.
+  \item \textbf{Concordância.} Em cada dimensão, a concordância entre
+    avaliadores é medida pelo kappa de Fleiss \cite{fleiss1971}, que corrige a
+    concordância que ocorreria por acaso; calcula-se com
+    \texttt{aggregate\_raters} e \texttt{fleiss\_kappa} do statsmodels
+    \cite{seabold2010} e interpreta-se pela escala de Landis \& Koch
+    \cite{landis1977}: $<$ 0 pobre; 0--0,20 leve; 0,21--0,40 razoável;
+    0,41--0,60 moderada; 0,61--0,80 substancial; 0,81--1 quase perfeita. Um
+    kappa baixo indicaria ambiguidade do próprio critério --- é um achado a
+    discutir, e não apenas um defeito do rotulador.
+  \item \textbf{Desempate e consenso.} O protocolo de desempate é registrado
+    \emph{antes} de observar as divergências: cada caso divergente é discutido
+    pelos avaliadores com a evidência de apoio (release notes e lista de
+    commits) até que se chegue a um acordo; sem acordo, o caso vai para reunião,
+    e a decisão final com o motivo fica registrada na issue de controle do
+    consenso. O rótulo de consenso de cada item é gravado em
+    \texttt{consenso\_repositorios.csv} e \texttt{consenso\_releases.csv}.
+  \item \textbf{Avaliação da heurística.} Frente ao consenso das 300 releases da
+    amostra-ouro, cada versão da heurística é avaliada com precisão, recall e F1
+    (\texttt{precision\_recall\_fscore\_support} do scikit-learn
+    \cite{pedregosa2011}): a precisão é a fração das releases marcadas como
+    corretivas que o consenso confirma, o recall é a fração das corretivas do
+    consenso que a heurística encontrou e o F1 é a média harmônica das duas. A
+    versão adotada no dataset é a de melhor F1, com meta mínima de 0,70; abaixo
+    dela, a heurística é refinada e reavaliada, documentando-se cada versão
+    testada. O tipo de projeto rotulado alimenta a RQ~06, e a validação sustenta
+    o CFR (b) da RQ~03 e a seção de ameaças à validade.
+\end{enumerate}
 
 % ---------------------------------------------------------------------------
-% Seções a serem desenvolvidas nas próximas sprints (Lab03S02 e Lab03S03).
+% Seções a serem desenvolvidas nas próximas sprints (Lab03S03 e entrega final).
 % Mantidas aqui como esqueleto, propositalmente vazias nesta entrega.
 % ---------------------------------------------------------------------------
-% \section{Metodologia}
-%   \subsection{Fonte de dados e funil de seleção}
-%   \subsection{Janela de observação e definições operacionais}
-%   \subsection{Variantes obrigatórias}
-%   \subsection{Protocolo de validação manual}
-%
 % \section{Resultados}
 %   \subsection{RQ 01 a RQ 04 e classificação DORA de referência}
 %   \subsection{RQ 05 e RQ 06}
@@ -233,6 +464,14 @@ GitHub Projects: \url{https://github.com/users/Gmbferreira/projects/2/views/1}
 % \section{Ameaças à Validade}
 %
 % \section{Replicação Cruzada}
+
+% ---------------------------------------------------------------------------
+% Link do repositório e do GitHub Projects do grupo (exigido pela disciplina).
+% ---------------------------------------------------------------------------
+\section*{Link do Repositório e do GitHub Projects}
+
+\noindent Repositório: \url{https://github.com/Gmbferreira/Mineracao-Metricas-DORA}\\
+GitHub Projects: \url{https://github.com/users/Gmbferreira/projects/2/views/1}
 
 \bibliographystyle{sbc}
 \bibliography{referencias}
