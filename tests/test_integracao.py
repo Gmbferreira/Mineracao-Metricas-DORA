@@ -99,21 +99,38 @@ def test_erro_num_repositorio_nao_para_os_outros(tmp_path):
 
 def test_consolidar_gera_csvs(tmp_path):
     cliente = _ComTotal(_cliente())
-    amostra = [{"full_name": "o/r", "default_branch": "main"}]
+    amostra = [{"full_name": "o/r", "default_branch": "main", "html_url": "https://github.com/o/r",
+                "linguagem": "Go", "stars": "1500", "idade_anos": "3.5", "contributors": "40",
+                "created_at": "2023-04-01T00:00:00Z"}]
     coletados, _ = coleta.coletar_amostra(cliente, Cfg(), amostra, str(tmp_path / "coleta"))
-    arq_metricas = tmp_path / "metricas.csv"
+    arq_dataset = tmp_path / "dataset.csv"
     arq_releases = tmp_path / "releases.csv"
+    arq_meta = tmp_path / "dataset_meta.json"
     consolidacao.consolidar(coletados, Cfg.janela_inicio, Cfg.janela_fim,
-                            str(arq_metricas), str(arq_releases))
+                            str(arq_dataset), str(arq_releases), amostra=amostra,
+                            arq_meta=str(arq_meta))
 
-    with open(arq_metricas, encoding="utf-8") as f:
-        linha = next(csv.DictReader(f))
+    with open(arq_dataset, encoding="utf-8") as f:
+        leitor = csv.DictReader(f)
+        assert leitor.fieldnames == consolidacao.CAMPOS_DATASET
+        linha = next(leitor)
+    assert linha["linguagem"] == "Go"
+    assert linha["stars"] == "1500"
+    assert linha["quartil_estrelas"] == "1"
     assert linha["releases_janela"] == "2"
     assert float(linha["lead_time_a_horas"]) == 13 * 24
     assert linha["releases_compare_falho"] == "1"
     assert float(linha["cfr_a"]) == round(1 / 3, 4)
+    # v1 e v2 ficam a 14 dias uma da outra: nenhuma falha no CFR (b)
+    assert float(linha["cfr_b"]) == 0.0
+    assert linha["releases_avaliadas_cfr_b"] == "2"
     assert float(linha["recuperacao_horas"]) == 2.0
     assert linha["classe_cfr"] == "Medium"
+
+    meta = json.loads(arq_meta.read_text(encoding="utf-8"))
+    assert meta["n_repositorios"] == 1
+    assert meta["heuristica_cfr_b"] == "v3_patch_e_mensagens"
+    assert set(meta["quartis"]) == {"quartil_estrelas", "quartil_idade", "quartil_contribuidores"}
 
     with open(arq_releases, encoding="utf-8") as f:
         releases = list(csv.DictReader(f))
@@ -159,3 +176,25 @@ def test_coleta_paralela_da_o_mesmo_resultado_da_sequencial(tmp_path):
     assert erros == []
     assert paralela[0]["runs"] == sequencial[0]["runs"]
     assert paralela[0]["avaliadas"] == sequencial[0]["avaliadas"]
+
+
+def test_quartis_do_dataset():
+    linhas = [{"stars": str(v), "idade_anos": str(v / 10), "contributors": v}
+              for v in (10, 20, 30, 40, 50, 60, 70, 80)]
+    linhas.append({"stars": "", "idade_anos": None, "contributors": "x"})
+    limites = consolidacao.adicionar_quartis(linhas)
+    assert [linha["quartil_estrelas"] for linha in linhas] == [1, 1, 2, 2, 3, 3, 4, 4, ""]
+    assert [linha["quartil_idade"] for linha in linhas][:2] == [1, 1]
+    assert limites["quartil_estrelas"]["q2"] == 45.0
+    assert linhas[-1]["quartil_contribuidores"] == ""
+
+
+def test_consolidar_sem_amostra_deixa_metadados_vazios(tmp_path):
+    cliente = _ComTotal(_cliente())
+    amostra = [{"full_name": "o/r", "default_branch": "main"}]
+    coletados, _ = coleta.coletar_amostra(cliente, Cfg(), amostra, str(tmp_path / "coleta"))
+    dataset, _ = consolidacao.consolidar(coletados, Cfg.janela_inicio, Cfg.janela_fim,
+                                         str(tmp_path / "d.csv"), str(tmp_path / "r.csv"))
+    assert dataset[0]["linguagem"] == ""
+    assert dataset[0]["quartil_estrelas"] == ""
+    assert not (tmp_path / "dataset_meta.json").exists()

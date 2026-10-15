@@ -12,7 +12,8 @@ ETAPAS = ("selecao", "coleta", "metricas")
 DIR_DADOS = "data"
 DIR_CK = os.path.join(DIR_DADOS, "checkpoints")
 DIR_COLETA = os.path.join(DIR_DADOS, "coleta")
-ARQ_METRICAS = os.path.join(DIR_DADOS, "metricas.csv")
+ARQ_DATASET = os.path.join(DIR_DADOS, "dataset.csv")
+ARQ_DATASET_META = os.path.join(DIR_DADOS, "dataset_meta.json")
 ARQ_RELEASES = os.path.join(DIR_DADOS, "releases.csv")
 ARQ_AMOSTRA = os.path.join(DIR_DADOS, "amostra.csv")
 ARQ_AMOSTRA_META = os.path.join(DIR_DADOS, "amostra_meta.json")
@@ -266,12 +267,13 @@ def executar_metricas(cfg, args):
         dados = coleta.carregar(DIR_COLETA, linha["full_name"], cfg)
         if dados is not None:
             coletados.append(dados)
-    metricas, releases = consolidacao.consolidar(
-        coletados, cfg.janela_inicio, cfg.janela_fim, ARQ_METRICAS, ARQ_RELEASES
+    dataset, releases = consolidacao.consolidar(
+        coletados, cfg.janela_inicio, cfg.janela_fim, ARQ_DATASET, ARQ_RELEASES,
+        amostra=amostra, arq_meta=ARQ_DATASET_META,
     )
     faltando = len(amostra) - len(coletados)
     print(
-        f"\nmetricas: {ARQ_METRICAS} ({len(metricas)} repositorios"
+        f"\ndataset: {ARQ_DATASET} ({len(dataset)} repositorios"
         + (f", {faltando} ainda sem coleta" if faltando else "")
         + f") e {ARQ_RELEASES} ({len(releases)} releases)",
         flush=True,
