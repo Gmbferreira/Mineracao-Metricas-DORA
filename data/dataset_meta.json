@@ -1,0 +1,26 @@
+{
+  "gerado_em": "2026-10-15T08:37:45",
+  "janela_inicio": "2025-10-02",
+  "janela_fim": "2026-10-02",
+  "n_repositorios": 300,
+  "n_releases": 21203,
+  "heuristica_cfr_b": "v3_patch_e_mensagens",
+  "quartis": {
+    "quartil_estrelas": {
+      "q1": 47785.0,
+      "q2": 61671.5,
+      "q3": 90532.0
+    },
+    "quartil_idade": {
+      "q1": 2.4974999999999996,
+      "q2": 6.385,
+      "q3": 10.8225
+    },
+    "quartil_contribuidores": {
+      "q1": 224.5,
+      "q2": 475.5,
+      "q3": 1031.25
+    }
+  },
+  "criterio_quartis": "percentis 25/50/75 com interpolacao linear; valores iguais ao limite ficam no grupo inferior"
+}
