@@ -5,3 +5,4 @@ pytest-cov>=5.0
 pandas>=2.2
 openpyxl>=3.1
 scikit-learn>=1.5
+statsmodels>=0.14

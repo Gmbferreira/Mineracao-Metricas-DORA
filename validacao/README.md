@@ -44,8 +44,23 @@ mesmo nome e faça o commit na sua issue de rotulagem.
 
 ## 3. Concordância e consenso (issue #12)
 
-O kappa de Fleiss de cada dimensão e o protocolo de desempate ficam na issue
-#12. O consenso deve ser gravado em dois CSVs, que são a entrada da avaliação
+```bash
+python -m validacao.concordancia
+```
+
+O script lê as planilhas `rotulos_*.xlsx`, calcula o kappa de Fleiss de cada
+dimensão (com `aggregate_raters` e `fleiss_kappa` do statsmodels, como o
+enunciado pede), interpreta o valor pela escala de Landis & Koch e lista os
+casos divergentes. Ele se recusa a rodar enquanto alguma planilha estiver
+incompleta, então a rotulagem (issues #10 e #11) precisa terminar antes.
+
+**Protocolo de desempate** (definido antes de olhar as divergências): cada caso
+divergente é discutido pelos avaliadores com a evidência de apoio (release notes
+e lista de commits) até chegarem a um acordo. Se não houver acordo, o caso vai
+para reunião e a decisão final, com o motivo, fica registrada no comentário da
+issue #12.
+
+O consenso deve ser gravado em dois CSVs, que são a entrada da avaliação
 da heurística:
 
 - `consenso_repositorios.csv`: `id_repo`, `full_name`, `tipo_projeto`,
