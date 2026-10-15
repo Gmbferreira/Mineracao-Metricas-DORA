@@ -1,3 +1,5 @@
+import datetime as dt
+import math
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 
@@ -14,6 +16,25 @@ CAMPOS_RELEASE = (
     "target_commitish",
     "html_url",
 )
+
+
+# Comparison da GraphQL: mesmos commits do compare REST, mas so os 1000 mais
+# recentes; o resto vem das primeiras paginas do REST
+CONSULTA_COMPARE = """
+query($dono: String!, $nome: String!, $base: String!, $head: String!, $depois: String) {
+  repository(owner: $dono, name: $nome) {
+    ref(qualifiedName: $base) {
+      compare(headRef: $head) {
+        commits(first: 100, after: $depois) {
+          totalCount
+          pageInfo { hasNextPage endCursor }
+          nodes { oid authoredDate message }
+        }
+      }
+    }
+  }
+}
+"""
 
 
 def reduzir_releases(dados):
@@ -105,12 +126,87 @@ def montar_pares(releases, inicio, fim, incluir_pre=False):
     return pares
 
 
-def buscar_commits(cliente, nome, base, head, per_page=100, max_paginas=100):
-    caminho = "/repos/{}/compare/{}...{}".format(
+def _caminho_compare(nome, base, head):
+    return "/repos/{}/compare/{}...{}".format(
         nome,
         urllib.parse.quote(base, safe=""),
         urllib.parse.quote(head, safe=""),
     )
+
+
+def _data_utc(valor):
+    if not valor:
+        return valor
+    return para_datetime(valor).astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _commits_graphql(cliente, nome, base, head):
+    """(total, commits) pela GraphQL, ou None se a resposta sair do normal."""
+    dono, repositorio = nome.split("/", 1)
+    commits = []
+    depois = None
+    while True:
+        try:
+            dados = cliente.graphql(
+                CONSULTA_COMPARE,
+                {"dono": dono, "nome": repositorio, "base": "refs/tags/" + base,
+                 "head": "refs/tags/" + head, "depois": depois},
+                repositorio=nome,
+            )
+        except RuntimeError:
+            return None
+        if dados.get("errors"):
+            return None
+        ref = ((dados.get("data") or {}).get("repository") or {}).get("ref") or {}
+        comparacao = ref.get("compare")
+        if not comparacao:
+            return None
+        pagina = comparacao["commits"]
+        for no in pagina["nodes"]:
+            commits.append(
+                {
+                    "sha": no["oid"],
+                    "data_autor": _data_utc(no.get("authoredDate")),
+                    "mensagem": (no.get("message") or "").split("\n", 1)[0][:300],
+                }
+            )
+        if not pagina["pageInfo"]["hasNextPage"]:
+            return pagina["totalCount"], commits
+        depois = pagina["pageInfo"]["endCursor"]
+
+
+def buscar_commits(cliente, nome, base, head, per_page=100, max_paginas=100):
+    """Commits da release `head` desde a release `base`.
+
+    Vai primeiro na GraphQL, que tem cota separada da REST. Ela devolve os
+    mesmos commits do compare REST, na mesma ordem, mas no maximo os 1000 mais
+    recentes; se o compare for maior, os mais antigos vem das primeiras paginas
+    do REST. Se o REST desse par ja esta no cache ou a GraphQL nao responde
+    como esperado, o compare sai todo pelo REST, como antes.
+    """
+    caminho = _caminho_compare(nome, base, head)
+    em_cache = getattr(cliente, "em_cache", None)
+    ja_no_cache = em_cache is not None and em_cache(caminho, {"per_page": per_page, "page": 1})
+    if not hasattr(cliente, "graphql") or ja_no_cache:
+        return _commits_rest(cliente, caminho, per_page, max_paginas)
+    resultado = _commits_graphql(cliente, nome, base, head)
+    if resultado is None:
+        return _commits_rest(cliente, caminho, per_page, max_paginas)
+    total, recentes = resultado
+    if len(recentes) >= total:
+        return {"status": "ok", "total_commits": total, "commits": recentes, "truncado": False}
+    faltam = total - len(recentes)
+    antigos = _commits_rest(cliente, caminho, per_page,
+                            min(max_paginas, math.ceil(faltam / per_page)))
+    if antigos["status"] != "ok":
+        return antigos
+    vistos = {commit["sha"] for commit in antigos["commits"]}
+    commits = antigos["commits"] + [c for c in recentes if c["sha"] not in vistos]
+    return {"status": "ok", "total_commits": total, "commits": commits,
+            "truncado": len(commits) < total}
+
+
+def _commits_rest(cliente, caminho, per_page=100, max_paginas=100):
     commits = []
     total = None
     pagina = 1

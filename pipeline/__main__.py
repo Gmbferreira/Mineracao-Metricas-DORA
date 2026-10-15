@@ -250,7 +250,8 @@ def executar_coleta(cliente, cfg, args):
     )
     print(
         f"coleta concluida: {len(coletados)} ok, {len(erros)} com erro | "
-        f"chamadas de API: {cliente.chamadas} | tempo: {time.time() - inicio:.0f}s",
+        f"chamadas de API: {cliente.chamadas} REST e {cliente.chamadas_graphql} GraphQL | "
+        f"tempo: {time.time() - inicio:.0f}s",
         flush=True,
     )
     if erros:

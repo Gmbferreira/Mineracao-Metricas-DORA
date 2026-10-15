@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import time
@@ -7,6 +8,7 @@ import requests
 from pipeline.cache import CacheRespostas
 
 API = "https://api.github.com"
+API_GRAPHQL = API + "/graphql"
 VERSAO_API = "2022-11-28"
 CABECALHOS_CACHE = (
     "Link",
@@ -72,6 +74,7 @@ class ClienteGitHub:
         self.intervalo_busca = intervalo_busca
         self._ultima_busca = 0.0
         self._chamadas = 0
+        self._chamadas_graphql = 0
         self._forcar = forcar_global
         self._timeout = timeout
         self.backoff_base = backoff_base
@@ -82,6 +85,10 @@ class ClienteGitHub:
     @property
     def chamadas(self):
         return self._chamadas
+
+    @property
+    def chamadas_graphql(self):
+        return self._chamadas_graphql
 
     def _atualizar_limites(self, resposta):
         recurso = resposta.headers.get("X-RateLimit-Resource")
@@ -185,6 +192,77 @@ class ClienteGitHub:
             )
         raise RuntimeError(
             f"GET {url}: tentativas esgotadas ({self.backoff_max_tentativas})"
+        )
+
+    def em_cache(self, caminho, params=None):
+        if not self.cache or self._forcar:
+            return False
+        url = caminho if caminho.startswith("http") else API + caminho
+        bloco = self.cache.obter(self.cache.grupo(url), url, self.cache.chave(url, params))
+        return bloco is not None and bloco.get("status_code") == 200
+
+    def graphql(self, consulta, variaveis=None, repositorio=None):
+        """POST na API GraphQL, com o mesmo cache, cota e backoff do GET.
+
+        A GraphQL tem uma cota propria (recurso `graphql`), separada da REST.
+        So respostas sem erro vao para o cache, guardadas junto do repositorio.
+        """
+        variaveis = variaveis or {}
+        url = API + (f"/repos/{repositorio}/graphql" if repositorio else "/graphql")
+        params = {"consulta": hashlib.sha1(consulta.encode("utf-8")).hexdigest()[:12],
+                  **variaveis}
+        grupo_url = chave = None
+        if self.cache and not self._forcar:
+            grupo_url = self.cache.grupo(url)
+            chave = self.cache.chave(url, params)
+            bloco = self.cache.obter(grupo_url, url, chave)
+            if bloco is not None and bloco.get("status_code") == 200:
+                return bloco["dados"]
+        corpo = {"query": consulta, "variables": variaveis}
+        for tentativa in range(self.backoff_max_tentativas):
+            self._aguardar_cota("graphql")
+            try:
+                resposta = self.sessao.post(API_GRAPHQL, json=corpo, timeout=self._timeout)
+            except requests.RequestException:
+                self._dormir_backoff(tentativa)
+                continue
+            self._chamadas_graphql += 1
+            self._atualizar_limites(resposta)
+            if resposta.status_code == 200:
+                dados = _json_ou_texto(resposta)
+                if not isinstance(dados, dict):
+                    self._dormir_backoff(tentativa)
+                    continue
+                erros = dados.get("errors") or []
+                if any(erro.get("type") == "RATE_LIMITED" for erro in erros):
+                    reset = resposta.headers.get("X-RateLimit-Reset")
+                    self._limites["graphql"] = {
+                        "remaining": 0,
+                        "reset": int(reset) if reset else int(time.time()) + 60,
+                    }
+                    continue
+                if not erros and self.cache:
+                    if chave is None:
+                        grupo_url = self.cache.grupo(url)
+                        chave = self.cache.chave(url, params)
+                    self.cache.salvar(grupo_url, url, chave, {
+                        "url": url,
+                        "params": params,
+                        "status_code": 200,
+                        "dados": dados,
+                        "salvo_em": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    })
+                return dados
+            if self._esperar_cota(resposta, tentativa):
+                continue
+            if 500 <= resposta.status_code < 600:
+                self._dormir_backoff(tentativa)
+                continue
+            raise RuntimeError(
+                f"POST graphql -> HTTP {resposta.status_code}: {resposta.text[:300]}"
+            )
+        raise RuntimeError(
+            f"POST graphql: tentativas esgotadas ({self.backoff_max_tentativas})"
         )
 
     def buscar(self, consulta, per_page=100, pagina=1):
