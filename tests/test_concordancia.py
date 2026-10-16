@@ -134,3 +134,100 @@ def test_main_aborta_com_rotulagem_incompleta(tmp_path):
         _planilha_minima(tmp_path / f"rotulos_{nome}.xlsx")
     with pytest.raises(SystemExit, match="incompleta"):
         concordancia.main(diretorio=str(tmp_path), argv=[])
+
+
+def _planilha_achatada(caminho):
+    """Layout reexportado: uma aba, uma linha por release, rotulos de repo repetidos."""
+    livro = Workbook()
+    aba = livro.active
+    aba.title = "releases_ouro_preenchido"
+    aba.append(["id_release", "id_repo", "full_name", "tipo_projeto", "entrega_real",
+                "tag_name", "tag_anterior", "published_at", "release_corretiva",
+                "link_release", "link_commits"])
+    aba.append([1, 1, "o/r", "biblioteca/framework", "não", "v1", None,
+                "2025-01-01", "sim", "u", "u"])
+    aba.append([2, 1, "o/r", "biblioteca/framework", "não", "v2", None,
+                "2025-01-02", "não", "u", "u"])
+    aba.append([3, 2, "o/r2", "ferramenta CLI", "sim", "v1", None,
+                "2025-01-03", "nao", "u", "u"])
+    livro.save(caminho)
+
+
+def test_ler_planilha_layout_achatado(tmp_path):
+    caminho = tmp_path / "rotulos_teste.xlsx"
+    _planilha_achatada(caminho)
+    rotulos = concordancia.ler_planilha(str(caminho))
+    # rotulos de repositorio vem uma vez por id_repo (nao um por release)
+    assert list(rotulos["tipo_projeto"].index) == [1, 2]
+    assert rotulos["tipo_projeto"][1] == "biblioteca/framework"
+    assert rotulos["tipo_projeto"][2] == "ferramenta CLI"
+    # 'entrega_real' cai em 'entregas_reais'
+    assert rotulos["entregas_reais"][1] == "não"
+    # 'release_corretiva' cai em 'corretiva', indexado por id_release
+    assert list(rotulos["corretiva"].index) == [1, 2, 3]
+    assert rotulos["corretiva"][2] == "não"
+
+
+def test_ler_planilha_achatada_acusa_conflito_de_repositorio(tmp_path):
+    caminho = tmp_path / "rotulos_teste.xlsx"
+    livro = Workbook()
+    aba = livro.active
+    aba.title = "releases_ouro_preenchido"
+    aba.append(["id_release", "id_repo", "tipo_projeto", "entrega_real",
+                "release_corretiva"])
+    aba.append([1, 1, "outro", "sim", "nao"])
+    aba.append([2, 1, "biblioteca/framework", "sim", "nao"])
+    livro.save(caminho)
+    with pytest.raises(SystemExit, match="incompativeis"):
+        concordancia.ler_planilha(str(caminho))
+
+
+def test_ler_planilha_layout_desconhecido_aborta(tmp_path):
+    caminho = tmp_path / "rotulos_teste.xlsx"
+    livro = Workbook()
+    livro.active.append(["qualquer", "coisa"])
+    livro.save(caminho)
+    with pytest.raises(SystemExit, match="layout nao reconhecido"):
+        concordancia.ler_planilha(str(caminho))
+
+
+def test_acentos_e_maiusculas_viram_categorias_canonicas():
+    assert concordancia.normalizar(
+        pd.Series(["não", "Sim", "incerto"], dtype=object),
+        ["sim", "nao", "incerto"],
+    ) == {0: "nao", 1: "sim", 2: "incerto"}
+
+    completos = {"tipo_projeto": pd.Series(["aplicação/serviço"] + ["outro"] * 59,
+                                           dtype=object),
+                 "entregas_reais": pd.Series(["sim"] * 60, dtype=object),
+                 "corretiva": pd.Series(["não"] * 300, dtype=object)}
+    assert concordancia.conferir(completos) == []
+
+
+def test_pauta_traz_contexto_e_links(tmp_path):
+    pd.DataFrame({"id_repo": [1, 2], "full_name": ["o/r", "o/r2"],
+                  "html_url": ["ur", "ur2"]}).to_csv(
+        tmp_path / "amostra_ouro.csv", index=False)
+    pd.DataFrame({"id_release": [1, 2], "id_repo": [1, 1],
+                  "full_name": ["o/r", "o/r"], "tag_name": ["v1", "v2"],
+                  "tag_anterior": ["", ""], "published_at": ["2025-01-01", "2025-01-02"],
+                  "link_release": ["lr1", "lr2"],
+                  "link_commits": ["lc1", "lc2"]}).to_csv(
+        tmp_path / "releases_ouro.csv", index=False)
+    dados = {
+        "gabriel": {"tipo_projeto": pd.Series(["outro", "biblioteca/framework"],
+                                              index=[1, 2], dtype=object),
+                    "entregas_reais": pd.Series(["sim", "nao"], index=[1, 2], dtype=object),
+                    "corretiva": pd.Series(["sim", "sim"], index=[1, 2], dtype=object)},
+        "guilherme": {"tipo_projeto": pd.Series(["outro", "biblioteca/framework"],
+                                                index=[1, 2], dtype=object),
+                      "entregas_reais": pd.Series(["sim", "nao"], index=[1, 2], dtype=object),
+                      "corretiva": pd.Series(["nao", "sim"], index=[1, 2], dtype=object)},
+    }
+    pauta = concordancia.pauta_divergencias(dados, diretorio=str(tmp_path))
+    assert list(pauta["dimensao"]) == ["corretiva"]
+    assert list(pauta["id"]) == [1]
+    assert pauta.iloc[0]["full_name"] == "o/r"
+    assert pauta.iloc[0]["tag"] == "v1"
+    assert pauta.iloc[0]["link_commits"] == "lc1"
+    assert pauta.iloc[0]["consenso"] == "" and pauta.iloc[0]["motivo"] == ""

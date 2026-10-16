@@ -54,11 +54,29 @@ enunciado pede), interpreta o valor pela escala de Landis & Koch e lista os
 casos divergentes. Ele se recusa a rodar enquanto alguma planilha estiver
 incompleta, então a rotulagem (issues #10 e #11) precisa terminar antes.
 
+O leitor aceita dois layouts de planilha: o padrão, com as abas `repositorios` e
+`releases` geradas pelo sorteio, e o achatado, com uma aba e uma linha por
+release repetindo os rótulos do repositório (comum em planilhas reexportadas).
+Os rótulos são comparados sem diferenciar maiúsculas/acentos (`não` = `nao`,
+`aplicação/serviço` = `aplicacao/servico`), e nomes de coluna alternativos como
+`entrega_real` e `release_corretiva` também são aceitos.
+
+Para gerar a pauta da discussão de desempate, com o repositório, a tag e os
+links de cada caso divergente:
+
+```bash
+python -m validacao.concordancia --pauta validacao/pauta_divergencias.csv
+```
+
+O CSV traz uma linha por divergência com os rótulos de cada avaliador e duas
+colunas em branco (`consenso` e `motivo`) para preencher na reunião.
+
 **Protocolo de desempate** (definido antes de olhar as divergências): cada caso
 divergente é discutido pelos avaliadores com a evidência de apoio (release notes
-e lista de commits) até chegarem a um acordo. Se não houver acordo, o caso vai
-para reunião e a decisão final, com o motivo, fica registrada no comentário da
-issue #12.
+e lista de commits) até chegarem a um acordo, registrado em
+`validacao/decisoes_desempate.csv` (colunas `dimensao,id,consenso,motivo`). Se
+não houver acordo, o caso vai para reunião e a decisão final, com o motivo, fica
+registrada no comentário da issue #12.
 
 O consenso deve ser gravado em dois CSVs, que são a entrada da avaliação
 da heurística:
