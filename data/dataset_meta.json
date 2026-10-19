@@ -1,10 +1,10 @@
 {
-  "gerado_em": "2026-10-15T08:37:45",
+  "gerado_em": "2026-10-19T12:03:04",
   "janela_inicio": "2025-10-02",
   "janela_fim": "2026-10-02",
   "n_repositorios": 300,
   "n_releases": 21203,
-  "heuristica_cfr_b": "v3_patch_e_mensagens",
+  "heuristica_cfr_b": "v6_patch_e_notas",
   "quartis": {
     "quartil_estrelas": {
       "q1": 47785.0,

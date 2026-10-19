@@ -1,0 +1,7 @@
+versao,precisao,recall,f1,verdadeiros_positivos,falsos_positivos,falsos_negativos,releases,corretivas_no_consenso
+v1_patch,0.4842,0.8598,0.6195,92,98,15,300,107
+v2_mensagens,0.3603,0.8318,0.5028,89,158,18,300,107
+v3_patch_e_mensagens,0.5064,0.7383,0.6008,79,77,28,300,107
+v4_patch_ou_mensagens,0.363,0.9533,0.5258,102,179,5,300,107
+v5_patch_e_maioria,0.675,0.2523,0.3673,27,13,80,300,107
+v6_patch_e_notas,0.6748,0.7757,0.7217,83,40,24,300,107
