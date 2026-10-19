@@ -88,7 +88,8 @@ def para_cfr_b(avaliadas, notas=None):
         {
             "tag_name": item["tag_name"],
             "published_at": item["published_at"],
-            "mensagens": [commit["mensagem"] for commit in item.get("commits", [])],
+            # os compares das variantes (RQ 07) guardam so a data de cada commit
+            "mensagens": [commit.get("mensagem", "") for commit in item.get("commits", [])],
             "notas": notas.get(item["tag_name"], ""),
         }
         for item in avaliadas
@@ -173,6 +174,72 @@ def linhas_releases(dados):
     return linhas
 
 
+# combinacoes de definicoes da RQ 07: unidade de deploy, variante do lead time e
+# variante do CFR (C1 e a referencia, igual ao dataset principal)
+COMBINACOES = {
+    "c1": ("release", "lead_time_a", "cfr_a"),
+    "c2": ("release_pre", "lead_time_b", "cfr_b"),
+    "c3": ("tag", "lead_time_b", "cfr_a"),
+}
+UNIDADES = ("release", "release_pre", "tag")
+CAMPOS_VARIANTES = (
+    ["full_name"]
+    + [f"{campo}_{unidade}" for unidade in UNIDADES
+       for campo in ("unidades", "deployment_frequency", "lead_time_a", "lead_time_b", "cfr_b")
+       if not (unidade == "tag" and campo == "cfr_b")]
+    + ["cfr_a", "recuperacao_horas"]
+    + [f"classe_{metrica}_{combinacao}" for combinacao in COMBINACOES
+       for metrica in ("frequencia", "lead_time", "cfr", "recuperacao", "geral")]
+)
+
+
+def _unidade(avaliadas, inicio, fim, notas, quantidade=None, com_cfr_b=True):
+    quantidade = len(avaliadas) if quantidade is None else quantidade
+    lt = lead_time.lead_time_repositorio(para_lead_time(avaliadas))
+    valores = {
+        "unidades": quantidade,
+        "deployment_frequency": frequencia.deployment_frequency(quantidade, inicio, fim),
+        "lead_time_a": lt["lead_time_a_horas"],
+        "lead_time_b": lt["lead_time_b_horas"],
+    }
+    if com_cfr_b:
+        valores["cfr_b"] = cfr.cfr_entrega(para_cfr_b(avaliadas, notas), fim)["cfr_b"]
+    return valores
+
+
+def metricas_variantes(dados, inicio, fim):
+    """Metricas de cada unidade de deploy e a classificacao em C1, C2 e C3."""
+    notas = dados.get("notas")
+    unidades = {"release": _unidade(
+        dados["avaliadas"], inicio, fim, notas,
+        quantidade=frequencia.releases_na_janela(dados["releases"], inicio, fim),
+    )}
+    variantes = dados.get("variantes")
+    if variantes:
+        unidades["release_pre"] = _unidade(variantes["release_pre"]["avaliadas"], inicio, fim, notas)
+        unidades["tag"] = _unidade(variantes["tag"]["avaliadas"], inicio, fim, notas, com_cfr_b=False)
+    comum = {"cfr_a": cfr.cfr_ci(dados["runs"])["cfr_a"],
+             "recuperacao_horas": recuperacao.tempo_recuperacao_repositorio(dados["runs"])["recuperacao_horas"]}
+    linha = {"full_name": dados["full_name"]}
+    for unidade, valores in unidades.items():
+        for campo, valor in valores.items():
+            casas = 0 if campo == "unidades" else (2 if campo.startswith("lead_time") else 4)
+            linha[f"{campo}_{unidade}"] = valor if campo == "unidades" else _arredondar(valor, casas)
+    linha["cfr_a"] = _arredondar(comum["cfr_a"])
+    linha["recuperacao_horas"] = _arredondar(comum["recuperacao_horas"], 2)
+    for combinacao, (unidade, variante_lt, variante_cfr) in COMBINACOES.items():
+        if unidade not in unidades:
+            continue
+        valores = unidades[unidade]
+        taxa = comum["cfr_a"] if variante_cfr == "cfr_a" else valores["cfr_b"]
+        classes = classificacao.classificar_repositorio(
+            valores["deployment_frequency"], valores[variante_lt], taxa, comum["recuperacao_horas"]
+        )
+        for metrica in ("frequencia", "lead_time", "cfr", "recuperacao", "geral"):
+            linha[f"classe_{metrica}_{combinacao}"] = classes[f"classe_{metrica}"]
+    return linha
+
+
 def escrever_csv(caminho, campos, linhas):
     with open(caminho, "w", newline="", encoding="utf-8") as f:
         escritor = csv.DictWriter(f, fieldnames=campos)
@@ -203,7 +270,7 @@ def adicionar_quartis(linhas):
 
 
 def consolidar(coletados, inicio, fim, arq_dataset, arq_releases, amostra=None,
-               arq_meta=None):
+               arq_meta=None, arq_variantes=None):
     metadados_por_repo = {linha["full_name"]: linha for linha in amostra or []}
     ordenados = sorted(coletados, key=lambda dados: dados["full_name"].lower())
     dataset = [
@@ -214,6 +281,9 @@ def consolidar(coletados, inicio, fim, arq_dataset, arq_releases, amostra=None,
     releases = [linha for dados in ordenados for linha in linhas_releases(dados)]
     escrever_csv(arq_dataset, CAMPOS_DATASET, dataset)
     escrever_csv(arq_releases, CAMPOS_RELEASES, releases)
+    if arq_variantes:
+        escrever_csv(arq_variantes, CAMPOS_VARIANTES,
+                     [metricas_variantes(dados, inicio, fim) for dados in ordenados])
     if arq_meta:
         meta = {
             "gerado_em": dt.datetime.now().isoformat(timespec="seconds"),
