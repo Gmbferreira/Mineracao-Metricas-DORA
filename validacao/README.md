@@ -78,6 +78,31 @@ e lista de commits) até chegarem a um acordo, registrado em
 não houver acordo, o caso vai para reunião e a decisão final, com o motivo, fica
 registrada no comentário da issue #12.
 
+**Como foi feito na prática.** Com autorização da disciplina, as duas planilhas
+foram preenchidas com apoio de modelos de linguagem, e as divergências foram
+decididas por um terceiro avaliador, também um modelo de linguagem, no lugar da
+discussão entre nós dois. Ele recebeu o material de cada caso (descrição e README
+do repositório, release notes, arquivos para download e commits) e os dois
+rótulos como "A" e "B", em ordem sorteada, sem saber de quem era cada um. Cada
+decisão, com o motivo, está em `decisoes_desempate.csv`, e as colunas
+`consenso` e `motivo` da pauta foram preenchidas com o mesmo resultado. O kappa
+de cada dimensão fica salvo com:
+
+```bash
+python -m validacao.concordancia --saida validacao/concordancia.csv
+```
+
+| Dimensão | Itens | Divergências | Concordância | Kappa | Landis & Koch |
+|---|---|---|---|---|---|
+| tipo_projeto | 60 | 41 | 31,7% | −0,03 | pobre |
+| entregas_reais | 60 | 19 | 68,3% | −0,13 | pobre |
+| corretiva | 300 | 123 | 59,0% | 0,10 | leve |
+
+O desempate ficou com o rótulo da planilha `gabriel` em 182 dos 183 casos. O
+terceiro avaliador recebeu o mesmo material usado na rotulagem dessa planilha,
+então o consenso ficou muito próximo dela. Isso é uma limitação da validação e
+está registrado no artigo.
+
 O consenso deve ser gravado em dois CSVs, que são a entrada da avaliação
 da heurística:
 
