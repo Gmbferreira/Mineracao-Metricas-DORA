@@ -21,20 +21,23 @@ def mensagens_por_tag(dados):
     }
 
 
-def avaliar(consenso, mensagens, heuristicas=None):
+def avaliar(consenso, mensagens, heuristicas=None, notas=None):
     """Precisao, recall e F1 de cada versao da heuristica contra o consenso.
 
     `consenso` tem `full_name`, `tag_name` e `corretiva` (sim/nao); `mensagens`
-    mapeia (full_name, tag_name) para as mensagens dos commits da release.
+    e `notas` mapeiam (full_name, tag_name) para as mensagens dos commits e as
+    release notes da release.
     """
     heuristicas = heuristicas or corretiva.HEURISTICAS
+    notas = notas or {}
     esperado = (consenso["corretiva"].str.strip().str.lower() == "sim").tolist()
     linhas = []
     for nome, heuristica in heuristicas.items():
-        previsto = [
-            bool(heuristica(release.tag_name, mensagens.get((release.full_name, release.tag_name), [])))
-            for release in consenso.itertuples()
-        ]
+        previsto = []
+        for release in consenso.itertuples():
+            chave = (release.full_name, release.tag_name)
+            previsto.append(bool(heuristica(release.tag_name, mensagens.get(chave, []),
+                                            notas.get(chave, ""))))
         precisao, recall, f1, _ = precision_recall_fscore_support(
             esperado, previsto, average="binary", pos_label=True, zero_division=0
         )
@@ -55,16 +58,18 @@ def avaliar(consenso, mensagens, heuristicas=None):
 
 
 def carregar_mensagens(consenso, cfg, dir_coleta=DIR_COLETA):
-    mensagens = {}
+    mensagens, notas = {}, {}
     faltando = []
     for nome in sorted(consenso["full_name"].unique()):
         dados = coleta.carregar(dir_coleta, nome, cfg)
-        if dados is None:
+        if dados is None or "notas" not in dados:
             faltando.append(nome)
             continue
         for tag, lista in mensagens_por_tag(dados).items():
             mensagens[(nome, tag)] = lista
-    return mensagens, faltando
+        for tag, texto in dados["notas"].items():
+            notas[(nome, tag)] = texto
+    return mensagens, notas, faltando
 
 
 def main():
@@ -82,13 +87,13 @@ def main():
         )
     cfg = config.carregar(args.config)
     consenso = pd.read_csv(ARQ_CONSENSO)
-    mensagens, faltando = carregar_mensagens(consenso, cfg)
+    mensagens, notas, faltando = carregar_mensagens(consenso, cfg)
     if faltando:
         raise SystemExit(
-            "Faltam dados coletados de: " + ", ".join(faltando)
+            "Faltam dados coletados (commits ou release notes) de: " + ", ".join(faltando)
             + ". Rode antes: python -m pipeline --etapas coleta"
         )
-    resultado = avaliar(consenso, mensagens)
+    resultado = avaliar(consenso, mensagens, notas=notas)
     resultado.to_csv(ARQ_RESULTADO, index=False)
     print(resultado.to_string(index=False), flush=True)
     melhor = resultado.sort_values("f1", ascending=False).iloc[0]

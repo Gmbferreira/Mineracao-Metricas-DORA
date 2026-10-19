@@ -6,6 +6,11 @@ import pytest
 from pipeline import coleta
 from validacao import avaliacao
 
+class Cfg:
+    janela_inicio = __import__("datetime").date(2025, 10, 2)
+    janela_fim = __import__("datetime").date(2026, 10, 2)
+
+
 CONFIG = """
 janela: {inicio: "2025-10-02", fim: "2026-10-02"}
 alvo_qualificados: 300
@@ -29,7 +34,7 @@ def exemplo_enunciado():
 
 def test_avaliar_reproduz_o_exemplo_do_enunciado(exemplo_enunciado):
     marcadas = set(exemplo_enunciado.loc[exemplo_enunciado["marcada"], "tag_name"])
-    heuristicas = {"exemplo": lambda tag, mensagens: tag in marcadas}
+    heuristicas = {"exemplo": lambda tag, mensagens, notas="": tag in marcadas}
     resultado = avaliacao.avaliar(exemplo_enunciado, {}, heuristicas).iloc[0]
     assert resultado["precisao"] == 0.75
     assert resultado["recall"] == 0.6
@@ -55,7 +60,7 @@ def test_avaliar_usa_as_mensagens_de_cada_release():
 
 def test_avaliar_sem_acertos_nao_quebra():
     consenso = pd.DataFrame([{"full_name": "o/r", "tag_name": "v1.1.0", "corretiva": "sim"}])
-    resultado = avaliacao.avaliar(consenso, {}, {"nunca": lambda tag, m: False}).iloc[0]
+    resultado = avaliacao.avaliar(consenso, {}, {"nunca": lambda tag, m, notas="": False}).iloc[0]
     assert resultado["f1"] == 0.0
 
 
@@ -79,6 +84,7 @@ def _preparar_main(monkeypatch, tmp_path, com_consenso=True, com_coleta=True):
     if com_coleta:
         coleta.salvar(str(tmp_path / "data" / "coleta"), "o/r", {
             "janela": {"inicio": "2025-10-02", "fim": "2026-10-02"},
+            "notas": {"v1.0.1": "Bug fixes", "v1.1.0": "New features"},
             "avaliadas": [
                 {"tag_name": "v1.0.1", "commits": [{"mensagem": "fix: a"}]},
                 {"tag_name": "v1.1.0", "commits": [{"mensagem": "feat: b"}]},
@@ -93,6 +99,26 @@ def test_main_grava_resultado(monkeypatch, tmp_path, capsys):
     resultado = pd.read_csv(tmp_path / "validacao" / "avaliacao_heuristica.csv")
     assert len(resultado) == len(avaliacao.corretiva.HEURISTICAS)
     assert "melhor versao" in capsys.readouterr().out
+
+
+def test_avaliar_usa_as_notas_da_release():
+    consenso = pd.DataFrame([
+        {"full_name": "o/r", "tag_name": "v1.0.1", "corretiva": "sim"},
+        {"full_name": "o/r", "tag_name": "v1.0.2", "corretiva": "nao"},
+    ])
+    notas = {("o/r", "v1.0.1"): "Bug fixes", ("o/r", "v1.0.2"): "New feature: dark mode"}
+    resultado = avaliacao.avaliar(consenso, {}, notas=notas).set_index("versao")
+    assert resultado.loc["v6_patch_e_notas", "f1"] == 1.0
+    assert resultado.loc["v1_patch", "precisao"] == 0.5
+
+
+def test_main_com_coleta_sem_notas(monkeypatch, tmp_path):
+    _preparar_main(monkeypatch, tmp_path)
+    dados = coleta.carregar(str(tmp_path / "data" / "coleta"), "o/r", Cfg)
+    del dados["notas"]
+    coleta.salvar(str(tmp_path / "data" / "coleta"), "o/r", dados)
+    with pytest.raises(SystemExit, match="release notes"):
+        avaliacao.main()
 
 
 def test_main_sem_consenso(monkeypatch, tmp_path):

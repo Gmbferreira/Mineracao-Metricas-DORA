@@ -116,6 +116,45 @@ def test_versoes_da_heuristica(versao_heuristica, tag, mensagens, esperado):
     assert corretiva.HEURISTICAS[versao_heuristica](tag, mensagens) is esperado
 
 
+@pytest.mark.parametrize("notas, esperado", [
+    ("## Bug Fixes\n- fix crash when saving\n- fix regression in parser", True),
+    ("## Features\n- add dark mode\n- new export option\n- fix typo", False),
+    ("Security release: fixes CVE-2026-1234", True),
+    ("Improvements and new features", False),
+    ("", True),
+    (None, True),
+])
+def test_notas_de_correcao(notas, esperado):
+    assert corretiva.notas_de_correcao(notas) is esperado
+
+
+def test_palavras_das_notas_respeitam_limite_de_palavra():
+    assert corretiva.CORRECAO_NAS_NOTAS.findall("prefix fixture debugger") == []
+    assert corretiva.FUNCIONALIDADE_NAS_NOTAS.findall("newer address supportive") == []
+
+
+@pytest.mark.parametrize("tag, notas, esperado", [
+    ("v1.0.1", "Bug fixes: crash on start", True),
+    ("v1.0.1", "New features: plugins, themes", False),
+    ("v1.1.0", "Bug fixes: crash on start", False),
+    ("v1.0.1", "", True),
+])
+def test_v6_patch_e_notas(tag, notas, esperado):
+    assert corretiva.v6_patch_e_notas(tag, [], notas) is esperado
+
+
+def test_cfr_b_usa_as_notas_na_v6():
+    releases = [
+        _release("v1.0.0", "2026-03-01T00:00:00Z"),
+        _release("v1.0.1", "2026-03-02T00:00:00Z") | {"notas": "New features and improvements"},
+        _release("v1.0.2", "2026-03-20T00:00:00Z"),
+        _release("v1.0.3", "2026-03-21T00:00:00Z") | {"notas": "Fixes a crash introduced in 1.0.2"},
+    ]
+    resultado = cfr.cfr_entrega(releases, FIM, heuristica="v6_patch_e_notas")
+    assert resultado["releases_falha_cfr_b"] == 1
+    assert resultado["releases_corretivas"] == 2
+
+
 def test_padrao_esta_entre_as_versoes():
     assert corretiva.PADRAO in corretiva.HEURISTICAS
 
@@ -192,7 +231,8 @@ def test_cfr_b_com_outra_versao_da_heuristica():
         _release("v1.0.0", "2026-03-01T00:00:00Z"),
         _release("v1.0.1", "2026-03-02T00:00:00Z", ["chore: release"]),
     ]
-    assert cfr.cfr_entrega(releases, FIM)["releases_falha_cfr_b"] == 0
+    v3 = cfr.cfr_entrega(releases, FIM, heuristica="v3_patch_e_mensagens")
+    assert v3["releases_falha_cfr_b"] == 0
     assert cfr.cfr_entrega(releases, FIM, heuristica="v1_patch")["releases_falha_cfr_b"] == 1
 
 
@@ -209,4 +249,5 @@ def test_cfr_b_release_sem_mensagens():
         {"tag_name": "v1.0.0", "published_at": "2026-03-01T00:00:00Z"},
         {"tag_name": "v1.0.1", "published_at": "2026-03-02T00:00:00Z"},
     ]
-    assert cfr.cfr_entrega(releases, FIM)["releases_falha_cfr_b"] == 0
+    resultado = cfr.cfr_entrega(releases, FIM, heuristica="v3_patch_e_mensagens")
+    assert resultado["releases_falha_cfr_b"] == 0

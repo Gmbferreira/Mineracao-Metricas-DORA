@@ -45,10 +45,10 @@ def cfr_entrega(releases, fim, heuristica=corretiva.PADRAO, dias=7):
     """CFR variante (b): releases seguidas por uma release corretiva em ate `dias`.
 
     `releases` sao as releases da janela (sem draft e sem pre-release), cada uma
-    com `tag_name`, `published_at` e `mensagens` (commits desde a release
-    anterior). A release R falha se a proxima release da mesma linha sair em ate
-    `dias` dias e for corretiva. Se esse prazo passa do fim da janela, R e
-    censurada e fica fora do denominador.
+    com `tag_name`, `published_at`, `mensagens` (commits desde a release
+    anterior) e `notas` (release notes). A release R falha se a proxima release
+    da mesma linha sair em ate `dias` dias e for corretiva. Se esse prazo passa
+    do fim da janela, R e censurada e fica fora do denominador.
     """
     e_corretiva = corretiva.HEURISTICAS[heuristica]
     prazo = dt.timedelta(days=dias)
@@ -61,7 +61,8 @@ def cfr_entrega(releases, fim, heuristica=corretiva.PADRAO, dias=7):
         da_linha.sort(key=lambda release: (para_datetime(release["published_at"]),
                                            release["tag_name"]))
         for posicao, release in enumerate(da_linha):
-            if e_corretiva(release["tag_name"], release.get("mensagens", [])):
+            if e_corretiva(release["tag_name"], release.get("mensagens", []),
+                           release.get("notas", "")):
                 corretivas += 1
             publicada = para_datetime(release["published_at"])
             if publicada + prazo > limite:
@@ -73,7 +74,8 @@ def cfr_entrega(releases, fim, heuristica=corretiva.PADRAO, dias=7):
             seguinte = da_linha[posicao + 1]
             if para_datetime(seguinte["published_at"]) - publicada > prazo:
                 continue
-            if e_corretiva(seguinte["tag_name"], seguinte.get("mensagens", [])):
+            if e_corretiva(seguinte["tag_name"], seguinte.get("mensagens", []),
+                           seguinte.get("notas", "")):
                 falhas += 1
     return {
         "cfr_b": falhas / avaliadas if avaliadas else None,

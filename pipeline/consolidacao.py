@@ -82,12 +82,14 @@ def para_lead_time(avaliadas):
     ]
 
 
-def para_cfr_b(avaliadas):
+def para_cfr_b(avaliadas, notas=None):
+    notas = notas or {}
     return [
         {
             "tag_name": item["tag_name"],
             "published_at": item["published_at"],
             "mensagens": [commit["mensagem"] for commit in item.get("commits", [])],
+            "notas": notas.get(item["tag_name"], ""),
         }
         for item in avaliadas
     ]
@@ -99,7 +101,7 @@ def metricas_repo(dados, inicio, fim, meta=None):
     df = frequencia.deployment_frequency(n_releases, inicio, fim)
     lt = lead_time.lead_time_repositorio(para_lead_time(dados["avaliadas"]))
     falhas = cfr.cfr_ci(dados["runs"])
-    entrega = cfr.cfr_entrega(para_cfr_b(dados["avaliadas"]), fim)
+    entrega = cfr.cfr_entrega(para_cfr_b(dados["avaliadas"], dados.get("notas")), fim)
     rec = recuperacao.tempo_recuperacao_repositorio(dados["runs"])
     classes = classificacao.classificar_repositorio(
         df, lt["lead_time_a_horas"], falhas["cfr_a"], rec["recuperacao_horas"]

@@ -2,6 +2,7 @@ import csv
 import datetime as dt
 import json
 
+from metricas import corretiva
 from pipeline import coleta, consolidacao
 from tests.falsos import ClienteFalso, RespostaFalsa, runs_por_intervalo
 
@@ -36,6 +37,15 @@ class _ComTotal:
 
     def get(self, *args, **kwargs):
         return self._cliente.get(*args, **kwargs)
+
+    def graphql(self, consulta, variaveis=None, repositorio=None):
+        return {"data": {"repository": {"releases": {
+            "pageInfo": {"hasNextPage": False, "endCursor": None},
+            "nodes": [
+                {"tagName": "v2", "createdAt": "2026-03-15T00:00:00Z", "description": "Bug fixes"},
+                {"tagName": "v1", "createdAt": "2026-03-01T00:00:00Z", "description": None},
+            ],
+        }}}}
 
 
 def _cliente():
@@ -124,7 +134,7 @@ def test_consolidar_gera_csvs(tmp_path):
 
     meta = json.loads(arq_meta.read_text(encoding="utf-8"))
     assert meta["n_repositorios"] == 1
-    assert meta["heuristica_cfr_b"] == "v3_patch_e_mensagens"
+    assert meta["heuristica_cfr_b"] == corretiva.PADRAO
     assert set(meta["quartis"]) == {"quartil_estrelas", "quartil_idade", "quartil_contribuidores"}
 
     with open(arq_releases, encoding="utf-8") as f:
@@ -132,6 +142,44 @@ def test_consolidar_gera_csvs(tmp_path):
     assert [r["status_compare"] for r in releases] == ["404", "ok"]
     assert releases[1]["lead_time_horas"] == "312.0"
     assert releases[0]["lead_time_horas"] == ""
+
+
+def test_coleta_antiga_sem_notas_ganha_as_notas(tmp_path, capsys):
+    amostra = [{"full_name": "o/r", "default_branch": "main"}]
+    coleta.coletar_amostra(_ComTotal(_cliente()), Cfg(), amostra, str(tmp_path))
+    dados = coleta.carregar(str(tmp_path), "o/r", Cfg())
+    assert dados["notas"] == {"v2": "Bug fixes", "v1": ""}
+    del dados["notas"]
+    coleta.salvar(str(tmp_path), "o/r", dados)
+    capsys.readouterr()
+
+    coletados, erros = coleta.coletar_amostra(_ComTotal(_cliente()), Cfg(), amostra, str(tmp_path))
+    assert erros == []
+    assert coletados[0]["notas"]["v2"] == "Bug fixes"
+    assert coleta.carregar(str(tmp_path), "o/r", Cfg())["notas"]["v2"] == "Bug fixes"
+    assert "notas coletadas agora" in capsys.readouterr().out
+
+
+def test_erro_nas_notas_vira_erro_do_repositorio(tmp_path):
+    class SemNotas(_ComTotal):
+        def graphql(self, *args, **kwargs):
+            return {"errors": [{"message": "Something went wrong"}]}
+
+    amostra = [{"full_name": "o/r", "default_branch": "main"}]
+    coletados, erros = coleta.coletar_amostra(SemNotas(_cliente()), Cfg(), amostra, str(tmp_path))
+    assert coletados == []
+    assert "release notes" in erros[0]["erro"]
+
+
+def test_para_cfr_b_leva_as_notas():
+    avaliadas = [{"tag_name": "v1", "published_at": "2026-01-01T00:00:00Z",
+                  "commits": [{"mensagem": "fix: a"}]},
+                 {"tag_name": "v2", "published_at": "2026-01-02T00:00:00Z"}]
+    linhas = consolidacao.para_cfr_b(avaliadas, {"v1": "Bug fixes"})
+    assert linhas[0] == {"tag_name": "v1", "published_at": "2026-01-01T00:00:00Z",
+                         "mensagens": ["fix: a"], "notas": "Bug fixes"}
+    assert linhas[1]["notas"] == ""
+    assert consolidacao.para_cfr_b(avaliadas)[0]["notas"] == ""
 
 
 def test_ler_amostra(tmp_path):
