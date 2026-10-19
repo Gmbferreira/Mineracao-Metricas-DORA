@@ -231,3 +231,40 @@ def test_pauta_traz_contexto_e_links(tmp_path):
     assert pauta.iloc[0]["tag"] == "v1"
     assert pauta.iloc[0]["link_commits"] == "lc1"
     assert pauta.iloc[0]["consenso"] == "" and pauta.iloc[0]["motivo"] == ""
+
+
+def test_tabela_kappa_tem_uma_linha_por_dimensao():
+    serie = lambda valores: pd.Series(valores, index=[1, 2, 3, 4], dtype=object)
+    dados = {
+        "a": {"tipo_projeto": serie(["outro"] * 2 + ["biblioteca/framework"] * 2),
+              "entregas_reais": serie(["sim", "sim", "nao", "nao"]),
+              "corretiva": serie(["sim", "sim", "nao", "sim"])},
+        "b": {"tipo_projeto": serie(["outro"] * 2 + ["biblioteca/framework"] * 2),
+              "entregas_reais": serie(["sim", "sim", "nao", "nao"]),
+              "corretiva": serie(["sim", "sim", "nao", "nao"])},
+    }
+    tabela = concordancia.tabela_kappa(dados).set_index("dimensao")
+    assert list(tabela.index) == ["tipo_projeto", "entregas_reais", "corretiva"]
+    assert tabela.loc["tipo_projeto", "kappa"] == 1.0
+    assert tabela.loc["corretiva", "kappa"] == pytest.approx(0.4667, abs=1e-4)
+    assert tabela.loc["corretiva", "concordancia_bruta"] == 0.75
+    assert tabela.loc["corretiva", "divergencias"] == 1
+    assert tabela.loc["corretiva", "interpretacao"] == "moderada"
+
+
+def test_main_grava_o_kappa(tmp_path, monkeypatch):
+    dados = {"gabriel": {}, "guilherme": {}}
+    for nome in dados:
+        dados[nome] = {
+            "tipo_projeto": pd.Series(["outro"] * 60, index=range(1, 61), dtype=object),
+            "entregas_reais": pd.Series(["sim"] * 60, index=range(1, 61), dtype=object),
+            "corretiva": pd.Series(["nao"] * 300, index=range(1, 301), dtype=object),
+        }
+        (tmp_path / f"rotulos_{nome}.xlsx").write_bytes(b"")
+    monkeypatch.setattr(concordancia, "ler_planilha",
+                        lambda caminho: dados["gabriel" if "gabriel" in str(caminho) else "guilherme"])
+    saida = tmp_path / "concordancia.csv"
+    concordancia.main(diretorio=str(tmp_path), argv=["--saida", str(saida)])
+    tabela = pd.read_csv(saida)
+    assert list(tabela["dimensao"]) == ["tipo_projeto", "entregas_reais", "corretiva"]
+    assert list(tabela["divergencias"]) == [0, 0, 0]

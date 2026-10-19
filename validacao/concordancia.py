@@ -228,6 +228,23 @@ def interpretar(kappa):
     return "quase perfeita"
 
 
+def tabela_kappa(rotulos_por_avaliador):
+    """Uma linha por dimensao com o kappa, a interpretacao e o numero de divergencias."""
+    linhas = []
+    for nome, _, _, _, _ in DIMENSOES:
+        resultado = calcular(rotulos_por_avaliador, nome)
+        linhas.append({
+            "dimensao": nome,
+            "itens": resultado["itens"],
+            "avaliadores": resultado["avaliadores"],
+            "concordancia_bruta": round(resultado["concordancia_bruta"], 4),
+            "kappa": round(resultado["kappa"], 4),
+            "interpretacao": resultado["interpretacao"],
+            "divergencias": len(resultado["divergencias"]),
+        })
+    return pd.DataFrame(linhas)
+
+
 def pauta_divergencias(rotulos_por_avaliador, diretorio=DIR_VALIDACAO):
     """Divergencias de todas as dimensoes com repositorio, tag e links de apoio.
 
@@ -271,6 +288,8 @@ def main(diretorio=DIR_VALIDACAO, argv=None):
     parser.add_argument("--diretorio", default=diretorio)
     parser.add_argument("--pauta", default=None,
                         help="grava a lista de divergencias (com links) em CSV")
+    parser.add_argument("--saida", default=None,
+                        help="grava o kappa de cada dimensao em CSV")
     args = parser.parse_args(argv)
 
     faltando = [c for c in planilhas(args.diretorio) if not os.path.exists(c)]
@@ -310,6 +329,9 @@ def main(diretorio=DIR_VALIDACAO, argv=None):
         pauta = pauta_divergencias(todos, args.diretorio)
         pauta.to_csv(args.pauta, index=False)
         print(f"\npauta escrita em {args.pauta} ({len(pauta)} divergencias)")
+    if args.saida:
+        tabela_kappa(todos).to_csv(args.saida, index=False)
+        print(f"\nkappa escrito em {args.saida}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,4 @@
+dimensao,itens,avaliadores,concordancia_bruta,kappa,interpretacao,divergencias
+tipo_projeto,60,2,0.3167,-0.0317,pobre,41
+entregas_reais,60,2,0.6833,-0.1349,pobre,19
+corretiva,300,2,0.59,0.1009,leve,123
