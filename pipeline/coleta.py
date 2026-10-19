@@ -5,7 +5,7 @@ import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-from pipeline import releases, runs
+from pipeline import notas, releases, runs
 from pipeline.cache import substituir
 
 PARALELO_INTERNO = 3
@@ -63,11 +63,17 @@ def coletar_repo(cliente, cfg, nome, default_branch, paralelo=1):
         "coletado_em": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "releases": coletadas["releases"],
         "avaliadas": coletadas["avaliadas"],
+        "notas": coletar_notas_da_janela(cliente, cfg, nome, coletadas["avaliadas"]),
         "runs": execucoes["runs"],
         "intervalos_runs": execucoes["intervalos"],
         "intervalos_no_teto": execucoes["intervalos_no_teto"],
         "acesso_runs": execucoes["acesso"],
     }
+
+
+def coletar_notas_da_janela(cliente, cfg, nome, avaliadas):
+    tags = [item["tag_name"] for item in avaliadas]
+    return notas.coletar_notas(cliente, nome, cfg.janela_inicio, tags)
 
 
 def coletar_amostra(cliente, cfg, amostra, dir_coleta, limite=None, paralelo=1):
@@ -87,18 +93,23 @@ def coletar_amostra(cliente, cfg, amostra, dir_coleta, limite=None, paralelo=1):
         nome = linha["full_name"]
         dados = carregar(dir_coleta, nome, cfg)
         origem = "ja coletado"
-        if dados is None:
-            try:
+        try:
+            if dados is None:
                 dados = coletar_repo(
                     cliente, cfg, nome, linha.get("default_branch"), paralelo
                 )
                 salvar(dir_coleta, nome, dados)
-            except (RuntimeError, OSError) as erro:
-                with trava:
-                    print(f"  [{posicao}/{len(linhas)}] {nome}: erro ({erro})", flush=True)
-                    erros.append({"full_name": nome, "erro": str(erro)[:300]})
-                return None
-            origem = "coletado agora"
+                origem = "coletado agora"
+            elif "notas" not in dados:
+                # coletas antigas (antes da Sprint 02) nao tinham as release notes
+                dados["notas"] = coletar_notas_da_janela(cliente, cfg, nome, dados["avaliadas"])
+                salvar(dir_coleta, nome, dados)
+                origem = "ja coletado, notas coletadas agora"
+        except (RuntimeError, OSError) as erro:
+            with trava:
+                print(f"  [{posicao}/{len(linhas)}] {nome}: erro ({erro})", flush=True)
+                erros.append({"full_name": nome, "erro": str(erro)[:300]})
+            return None
         with trava:
             print(
                 f"  [{posicao}/{len(linhas)}] {nome}: {len(dados['avaliadas'])} releases "
