@@ -171,24 +171,59 @@ Decisões tomadas onde o enunciado deixa margem:
 
 Fica em `metricas/corretiva.py`. A tag é separada em **linha** (o prefixo, que
 em monorepos identifica o pacote: `vite@7.1.0` e `create-vite@8.0.1` são linhas
-diferentes) e **versão** SemVer. Dois sinais são usados:
+diferentes) e **versão** SemVer. Três sinais são usados:
 
 - **patch**: o terceiro número da versão é maior que zero (`2.3.1`);
 - **mensagens**: algum commit desde a release anterior tem `fix`, `hotfix`,
   `bugfix` ou `revert` na mensagem. Commits `fix(deps)` de atualização de
-  dependência não contam.
+  dependência não contam;
+- **notas**: as release notes usam palavras de correção (`fix`, `bug`,
+  `regression`, `crash`, `security`, `CVE`...) pelo menos tantas vezes quanto
+  palavras de funcionalidade (`feature`, `add`, `new`, `support`,
+  `improve`...). Release sem notas conta como empate.
 
-Como o enunciado pede para validar a heurística contra o consenso da
-amostra-ouro, deixei cinco versões prontas para comparar: só patch, só
-mensagens, patch **e** mensagens, patch **ou** mensagens, e patch com a maioria
-dos commits sendo correção. Até a validação, o dataset usa `patch e mensagens`.
-Depois dela, fica a versão com melhor F1 (a escolhida aparece em
-`data/dataset_meta.json`).
+**Validação contra o consenso da amostra-ouro** (300 releases, 107 corretivas
+no consenso; `python -m validacao.avaliacao`, resultado em
+`validacao/avaliacao_heuristica.csv`):
 
-"Fix" é a palavra mais comum no começo das mensagens de commit da amostra
-(cerca de 20%), então "ter algum commit de fix" sozinho tende a marcar quase
-toda release como corretiva. Por isso testo também as versões que combinam os
-dois sinais.
+| Versão | Regra | Precisão | Recall | F1 |
+|---|---|---|---|---|
+| v1 | patch | 0,48 | 0,86 | 0,62 |
+| v2 | mensagens | 0,36 | 0,83 | 0,50 |
+| v3 | patch **e** mensagens | 0,51 | 0,74 | 0,60 |
+| v4 | patch **ou** mensagens | 0,36 | 0,95 | 0,53 |
+| v5 | patch e maioria dos commits é correção | 0,68 | 0,25 | 0,37 |
+| **v6** | **patch e notas** | **0,67** | **0,78** | **0,72** |
+
+As cinco primeiras versões foram escritas antes da rotulagem e nenhuma chegou a
+0,70. "Fix" é a palavra mais comum no começo das mensagens de commit da amostra
+(cerca de 20%), então os sinais das mensagens erram muito: marcam como corretiva
+quase toda release com algum conserto no meio. Olhando os erros da v1, os falsos
+positivos eram patches que traziam funcionalidade nova, e era nas release notes
+que isso aparecia. A v6 foi criada depois dessa análise e é a usada no CFR (b)
+do dataset (o nome fica em `data/dataset_meta.json`). Antes de chegar nela,
+testei estas regras contra o mesmo consenso, sem transformá-las em versões do
+código:
+
+| Regra exploratória | Precisão | Recall | F1 |
+|---|---|---|---|
+| patch e nenhum commit `feat:` | 0,62 | 0,69 | 0,66 |
+| patch e commits de correção ≥ commits de funcionalidade | 0,54 | 0,85 | 0,66 |
+| patch e proporção de commits de correção ≥ 0,2 | 0,57 | 0,69 | 0,63 |
+| patch e nenhum commit de funcionalidade (`add`, `new`, `support`...) | 0,71 | 0,50 | 0,58 |
+| patch e até 7 dias depois da release anterior | 0,53 | 0,63 | 0,57 |
+| patch e até 50 commits | 0,50 | 0,59 | 0,54 |
+| notas com alguma palavra de correção e correção ≥ funcionalidade, sem exigir patch* | 0,64 | 0,72 | 0,68 |
+| patch e notas sem seção de funcionalidade* | 0,57 | 0,76 | 0,65 |
+
+\* calculadas com os primeiros 1.500 caracteres das release notes; a v6 usa as
+notas inteiras.
+
+Como a v6 foi escolhida olhando os mesmos 300 casos, o F1 dela tende a sair um
+pouco otimista. Separando os 60 repositórios em metades, ele variou entre 0,64
+e 0,79 (ids ímpares 0,64; pares 0,79; 1 a 30 0,73; 31 a 60 0,72). As release
+notes vêm da API GraphQL (`pipeline/notas.py`) e ficam no JSON de cada
+repositório em `data/coleta/`.
 
 ## Validação manual (Issues #8 a #12)
 
@@ -222,9 +257,10 @@ A última rodada, depois da troca do compare para a GraphQL, usou 23.210
 chamadas REST e 13.510 GraphQL em cerca de 5 horas. Os 100 repositórios da
 Sprint 01 continuam com exatamente os mesmos valores.
 
-O CFR (b) do dataset ainda usa a versão `patch e mensagens` da heurística.
-Depois da validação com a amostra-ouro (Issue #9), o dataset é gerado de novo
-com a versão escolhida.
+O CFR (b) do dataset usa a v6 da heurística (patch e notas), escolhida na
+validação com a amostra-ouro (Issue #9). Com ela, a mediana do CFR (b) ficou em
+0,22 (IQR de 0,08 a 0,44), em 299 repositórios; só o `expo/expo` fica sem valor,
+pela censura.
 
 ## Estrutura
 

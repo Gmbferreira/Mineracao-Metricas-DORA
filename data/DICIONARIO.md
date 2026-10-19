@@ -95,7 +95,10 @@ ao limite fica no grupo de baixo. Os limites estão em `data/dataset_meta.json`.
 
 A heurística de release corretiva usada no CFR (b) está em
 `metricas/corretiva.py`, e o nome da versão em uso fica em
-`data/dataset_meta.json` (`heuristica_cfr_b`). "Mesma linha" quer dizer o mesmo
+`data/dataset_meta.json` (`heuristica_cfr_b`). A versão atual (v6) marca como
+corretiva a release de patch (`2.3.1`) cujas release notes usam palavras de
+correção pelo menos tantas vezes quanto palavras de funcionalidade; ela teve F1
+de 0,72 contra o consenso da amostra-ouro. "Mesma linha" quer dizer o mesmo
 prefixo de tag: em um monorepo, `vite@7.1.0` e `create-vite@8.0.1` são linhas
 diferentes.
 
@@ -169,6 +172,40 @@ colunas acima e acrescenta as respostas:
 | `entregas_reais` | repositorios | `sim`, `nao`, `incerto` |
 | `corretiva` | releases | `sim`, `nao` |
 | `observacao` | as duas | texto livre |
+
+**`validacao/concordancia.csv`**: uma linha por dimensão rotulada
+(`python -m validacao.concordancia --saida validacao/concordancia.csv`).
+
+| Coluna | Tipo | Unidade | Origem / fórmula |
+|---|---|---|---|
+| `dimensao` | texto | — | `tipo_projeto`, `entregas_reais` ou `corretiva` |
+| `itens` | inteiro | itens | repositórios (60) ou releases (300) comparados |
+| `avaliadores` | inteiro | pessoas | número de planilhas comparadas |
+| `concordancia_bruta` | decimal | fração (0 a 1) | itens em que todos os avaliadores deram o mesmo rótulo ÷ itens |
+| `kappa` | decimal | −1 a 1 | kappa de Fleiss (`aggregate_raters` e `fleiss_kappa` do statsmodels) |
+| `interpretacao` | texto | — | escala de Landis & Koch (pobre, leve, razoavel, moderada, substancial, quase perfeita) |
+| `divergencias` | inteiro | itens | itens sem unanimidade |
+
+**`validacao/pauta_divergencias.csv`**: os casos divergentes, com o material de
+apoio e a decisão do desempate.
+
+| Coluna | Tipo | Unidade | Origem / fórmula |
+|---|---|---|---|
+| `dimensao`, `id` | texto, inteiro | — | dimensão e `id_repo`/`id_release` do caso |
+| `full_name`, `tag` | texto | — | repositório e, nas releases, a tag |
+| `link_release`, `link_commits` | texto | — | página da release (ou do repositório) e lista de commits |
+| `gabriel`, `guilherme` | texto | — | rótulo de cada avaliador |
+| `consenso`, `motivo` | texto | — | rótulo final e motivo, iguais a `decisoes_desempate.csv` |
+
+**`validacao/decisoes_desempate.csv`**: uma linha por caso em que as duas
+planilhas discordaram.
+
+| Coluna | Tipo | Unidade | Origem / fórmula |
+|---|---|---|---|
+| `dimensao` | texto | — | `tipo_projeto`, `entregas_reais` ou `corretiva` |
+| `id` | inteiro | — | `id_repo` (nas duas primeiras dimensões) ou `id_release` |
+| `consenso` | texto | — | rótulo final, com os mesmos valores das planilhas |
+| `motivo` | texto | — | por que esse rótulo foi escolhido |
 
 **`validacao/consenso_repositorios.csv`** e **`validacao/consenso_releases.csv`**:
 rótulo final depois do desempate. Têm as mesmas colunas de identificação
