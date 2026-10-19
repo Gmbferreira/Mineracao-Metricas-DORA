@@ -234,11 +234,10 @@ class ClienteGitHub:
                     self._dormir_backoff(tentativa)
                     continue
                 erros = dados.get("errors") or []
-                if any(erro.get("type") == "RATE_LIMITED" for erro in erros):
-                    reset = resposta.headers.get("X-RateLimit-Reset")
+                if any(_cota_esgotada(erro) for erro in erros):
                     self._limites["graphql"] = {
                         "remaining": 0,
-                        "reset": int(reset) if reset else int(time.time()) + 60,
+                        "reset": _fim_da_espera(resposta.headers),
                     }
                     continue
                 if not erros and self.cache:
@@ -278,6 +277,28 @@ class ClienteGitHub:
             busca=True,
         )
         return resposta.json()
+
+
+def _cota_esgotada(erro):
+    """Erro de cota da GraphQL: vem como RATE_LIMITED e, nas chamadas seguintes,
+    como RATE_LIMIT ("already exceeded")."""
+    return (erro.get("type") in ("RATE_LIMITED", "RATE_LIMIT")
+            or erro.get("code") == "graphql_rate_limit")
+
+
+def _fim_da_espera(cabecalhos):
+    """Ate quando esperar depois de um erro de cota da GraphQL.
+
+    Com a cota da hora zerada, espera o reset. Se a cota ainda tem pontos, o
+    limite e outro (o GitHub nao diz qual), e a espera e de pelo menos 1 minuto.
+    """
+    reset = cabecalhos.get("X-RateLimit-Reset")
+    minimo = int(time.time()) + 60
+    if not reset:
+        return minimo
+    if cabecalhos.get("X-RateLimit-Remaining") == "0":
+        return int(reset)
+    return max(int(reset), minimo)
 
 
 def _json_ou_texto(resposta):

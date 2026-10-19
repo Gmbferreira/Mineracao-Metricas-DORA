@@ -90,6 +90,17 @@ def test_graphql_limitada_sem_cabecalho_de_reset(monkeypatch):
     assert len(sleeps) == 1 and 55 <= sleeps[0] <= 62
 
 
+def test_graphql_limite_ja_excedido_com_cota_sobrando(monkeypatch):
+    # resposta real do GitHub com a cota da hora ainda com pontos
+    limitada = Resposta(200, {"errors": [{"type": "RATE_LIMIT", "code": "graphql_rate_limit",
+                                          "message": "API rate limit already exceeded"}]},
+                        _cabecalhos(remaining="3835", reset=str(int(time.time() + 10))))
+    ok = Resposta(200, {"data": {"x": 1}}, _cabecalhos())
+    cliente, sleeps = _cliente(monkeypatch, [limitada, ok])
+    assert cliente.graphql("query { x }") == {"data": {"x": 1}}
+    assert len(sleeps) == 1 and 59 <= sleeps[0] <= 62
+
+
 def test_cota_da_graphql_nao_trava_o_rest(monkeypatch):
     reset = int(time.time() + 40)
     respostas = [
