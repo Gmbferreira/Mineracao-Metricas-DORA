@@ -15,6 +15,7 @@ DIR_COLETA = os.path.join(DIR_DADOS, "coleta")
 ARQ_DATASET = os.path.join(DIR_DADOS, "dataset.csv")
 ARQ_DATASET_META = os.path.join(DIR_DADOS, "dataset_meta.json")
 ARQ_RELEASES = os.path.join(DIR_DADOS, "releases.csv")
+ARQ_VARIANTES = os.path.join(DIR_DADOS, "variantes.csv")
 ARQ_AMOSTRA = os.path.join(DIR_DADOS, "amostra.csv")
 ARQ_AMOSTRA_META = os.path.join(DIR_DADOS, "amostra_meta.json")
 ARQ_FUNIL_CSV = os.path.join(DIR_DADOS, "funil.csv")
@@ -240,7 +241,7 @@ def executar_selecao(cliente, cfg, args):
 
 
 def executar_coleta(cliente, cfg, args):
-    amostra = coleta.ler_amostra(ARQ_AMOSTRA)
+    amostra = coleta.ler_amostra(args.amostra)
     total = min(len(amostra), args.limite_repos or len(amostra))
     print(f"\ncoleta de releases, commits e runs: {total} repositorios", flush=True)
     inicio = time.time()
@@ -260,7 +261,7 @@ def executar_coleta(cliente, cfg, args):
 
 
 def executar_metricas(cfg, args):
-    amostra = coleta.ler_amostra(ARQ_AMOSTRA)
+    amostra = coleta.ler_amostra(args.amostra)
     if args.limite_repos:
         amostra = amostra[: args.limite_repos]
     coletados = []
@@ -268,15 +269,20 @@ def executar_metricas(cfg, args):
         dados = coleta.carregar(DIR_COLETA, linha["full_name"], cfg)
         if dados is not None:
             coletados.append(dados)
+    os.makedirs(args.saida, exist_ok=True)
+    arq_dataset = os.path.join(args.saida, os.path.basename(ARQ_DATASET))
+    arq_releases = os.path.join(args.saida, os.path.basename(ARQ_RELEASES))
     dataset, releases = consolidacao.consolidar(
-        coletados, cfg.janela_inicio, cfg.janela_fim, ARQ_DATASET, ARQ_RELEASES,
-        amostra=amostra, arq_meta=ARQ_DATASET_META,
+        coletados, cfg.janela_inicio, cfg.janela_fim, arq_dataset, arq_releases,
+        amostra=amostra,
+        arq_meta=os.path.join(args.saida, os.path.basename(ARQ_DATASET_META)),
+        arq_variantes=os.path.join(args.saida, os.path.basename(ARQ_VARIANTES)),
     )
     faltando = len(amostra) - len(coletados)
     print(
-        f"\ndataset: {ARQ_DATASET} ({len(dataset)} repositorios"
+        f"\ndataset: {arq_dataset} ({len(dataset)} repositorios"
         + (f", {faltando} ainda sem coleta" if faltando else "")
-        + f") e {ARQ_RELEASES} ({len(releases)} releases)",
+        + f") e {arq_releases} ({len(releases)} releases)",
         flush=True,
     )
 
@@ -299,6 +305,12 @@ def main():
                         help="limite de candidatos escaneados nesta execucao")
     parser.add_argument("--limite-repos", type=int, default=None,
                         help="coleta e metricas so dos N primeiros da amostra")
+    parser.add_argument("--amostra", default=ARQ_AMOSTRA,
+                        help="CSV com os repositorios da coleta e das metricas "
+                             f"(padrao: {ARQ_AMOSTRA}); use para rodar uma subamostra")
+    parser.add_argument("--saida", default=DIR_DADOS,
+                        help="pasta onde gravar dataset.csv, releases.csv, variantes.csv "
+                             f"e dataset_meta.json (padrao: {DIR_DADOS})")
     parser.add_argument("--paralelo", type=int, default=4,
                         help="repositorios coletados ao mesmo tempo na coleta "
                              "(padrao: 4; use 1 para coleta sequencial)")
