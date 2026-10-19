@@ -1,0 +1,61 @@
+id_repo,full_name,tipo_projeto,entregas_reais
+1,openclaw/openclaw,aplicacao/servico,sim
+2,tauri-apps/tauri,biblioteca/framework,sim
+3,keras-team/keras,biblioteca/framework,sim
+4,ClickHouse/ClickHouse,aplicacao/servico,sim
+5,react/react-native,biblioteca/framework,sim
+6,pyenv/pyenv,ferramenta CLI,sim
+7,nuxt/nuxt,biblioteca/framework,sim
+8,facebookresearch/faiss,biblioteca/framework,sim
+9,BerriAI/litellm,aplicacao/servico,sim
+10,microsoft/vscode,aplicacao/servico,sim
+11,remotion-dev/remotion,biblioteca/framework,sim
+12,alibaba/open-code-review,ferramenta CLI,sim
+13,pocketbase/pocketbase,aplicacao/servico,sim
+14,TanStack/query,biblioteca/framework,sim
+15,mrdoob/three.js,biblioteca/framework,sim
+16,prometheus/prometheus,aplicacao/servico,sim
+17,vllm-project/vllm,aplicacao/servico,sim
+18,payloadcms/payload,biblioteca/framework,sim
+19,jgm/pandoc,ferramenta CLI,sim
+20,mattpocock/skills,outro,sim
+21,chakra-ui/chakra-ui,biblioteca/framework,sim
+22,fastlane/fastlane,ferramenta CLI,sim
+23,shadcn-ui/ui,biblioteca/framework,sim
+24,sickn33/agentic-awesome-skills,outro,sim
+25,ethereum/go-ethereum,aplicacao/servico,sim
+26,Significant-Gravitas/AutoGPT,aplicacao/servico,sim
+27,upstash/context7,aplicacao/servico,sim
+28,xtekky/gpt4free,biblioteca/framework,sim
+29,langgenius/dify,aplicacao/servico,sim
+30,roboflow/supervision,biblioteca/framework,sim
+31,Fission-AI/OpenSpec,ferramenta CLI,sim
+32,mastodon/mastodon,aplicacao/servico,sim
+33,Mintplex-Labs/anything-llm,aplicacao/servico,sim
+34,Imbad0202/academic-research-skills,outro,sim
+35,pingcap/tidb,aplicacao/servico,sim
+36,ggml-org/llama.cpp,biblioteca/framework,nao
+37,ChrisTitusTech/winutil,aplicacao/servico,sim
+38,crewAIInc/crewAI,biblioteca/framework,sim
+39,ToolJet/ToolJet,aplicacao/servico,sim
+40,browser-use/browser-use,biblioteca/framework,sim
+41,danielmiessler/Fabric,ferramenta CLI,sim
+42,career-ops-hq/career-ops,aplicacao/servico,incerto
+43,vercel-labs/agent-browser,ferramenta CLI,sim
+44,ant-design/ant-design,biblioteca/framework,sim
+45,ccxt/ccxt,biblioteca/framework,sim
+46,apple/container,ferramenta CLI,sim
+47,reactive-resume/reactive-resume,aplicacao/servico,sim
+48,rails/rails,biblioteca/framework,sim
+49,fastapi/fastapi,biblioteca/framework,sim
+50,react-hook-form/react-hook-form,biblioteca/framework,sim
+51,moeru-ai/airi,aplicacao/servico,sim
+52,janhq/jan,aplicacao/servico,sim
+53,rtk-ai/rtk,ferramenta CLI,sim
+54,calcom/cal.diy,aplicacao/servico,sim
+55,zed-industries/zed,aplicacao/servico,sim
+56,typst/typst,ferramenta CLI,sim
+57,denoland/deno,ferramenta CLI,sim
+58,dani-garcia/vaultwarden,aplicacao/servico,sim
+59,nexu-io/open-design,aplicacao/servico,sim
+60,JuliaLang/julia,outro,sim

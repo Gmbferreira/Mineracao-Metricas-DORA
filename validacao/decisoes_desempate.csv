@@ -1,0 +1,184 @@
+dimensao,id,consenso,motivo
+tipo_projeto,3,biblioteca/framework,Framework de deep learning importado no código de outros projetos; nada no material indica uso como programa de terminal.
+tipo_projeto,5,biblioteca/framework,"Framework para criar apps nativos com React, usado como dependência; o DevTools anexado nas releases é só apoio."
+tipo_projeto,7,biblioteca/framework,Nuxt se define como framework full-stack para Vue e entra como dependência das aplicações web.
+tipo_projeto,8,biblioteca/framework,"Biblioteca de busca por similaridade em C++ com wrappers Python, usada dentro de outros sistemas, não executada sozinha."
+tipo_projeto,9,aplicacao/servico,"Apresenta-se como gateway auto-hospedado, com imagens Docker e painel admin; o SDK Python fica em segundo plano."
+tipo_projeto,11,biblioteca/framework,Framework de pacotes npm para criar vídeos em React; o estúdio visual roda dentro do projeto do usuário.
+tipo_projeto,12,ferramenta CLI,"É usado pelo comando ocr no terminal e em pipelines de CI, com binários por plataforma; não é biblioteca."
+tipo_projeto,13,aplicacao/servico,"Backend distribuído como executável pronto, com painel admin e API; o uso como pacote Go é alternativo."
+tipo_projeto,14,biblioteca/framework,"Biblioteca de busca e cache de dados para React, Vue, Solid e Svelte, importada como dependência nas aplicações."
+tipo_projeto,15,biblioteca/framework,"Biblioteca 3D em JavaScript que outros projetos importam via npm, como o próprio exemplo de uso mostra."
+tipo_projeto,16,aplicacao/servico,"Sistema de monitoramento e banco de séries temporais, implantado e mantido em execução como serviço."
+tipo_projeto,18,biblioteca/framework,"Framework para Next.js com CMS e painel admin, instalado como dependência no projeto; não é programa de terminal."
+tipo_projeto,19,ferramenta CLI,"Há uma biblioteca Haskell, mas as releases entregam o conversor de linha de comando, que é o uso principal."
+tipo_projeto,20,outro,"Coleção de skills em Markdown instaladas como plugin; não é código usado como dependência, aplicativo nem programa de terminal."
+tipo_projeto,21,biblioteca/framework,Biblioteca de componentes React instalada via npm e usada para montar interfaces de outras aplicações.
+tipo_projeto,22,ferramenta CLI,Usado pelo comando fastlane no terminal ou na CI para automatizar publicação de apps; não é importado pelo app.
+tipo_projeto,23,biblioteca/framework,Conjunto de componentes React reutilizáveis que outros projetos incorporam; a CLI só copia o código para o projeto.
+tipo_projeto,25,aplicacao/servico,"Geth é um nó Ethereum que operadores mantêm rodando, expondo JSON-RPC; funciona como serviço, não como utilitário de terminal."
+tipo_projeto,28,biblioteca/framework,"O README lista primeiro a biblioteca cliente Python; GUI e API são complementos, e a CLI serve para iniciá-las."
+tipo_projeto,31,ferramenta CLI,"Usado pelo comando openspec no terminal (init, show, validate); não é biblioteca importada por outros projetos."
+tipo_projeto,33,aplicacao/servico,Aplicativo de desktop e servidor auto-hospedado usado direto pelo usuário; as releases trazem instaladores para cada sistema.
+tipo_projeto,34,outro,"Coleção de skills em Markdown instalada como plugin de outro programa; não é biblioteca, aplicativo nem CLI."
+tipo_projeto,36,biblioteca/framework,Motor de inferência em C/C++ embutido por muitos projetos; a CLI e o servidor são construídos sobre essa biblioteca.
+tipo_projeto,38,biblioteca/framework,Framework Python instalado via PyPI e importado no código de quem o usa; a plataforma em nuvem é separada.
+tipo_projeto,40,biblioteca/framework,O repositório é a biblioteca Python instalada via pip; o serviço em nuvem é um produto separado.
+tipo_projeto,41,ferramenta CLI,"O uso principal é o comando fabric no terminal, distribuído como binário; servidor REST e interface web são extras."
+tipo_projeto,42,aplicacao/servico,"Programa usado direto por quem procura emprego, com scripts, rastreador e painéis próprios; não é dependência de outros projetos."
+tipo_projeto,45,biblioteca/framework,É uma biblioteca de trading publicada em vários gerenciadores de pacotes e importada no código de outros projetos.
+tipo_projeto,46,ferramenta CLI,"Usado pelo comando container no terminal (run, system start); a parte de biblioteca fica no pacote Containerization separado."
+tipo_projeto,47,aplicacao/servico,"Aplicação web de currículos usada direto pelo usuário, no site oficial ou auto-hospedada via Docker."
+tipo_projeto,48,biblioteca/framework,Framework web MVC usado como dependência das aplicações; o comando rails é só uma parte dele.
+tipo_projeto,49,biblioteca/framework,Framework web importado por quem constrói APIs em Python; é o próprio exemplo da categoria.
+tipo_projeto,50,biblioteca/framework,Biblioteca de hooks para formulários instalada via npm e usada dentro de aplicações React.
+tipo_projeto,52,aplicacao/servico,"Aplicativo de desktop usado direto pelo usuário; as releases trazem instaladores para Windows, macOS e Linux."
+tipo_projeto,53,ferramenta CLI,Binário de linha de comando que filtra a saída de comandos do terminal; a descrição o chama de CLI.
+tipo_projeto,54,aplicacao/servico,Plataforma de agendamento feita para auto-hospedar e usar direto; não é pacote importado por outros projetos.
+tipo_projeto,56,ferramenta CLI,"O repositório contém o compilador e sua CLI, usados pelo comando typst; o editor web é produto à parte."
+tipo_projeto,57,ferramenta CLI,"Runtime distribuído como executável único e usado por comandos no terminal (deno run, test, fmt, compile)."
+tipo_projeto,58,aplicacao/servico,Servidor compatível com Bitwarden implantado via Docker por quem quer auto-hospedar; não é biblioteca.
+tipo_projeto,59,aplicacao/servico,"Aplicativo de desktop com instaladores para macOS e Windows, usado direto pelo usuário como espaço de design."
+tipo_projeto,60,outro,"É a implementação de uma linguagem de programação (compilador, runtime e biblioteca padrão), que não cabe nas outras categorias."
+entregas_reais,1,sim,"Mesmo com a troca de nome, toda release traz instalador do app ou pacote, com notas para o usuário."
+entregas_reais,3,sim,"Não há anexos, mas cada tag corresponde a uma versão do keras publicada no PyPI, com notas de mudanças."
+entregas_reais,10,sim,Cada release é uma versão do VS Code entregue aos usuários; os binários ficam no site oficial.
+entregas_reais,13,sim,"Toda release traz executáveis prontos para várias plataformas, e as notas ensinam a atualizar o binário instalado."
+entregas_reais,14,sim,"São releases automáticas por pacote, mas cada uma é uma versão publicada no npm que o usuário instala."
+entregas_reais,16,sim,"Cada release publica binários para dezenas de sistemas e arquiteturas, inclusive a LTS; é o que o operador instala."
+entregas_reais,17,sim,"Cada release anexa wheels e o pacote fonte da versão publicada no PyPI, com notas de mudanças detalhadas."
+entregas_reais,18,sim,"Sem anexos, mas cada release corresponde a uma versão do payload publicada no npm, com changelog do que mudou."
+entregas_reais,19,sim,"Cada release traz instaladores e binários (.deb, .msi, .pkg) e é anunciada como versão disponível para uso."
+entregas_reais,21,sim,"Cada tag corresponde a um pacote publicado no npm, como @chakra-ui/react; a falta de notas não muda isso."
+entregas_reais,23,sim,"As releases são versões da CLI shadcn e do @shadcn/react publicadas no npm, que o usuário executa ou instala."
+entregas_reais,29,sim,"Cada release vira imagem Docker com a mesma versão, usada por quem hospeda o próprio Dify."
+entregas_reais,36,nao,As tags bNNNN são builds automáticas feitas a quase cada commit; o próprio README as chama de nightly.
+entregas_reais,37,sim,Cada release traz o winutil.ps1 que o comando de instalação baixa; é o que o usuário executa.
+entregas_reais,40,sim,Cada release corresponde a uma versão publicada no PyPI; a 0.10.1 saiu só para acertar a versão do pacote.
+entregas_reais,42,incerto,"Releases recentes são o que o usuário instala, mas até a v1.34 o atualizador seguia a main."
+entregas_reais,44,sim,Cada release corresponde a uma versão do pacote antd no npm; o website.tar.gz anexado é só a documentação.
+entregas_reais,56,sim,Cada release traz binários do compilador para várias plataformas; são eles que o usuário baixa e instala.
+entregas_reais,60,sim,Cada release é uma versão oficial que o usuário instala; binários ficam no site e o código-fonte vem anexado.
+corretiva,5,nao,"Release grande de rotina, com novidades de instalação, integrações e interface; as correções vêm misturadas e não são o foco."
+corretiva,6,nao,"Versão minor com quatro funcionalidades novas, como scroll_bar_style e eventos mobile; só duas correções de bug."
+corretiva,8,sim,"Só atualiza para o tauri-cli 2.11.2, que existe para levar duas correções de regressão no tratamento de recursos."
+corretiva,9,nao,"Primeiro alpha da versão 3, com seção de novas funcionalidades; não é uma release de correção."
+corretiva,11,nao,Versão minor que lança a API de destilação e a quantização GPTQ; os fixes são secundários.
+corretiva,12,nao,"Release de funcionalidades: Orbax, novos modos de quantização, otimizador novo e várias operações; correção não é o foco."
+corretiva,14,sim,Patch de segurança da linha 3.12 que fecha vetores de ataque no carregamento e na desserialização de modelos.
+corretiva,15,sim,Patch com quatro correções de segurança e dois bugs corrigidos; o único item fora disso é compatibilidade com Python 3.14.
+corretiva,16,sim,Patch da linha 25.9 feito de backports: oito correções de bug e dois ajustes internos.
+corretiva,17,sim,"Patch da LTS 25.8 composto por backports, em sua maioria correções de bugs e crashes."
+corretiva,18,sim,"Todos os commits são backports de correções, como vazamento de dados entre usuários, crashes e segfaults."
+corretiva,19,sim,Patch da linha 26.1 com 16 correções de bug em backport; as poucas melhorias são secundárias.
+corretiva,20,sim,"Patch da linha 26.7 com backports de correções de crashes e erros, mais atualização de bibliotecas vendorizadas."
+corretiva,22,sim,"Patch da linha 0.81 com correções pontuais de bugs e reversões, além da atualização de patch do React."
+corretiva,24,sim,Patch com três correções de build e só uma atualização do frontend do DevTools.
+corretiva,29,nao,"Atualizações de rotina, como CPython 3.15.0b2 e URLs, mais a opção nova init --install; não é correção."
+corretiva,30,nao,Rotina: adiciona o CPython 3.15.0b3 e ajusta scripts de CI; nada de correção de defeito.
+corretiva,32,nao,"Versão minor centrada em novidades como createUseFetch e vue-router v5; as correções acompanham, mas não são o foco."
+corretiva,42,nao,"Build nightly com várias funcionalidades novas, como uso por organização e transcrição de áudio; correções são minoria."
+corretiva,43,sim,"Desde a release anterior entraram só cinco commits, todos corrigindo os traces enviados ao Langfuse."
+corretiva,44,nao,"Release minor grande, com dezenas de funcionalidades novas junto das correções; não é uma release de correção."
+corretiva,45,sim,Patch da linha 1.101 cujo único conteúdo é um backport de segurança na autenticação dos tokens de sessão.
+corretiva,48,nao,"Release regular do editor, com muitas funcionalidades e ajustes; as correções estão diluídas no meio."
+corretiva,51,nao,"Duas correções junto do suporte novo a nós de texto no web-renderer, que concentra a maior parte dos commits."
+corretiva,54,nao,"Traz várias novidades, como Rspack fora do experimental e render de vários stills; as correções são poucas."
+corretiva,63,sim,"Reverte a otimização de GROUP BY da 0.36.0, que piorou o uso de índices; o resto é rotina."
+corretiva,69,nao,"Só acompanha a versão do query-core 5.101.0, que não lista mudanças; é atualização de rotina."
+corretiva,70,sim,A mudança própria do pacote corrige dependências não declaradas que quebravam a instalação com gerenciadores estritos.
+corretiva,72,nao,"Release mensal com otimizações, recursos novos e correções misturados; não tem foco em corrigir defeito."
+corretiva,73,nao,Release regular que remove código depreciado e adiciona recursos como BezierInterpolant; correções são parte menor.
+corretiva,82,sim,"Patch da 0.19 voltado a corrigir bugs do suporte ao Gemma 4, principalmente no streaming de tool calls."
+corretiva,84,nao,"Release grande de funcionalidades, como Model Runner V2 por padrão e modelos novos; correções são secundárias."
+corretiva,85,nao,"Release de funcionalidades e desempenho, com otimizações de modelos e decodificação especulativa; correção não é o foco."
+corretiva,86,sim,Única mudança corrige a mensagem de erro da 3.68.0 que indicava uma versão vulnerável do Next.js.
+corretiva,87,sim,O item principal corrige o casamento de rotas com server URL; o outro é um refactor pequeno.
+corretiva,88,nao,"Versão minor com funcionalidades em destaque, como ícones de blocos e upgrade do Lexical; correções vêm junto."
+corretiva,90,sim,"Sem funcionalidades novas: corrige backtracking no content-type multipart e vazamento no copiar e colar, mais ajuste de acesso."
+corretiva,91,sim,O anúncio coloca como motivo a regressão do template typst que sumia com links; a extensão nova é secundária.
+corretiva,92,nao,"Adiciona três formatos de entrada e um de saída; as correções acompanham, mas o foco são novidades."
+corretiva,97,nao,"Muda a skill teach para reaproveitar componentes; é melhoria de funcionalidade, não correção de defeito."
+corretiva,99,sim,"Corrige a skill writing-for-agents, que tinha deixado de ser acionada automaticamente; o resto é documentação e rotina."
+corretiva,100,sim,Dois dos três itens são correções: um alerta de segurança sobre credenciais e instruções que não funcionavam em outros ambientes.
+corretiva,105,nao,Versão minor que lança o componente DatePicker; os fixes de tipos e exports são secundários.
+corretiva,107,sim,"Corrige a 2.229.0, que quebrava no Ruby 3.4 sem gems removidas da stdlib, e falhas na publicação."
+corretiva,111,sim,"As três mudanças do CLI são correções, como o transform de imports com alias sem @."
+corretiva,115,nao,"É a primeira release do pacote @shadcn/react, ou seja, funcionalidade nova."
+corretiva,117,nao,"Release de descoberta, SEO e curadoria de metadados; as correções do web-app fazem parte, mas não são o principal."
+corretiva,119,nao,"Adiciona três skills novas e sincroniza o catálogo; é conteúdo novo, não correção."
+corretiva,122,nao,As notas se definem como release de funcionalidades; as correções críticas de segurança também saíram isoladas na 1.16.9.
+corretiva,125,nao,"Release de manutenção focada em desempenho, agendamento do fork Amsterdam e remoção da Holesky, não em corrigir defeito."
+corretiva,130,nao,Traz várias funcionalidades novas e melhorias de interface; as correções de bug são só uma parte.
+corretiva,134,sim,Única mudança corrige a perda das CAs padrão do Node quando NODE_EXTRA_CA_CERTS está configurado.
+corretiva,137,sim,"Ajusta a assinatura de get_quota em três providers, que quebrava com a rota de cota lançada na 7.1.4."
+corretiva,138,nao,O único commit troca argumentos posicionais por nomeados sem mudar o comportamento; é ajuste de legibilidade.
+corretiva,143,nao,Versão minor que lança o Summary Index e outras novidades; as correções são parte menor.
+corretiva,148,sim,"Patch que corrige bugs numéricos silenciosos nas detecções e o determinismo do InferenceSlicer, sem API nova."
+corretiva,150,sim,"Patch que corrige onze bugs, entre resultados errados e crashes, sem API nova nem mudanças incompatíveis."
+corretiva,151,sim,As notas a descrevem como release de estabilidade para corrigir problemas de caminho entre plataformas; o resto é Nix.
+corretiva,152,sim,Patch rápido que só corrige o formato das referências de comandos nos arquivos gerados.
+corretiva,154,nao,"Versão minor com novidades, como suporte ao Zed e opção de idioma no init; as correções acompanham."
+corretiva,158,sim,"Patch da linha 4.3 com duas correções de segurança, entre elas bypass de SSRF, e um bug corrigido."
+corretiva,159,sim,Patch da linha 4.4 dominado por correções de segurança e bugs; adições e mudanças são poucas e pequenas.
+corretiva,160,sim,Patch focado em falhas de segurança (permissões e SSRF) e numa lista longa de bugs corrigidos.
+corretiva,165,nao,"Versão traz vários provedores novos, skill de geração de imagem e idiomas; as correções são secundárias."
+corretiva,169,nao,"Versão minor que adiciona contratos de revisão, camadas de integridade e avaliações; as correções ajustam esses recursos novos."
+corretiva,171,nao,Patch da linha 8.5 mistura correções com vários backports de melhorias de DDL e estatísticas; correção não domina.
+corretiva,172,nao,"Traz backports de recursos como pushdown de IndexLookup, compactação de log backup e filtro de tabelas no PITR."
+corretiva,175,sim,"Manutenção pequena da linha 7.5; quase todas as mudanças corrigem bugs, incluindo regressão de CPU e condição de corrida."
+corretiva,177,nao,Os dois commits adicionam recursos: callback de progresso no mtmd e suporte a call no jinja.
+corretiva,179,sim,"Único commit corrige o servidor que ignorava o min-step ao dividir lotes, causando lentidão no prefill."
+corretiva,184,nao,"Mistura tweaks novos, limpeza de código e docs com poucas correções; correção não é o foco."
+corretiva,185,nao,"Release grande com muita limpeza, simplificações e recursos novos; as correções aparecem no meio de tudo."
+corretiva,186,nao,"Maior parte é documentação e infraestrutura, com uma melhoria no Agent; as correções são poucas e menores."
+corretiva,191,nao,"Traz recursos novos como OIDC PKCE, métricas OTel e Storybook; só uma correção de login SSO."
+corretiva,192,sim,Corrige o autocomplete do codeHinter e um estouro de layout em Container e Form; nada de recurso novo.
+corretiva,194,sim,"As três mudanças são correções de bugs: FileButton, evento Go to app e query rodando no carregamento."
+corretiva,195,nao,Traz a biblioteca de componentes customizados e altura dinâmica na Navigation; correções dividem espaço com recursos grandes.
+corretiva,196,sim,"Relançamento feito só para corrigir a 0.10.0, que saiu sem a versão atualizada no pyproject."
+corretiva,197,nao,"Vários recursos novos, como skills externas, modelo Gemini e variável para desativar extensões, junto com correções."
+corretiva,198,sim,"Patch quase todo de correções, como proxy, storage_state e caminhos no Windows; o resto é documentação."
+corretiva,199,nao,Versão que lança o novo agente beta em Rust; é claramente uma release de funcionalidade.
+corretiva,201,nao,"Única mudança adiciona suporte a imagens para modelos de visão no Ollama, ou seja, recurso novo."
+corretiva,207,nao,"Release dominada por recursos novos: provedores, idiomas, classificação de respostas e modo de oferta."
+corretiva,208,sim,"Onze correções, a maioria no dashboard web, contra um único recurso opcional de allowlist; o foco é corrigir."
+corretiva,214,sim,"Todas as mudanças são correções de bugs, como auto-connect, viewport da gravação e aba ativa."
+corretiva,217,sim,Patch com doze correções de componentes e duas otimizações de filtro na Table; nenhum recurso novo.
+corretiva,220,sim,"Patch só com correções de bugs e estilo em componentes, além de um ajuste de tipos."
+corretiva,224,sim,Quase todos os itens corrigem parsing e mapeamentos de exchanges; só um adiciona endpoints novos.
+corretiva,225,nao,Muitos itens são recursos e endpoints novos em várias exchanges; correções são só parte da release.
+corretiva,226,nao,"Versão minor com mudanças incompatíveis, comandos novos e refatorações; a correção de regressão é só um item."
+corretiva,229,sim,A própria nota diz que a versão corrige o container k8s quebrado quando instalado pelo pacote.
+corretiva,231,nao,Destaques são um template novo e melhorias no builder e no preview; as correções vêm depois.
+corretiva,234,nao,Mistura folhas CSS semânticas e bastante trabalho de SEO com poucas correções; o foco não é corrigir.
+corretiva,236,nao,"Versão minor do Rails com recursos novos, remoções de APIs depreciadas e mudanças grandes; não é correção."
+corretiva,238,sim,Patch da linha 7.1 só com correções no Active Record e compatibilidade do Action Cable com redis.
+corretiva,239,sim,"Patch da linha 8.0 com notas quase todas de correção, incluindo perda de dados no SQLite."
+corretiva,242,sim,Release de um único fix para functools wraps e partial combinados em rotas e dependências.
+corretiva,245,sim,"Única mudança corrige a montagem de rotas que não era thread-safe, marcada como bug fix."
+corretiva,246,nao,"Foco em desempenho, com duas otimizações de rerender e redução de bundle; só uma correção."
+corretiva,247,nao,"Abre com recurso novo nos dirtyFields e suporte a TypeScript 6, ao lado de algumas correções; release mista."
+corretiva,250,nao,"Traz o método getErrors, melhorias de desempenho e refatorações junto das correções; correção não é o principal."
+corretiva,251,nao,"Beta com vários recursos novos, como captura de tela e reconhecimento de fala, além das correções."
+corretiva,257,sim,"Todos os itens são correções: importação de modelos, backend CUDA e servidor MCP no encerramento."
+corretiva,263,sim,Corrige URLs antigas do repositório que quebravam a instalação; o item novo é só automação de CI.
+corretiva,264,sim,"Dezoito correções em filtros, git, docker e instalador contra um único recurso de dicas; predomina correção."
+corretiva,267,nao,"Mistura vários recursos novos, como PBAC, gatilhos de workflow e bloqueio de spam, com correções."
+corretiva,268,sim,"Única mudança corrige o fuso horário inconsistente em insights/routing, problema relatado como bug."
+corretiva,269,nao,"Muitos recursos e tarefas internas, como DAL de proração e página de compliance, misturados com correções."
+corretiva,273,sim,Release feita para corrigir regressão nas permissões padrão de chamadas de ferramenta do terminal.
+corretiva,275,sim,"Patch com cherry-picks de correção, incluindo um panic no editor; só um item é documentação."
+corretiva,277,sim,"Patch que corrige regressões e vários crashes da 0.14.0, principalmente na exportação para PDF."
+corretiva,279,nao,"Versão minor cheia de recursos novos, como fontes variáveis, MathML no HTML e exportação em bundle."
+corretiva,280,sim,"Patch que corrige regressões em matemática, falhas de layout e fontes da 0.15.0, com ajustes menores."
+corretiva,282,sim,"Notas são quase só fixes, como panic no CLI e problemas no compile; só um item de desempenho."
+corretiva,283,nao,"Patch com mais de vinte recursos novos em CLI, LSP, crypto e telemetria; correções não são o principal."
+corretiva,285,nao,"Traz vários recursos novos no desktop, inspector e node:test, misturados com correções; release mista."
+corretiva,289,sim,Patch para resolver o problema dos convites e a falha nas imagens Alpine com OpenSSL.
+corretiva,290,sim,"Patch necessário para corrigir a incompatibilidade com clientes 2026.8.0+, junto de outras correções e atualizações."
+corretiva,295,sim,"Tema da versão é confiabilidade; destaques e commits são quase todos correções, com um provedor novo."
+corretiva,296,nao,Versão minor 1.12 com grande volume de recursos e mudanças de linguagem; não é release de correção.
+corretiva,297,sim,"Patch da 1.12 com backports de correção, como estouro de buffer, e atualizações de stdlib."
+corretiva,298,sim,"Patch da 1.12; entre a 1.12.5 e a 1.12.6 predominam backports de correção, com poucos ajustes novos."
+corretiva,299,sim,"Patch da LTS 1.10 com correções de build e backports, sem recursos novos."
