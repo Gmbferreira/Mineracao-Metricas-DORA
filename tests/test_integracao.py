@@ -39,6 +39,19 @@ class _ComTotal:
         return self._cliente.get(*args, **kwargs)
 
     def graphql(self, consulta, variaveis=None, repositorio=None):
+        if "refs(" in consulta:
+            return {"data": {"repository": {"refs": {
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
+                "nodes": [
+                    {"name": "v2", "target": {"__typename": "Commit", "oid": "c2",
+                                              "committedDate": "2026-03-15T00:00:00Z"}},
+                    {"name": "v1", "target": {"__typename": "Tag", "target": {
+                        "__typename": "Commit", "oid": "c1",
+                        "committedDate": "2026-03-01T00:00:00Z"}}},
+                    {"name": "v0", "target": {"__typename": "Commit", "oid": "c0",
+                                              "committedDate": "2025-01-01T00:00:00Z"}},
+                ],
+            }}}}
         return {"data": {"repository": {"releases": {
             "pageInfo": {"hasNextPage": False, "endCursor": None},
             "nodes": [

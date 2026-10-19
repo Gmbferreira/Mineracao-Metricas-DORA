@@ -5,7 +5,7 @@ import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-from pipeline import notas, releases, runs
+from pipeline import notas, releases, runs, variantes
 from pipeline.cache import substituir
 
 PARALELO_INTERNO = 3
@@ -56,7 +56,7 @@ def coletar_repo(cliente, cfg, nome, default_branch, paralelo=1):
         cliente, nome, default_branch, cfg.janela_inicio, cfg.janela_fim,
         paralelo=paralelo,
     )
-    return {
+    dados = {
         "full_name": nome,
         "default_branch": default_branch,
         "janela": janela(cfg),
@@ -69,6 +69,17 @@ def coletar_repo(cliente, cfg, nome, default_branch, paralelo=1):
         "intervalos_no_teto": execucoes["intervalos_no_teto"],
         "acesso_runs": execucoes["acesso"],
     }
+    completar_variantes(cliente, cfg, dados)
+    return dados
+
+
+def completar_variantes(cliente, cfg, dados):
+    """Pre-releases e tags (unidades de deploy da RQ 07), junto do resto da coleta."""
+    resultado = variantes.coletar_variantes(
+        cliente, dados["full_name"], cfg.janela_inicio, cfg.janela_fim, dados
+    )
+    dados.setdefault("notas", {}).update(resultado.pop("notas"))
+    dados["variantes"] = resultado
 
 
 def coletar_notas_da_janela(cliente, cfg, nome, avaliadas):
@@ -100,11 +111,19 @@ def coletar_amostra(cliente, cfg, amostra, dir_coleta, limite=None, paralelo=1):
                 )
                 salvar(dir_coleta, nome, dados)
                 origem = "coletado agora"
-            elif "notas" not in dados:
-                # coletas antigas (antes da Sprint 02) nao tinham as release notes
-                dados["notas"] = coletar_notas_da_janela(cliente, cfg, nome, dados["avaliadas"])
-                salvar(dir_coleta, nome, dados)
-                origem = "ja coletado, notas coletadas agora"
+            else:
+                # coletas antigas nao tinham as release notes (Sprint 02) nem as
+                # unidades de deploy da RQ 07 (Sprint 03)
+                completou = []
+                if "notas" not in dados:
+                    dados["notas"] = coletar_notas_da_janela(cliente, cfg, nome, dados["avaliadas"])
+                    completou.append("notas")
+                if "variantes" not in dados:
+                    completar_variantes(cliente, cfg, dados)
+                    completou.append("variantes")
+                if completou:
+                    salvar(dir_coleta, nome, dados)
+                    origem = f"ja coletado, {' e '.join(completou)} coletadas agora"
         except (RuntimeError, OSError) as erro:
             with trava:
                 print(f"  [{posicao}/{len(linhas)}] {nome}: erro ({erro})", flush=True)
