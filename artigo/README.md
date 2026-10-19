@@ -11,7 +11,7 @@ Artigo no Overleaf (leitura): <https://www.overleaf.com/read/rxydywpnvjym#6b20e1
 
 | Arquivo | Papel |
 |---|---|
-| `main.tex` | Documento principal (cabeçalho, resumo/abstract, Introdução e hipóteses) |
+| `main.tex` | Documento principal (cabeçalho, resumo/abstract, Introdução, hipóteses e Metodologia) |
 | `referencias.bib` | Bibliografia (DORA, Accelerate, Wohlin, SemVer, bibliotecas de análise) |
 | `sbc-template.sty` | Estilo oficial da SBC (v2017) |
 | `sbc.bst` | Estilo bibliográfico da SBC |
@@ -46,8 +46,12 @@ pdflatex main
 - As seções de Resultados, Discussão, Ameaças à Validade e Replicação Cruzada
   estão comentadas no fim de `main.tex`, como esqueleto para as próximas
   sprints.
-- A Metodologia descreve o protocolo e as definições, sem apresentar números de
-  resultado (kappa, F1, distribuições), que ficam para a sprint de análise.
+- A Metodologia traz também o resultado da validação manual (kappa de Fleiss,
+  consenso e F1 de cada versão da heurística de release corretiva), porque é ele
+  que define qual heurística entra no CFR (b) e o enunciado pede o F1 de cada
+  versão testada. Os resultados das RQ 01 a RQ 07 ficam para a Sprint 03.
+- A Metodologia registra que os rótulos e o desempate da amostra-ouro foram
+  feitos com apoio de modelos de linguagem, com autorização da disciplina.
 - As hipóteses são informais e foram redigidas **antes** da análise dos dados,
   conforme exigido pela disciplina.
 

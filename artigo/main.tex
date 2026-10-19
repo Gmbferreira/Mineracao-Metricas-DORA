@@ -221,15 +221,30 @@ validação manual.
 \subsection{Fonte de dados e funil de seleção}
 \label{sec:fonte}
 
-Os dados provêm da API REST do GitHub \cite{githubrest}, acessada por um cliente
-HTTP próprio escrito em Python, sem bibliotecas de terceiros para a API. O token
-de acesso é lido de uma variável de ambiente e nunca é gravado em disco. Toda
-resposta é guardada em cache local e a execução é retomável por checkpoints:
-interrompida a coleta (rate limit, queda de rede ou \texttt{Ctrl+C}), o mesmo
-comando continua de onde parou sem repetir requisições já feitas. Quando a cota
-horária se esgota, o cliente pausa até a renovação e repete erros temporários
-(5xx) com espera exponencial. A seleção inteira roda com um único comando
+Os dados provêm das APIs REST \cite{githubrest} e GraphQL \cite{githubgraphql}
+do GitHub, acessadas por um cliente HTTP próprio escrito em Python, sem
+bibliotecas de terceiros para a API. O token de acesso é lido de uma variável de
+ambiente e nunca é gravado em disco. Toda resposta é guardada em cache local e a
+execução é retomável por checkpoints: interrompida a coleta (rate limit, queda
+de rede ou \texttt{Ctrl+C}), o mesmo comando continua de onde parou sem repetir
+requisições já feitas. Quando a cota horária se esgota, o cliente pausa até a
+renovação e repete erros temporários (5xx) com espera exponencial. A seleção, a
+coleta e o cálculo das métricas rodam com um único comando
 (\texttt{python -m pipeline --config config.yaml}).
+
+Releases, workflow runs e metadados vêm da API REST. Os workflow runs são
+consultados primeiro para a janela inteira; quando passam do teto de 1.000
+resultados por consulta, a janela é dividida em meses e, se preciso, em
+intervalos menores, até nenhum intervalo ficar no teto. Os commits incluídos em
+cada release vêm do objeto \texttt{Comparison} da API GraphQL, que devolve os
+mesmos commits do \texttt{compare} da API REST, na mesma ordem, mas no máximo os
+1.000 mais recentes; quando o \texttt{compare} é maior, os mais antigos vêm das
+páginas do REST. Antes de adotar essa troca, comparamos os dois caminhos em 150
+pares de releases sorteados entre os repositórios já coletados e obtivemos os
+mesmos commits, datas de autor e mensagens nos 150. As \emph{release notes},
+usadas pela heurística de release corretiva, também vêm da API GraphQL. A coleta
+da amostra final reuniu 21.203 releases na janela e cerca de 3 milhões de
+workflow runs, sem nenhum repositório com erro.
 
 A busca de candidatos usa os pré-filtros \texttt{stars:>=1000},
 \texttt{fork:false}, \texttt{archived:false} e \texttt{pushed:>=2025-10-02}. Como
@@ -381,16 +396,23 @@ ficam fora do denominador (censura).
 
 \textbf{Release corretiva.} O proxy de entrega depende de identificar releases
 cujo objetivo principal é corrigir um defeito recente. A heurística automática
-separa a tag em \emph{linha} (o prefixo) e versão SemVer \cite{semver} e marca a
-release como corretiva quando, desde a release anterior, (i) apenas o número de
-\emph{patch} da versão mudou (\texttt{2.3.0} $\rightarrow$ \texttt{2.3.1}) e/ou
-(ii) algum commit tem \texttt{fix}, \texttt{hotfix}, \texttt{bugfix} ou
-\texttt{revert} na mensagem (atualizações de dependência do tipo
-\texttt{fix(deps)} não contam). Como ``fix'' é a palavra mais comum no começo
-das mensagens de commit da amostra (cerca de 20\%), cinco versões da heurística
-são mantidas --- só patch, só mensagens, patch \emph{e} mensagens, patch
-\emph{ou} mensagens e patch com maioria de commits de correção --- e a escolha
-entre elas é feita pela validação manual (Seção~\ref{sec:validacao}).
+separa a tag em \emph{linha} (o prefixo) e versão SemVer \cite{semver} e combina
+três sinais: (i) apenas o número de \emph{patch} da versão mudou
+(\texttt{2.3.0} $\rightarrow$ \texttt{2.3.1}); (ii) algum commit desde a release
+anterior tem \texttt{fix}, \texttt{hotfix}, \texttt{bugfix} ou \texttt{revert}
+na mensagem (atualizações de dependência do tipo \texttt{fix(deps)} não
+contam); e (iii) as \emph{release notes} usam palavras de correção
+(\emph{fix}, \emph{bug}, \emph{regression}, \emph{crash}, \emph{security},
+\emph{CVE}...) pelo menos tantas vezes quanto palavras de funcionalidade
+(\emph{feature}, \emph{add}, \emph{new}, \emph{support}, \emph{improve}...).
+Antes da rotulagem, escrevemos cinco versões com os sinais (i) e (ii) --- só
+patch, só mensagens, patch \emph{e} mensagens, patch \emph{ou} mensagens e patch
+com maioria de commits de correção ---, porque ``fix'' é a palavra mais comum no
+começo das mensagens de commit da amostra (cerca de 20\%) e, sozinha, marcaria
+quase toda release como corretiva. Como nenhuma delas chegou a F1 de 0,70 na
+validação (Seção~\ref{sec:resultado-validacao}), criamos uma sexta versão
+(v6: patch \emph{e} release notes de correção), que é a usada no CFR (b) do
+dataset.
 
 \textbf{Unidade de deploy.} Além da release principal, a RQ~07 alterna entre
 duas outras unidades: a soma de releases e pré-releases, e a tag apontada para um
@@ -421,7 +443,13 @@ cinco passos.
     ao usuário (sim, não ou incerto); e (iii) se cada uma das 5 releases é
     corretiva (sim ou não), lendo as release notes e a lista de commits. As
     colunas de resposta só aceitam os valores de uma lista fixa, e cada linha
-    traz links diretos para a release e para os commits.
+    traz links diretos para a release e para os commits. Com autorização da
+    disciplina, os dois conjuntos de rótulos foram produzidos com apoio de
+    modelos de linguagem, em processos separados, sem acesso à saída da
+    heurística nem aos rótulos do outro avaliador. Em um deles, o modelo recebeu
+    para cada item a descrição e o início do README do repositório, as release
+    notes, a lista de arquivos para download e as mensagens dos commits desde a
+    release anterior, além das mesmas instruções da planilha.
   \item \textbf{Concordância.} Em cada dimensão, a concordância entre
     avaliadores é medida pelo kappa de Fleiss \cite{fleiss1971}, que corrige a
     concordância que ocorreria por acaso; calcula-se com
@@ -431,13 +459,17 @@ cinco passos.
     0,41--0,60 moderada; 0,61--0,80 substancial; 0,81--1 quase perfeita. Um
     kappa baixo indicaria ambiguidade do próprio critério --- é um achado a
     discutir, e não apenas um defeito do rotulador.
-  \item \textbf{Desempate e consenso.} O protocolo de desempate é registrado
-    \emph{antes} de observar as divergências: cada caso divergente é discutido
-    pelos avaliadores com a evidência de apoio (release notes e lista de
-    commits) até que se chegue a um acordo; sem acordo, o caso vai para reunião,
-    e a decisão final com o motivo fica registrada na issue de controle do
-    consenso. O rótulo de consenso de cada item é gravado em
-    \texttt{consenso\_repositorios.csv} e \texttt{consenso\_releases.csv}.
+  \item \textbf{Desempate e consenso.} O protocolo de desempate foi registrado
+    \emph{antes} de observar as divergências: cada caso divergente seria
+    discutido pelos avaliadores com a evidência de apoio (release notes e lista
+    de commits) até que se chegasse a um acordo. Como os rótulos vieram de
+    modelos de linguagem, as divergências foram decididas por um terceiro
+    avaliador, também um modelo de linguagem, que recebeu o material de cada
+    caso e os dois rótulos identificados apenas como ``A'' e ``B'', em ordem
+    sorteada, e registrou o motivo de cada decisão em
+    \texttt{decisoes\_desempate.csv}. O rótulo de consenso de cada item é
+    gravado em \texttt{consenso\_repositorios.csv} e
+    \texttt{consenso\_releases.csv}.
   \item \textbf{Avaliação da heurística.} Frente ao consenso das 300 releases da
     amostra-ouro, cada versão da heurística é avaliada com precisão, recall e F1
     (\texttt{precision\_recall\_fscore\_support} do scikit-learn
@@ -449,6 +481,80 @@ cinco passos.
     testada. O tipo de projeto rotulado alimenta a RQ~06, e a validação sustenta
     o CFR (b) da RQ~03 e a seção de ameaças à validade.
 \end{enumerate}
+
+\subsection{Resultado da validação manual}
+\label{sec:resultado-validacao}
+
+A concordância entre os dois avaliadores foi baixa nas três dimensões
+(Tabela~\ref{tab:kappa}). No tipo do projeto, parte das divergências são erros
+claros de um dos conjuntos de rótulos (bibliotecas como \texttt{keras} e
+\texttt{nuxt} marcadas como ferramenta CLI, e \texttt{three.js} como
+``outro''), o que aponta mais para a qualidade da rotulagem do que para
+ambiguidade do critério. Na release corretiva, o kappa de 0,10 confirma que o
+critério é ambíguo: as divergências se concentram em releases que misturam
+correções e funcionalidades novas, nas quais decidir qual é o ``objetivo
+principal'' depende de leitura.
+
+\begin{table}[t]
+  \centering
+  \caption{Concordância entre os dois avaliadores da amostra-ouro (kappa de
+    Fleiss, interpretado pela escala de Landis \& Koch).}
+  \label{tab:kappa}
+  \footnotesize
+  \begin{tabular}{@{}lrrrrl@{}}
+    \toprule
+    Dimensão & Itens & Divergências & Concordância & Kappa & Interpretação \\
+    \midrule
+    Tipo do projeto & 60 & 41 & 31,7\% & $-0{,}03$ & pobre \\
+    Entregas reais & 60 & 19 & 68,3\% & $-0{,}13$ & pobre \\
+    Release corretiva & 300 & 123 & 59,0\% & $0{,}10$ & leve \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+As 183 divergências passaram pelo desempate. O terceiro avaliador ficou com o
+rótulo do mesmo avaliador em 182 dos 183 casos. Como ele recebeu o mesmo
+material usado na rotulagem desse avaliador, o consenso ficou muito próximo dos
+rótulos dele, e a referência usada na avaliação da heurística não é tão
+independente quanto o protocolo previa; tratamos isso como ameaça à validade. O
+consenso tem 107 releases corretivas entre as 300; 24 repositórios do tipo
+aplicação/serviço, 21 biblioteca/framework, 11 ferramenta CLI e 4 outro; e 58 dos
+60 repositórios com releases que representam entregas reais.
+
+A Tabela~\ref{tab:heuristica} mostra o desempenho de cada versão da heurística
+de release corretiva contra o consenso. As versões baseadas em mensagens de
+commit erram muito porque quase toda release tem algum commit de correção no
+meio; a v1 (só patch) chega ao melhor recall entre as originais, mas marca como
+corretivas muitas releases de patch que trazem funcionalidade nova. Antes da v6
+testamos ainda regras exploratórias que usam só os commits: patch sem commit
+\texttt{feat:} (F1 = 0,66), patch com pelo menos tantos commits de correção
+quanto de funcionalidade (0,66), patch até 7 dias depois da release anterior
+(0,57) e
+patch com até 50 commits (0,54); a lista completa está no README do
+repositório. A v6, que olha as release notes, foi a única a passar de 0,70
+(F1 = 0,72). Como ela foi
+definida depois de examinar os erros nesses mesmos 300 casos, o valor tende a ser
+otimista: separando os 60 repositórios em metades, o F1 variou entre 0,64 e 0,79.
+
+\begin{table}[t]
+  \centering
+  \caption{Versões testadas da heurística de release corretiva contra o
+    consenso das 300 releases da amostra-ouro (107 corretivas).}
+  \label{tab:heuristica}
+  \footnotesize
+  \begin{tabular}{@{}llrrr@{}}
+    \toprule
+    Versão & Regra & Precisão & Recall & F1 \\
+    \midrule
+    v1 & patch & 0,48 & 0,86 & 0,62 \\
+    v2 & mensagens & 0,36 & 0,83 & 0,50 \\
+    v3 & patch \emph{e} mensagens & 0,51 & 0,74 & 0,60 \\
+    v4 & patch \emph{ou} mensagens & 0,36 & 0,95 & 0,53 \\
+    v5 & patch e maioria de commits de correção & 0,68 & 0,25 & 0,37 \\
+    \textbf{v6} & \textbf{patch e release notes de correção} & \textbf{0,67} & \textbf{0,78} & \textbf{0,72} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 % ---------------------------------------------------------------------------
 % Seções a serem desenvolvidas nas próximas sprints (Lab03S03 e entrega final).
