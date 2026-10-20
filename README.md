@@ -329,7 +329,7 @@ e a classificação em C1, C2 e C3 (colunas no dicionário de dados).
 
 ## Análises (Issues #17 e #18)
 
-Cada análise é um script que lê os CSVs de `data/` e grava tabelas, gráfico e
+Cada análise é um script que lê os CSVs de `data/` e grava tabelas, gráficos e
 um resumo em markdown em `analises/resultados/`:
 
 ```bash
@@ -337,16 +337,25 @@ python -m analises.rq07_sensibilidade
 python -m analises.rq08_rework
 ```
 
-- **RQ 07** (`rq07_sensibilidade.py`): distribuição da classe geral em cada
-  combinação; para cada par (C1×C2, C1×C3, C2×C3) e cada métrica, a % de
+Os resumos de cada métrica trazem média, mediana, moda, quartis e IQR
+(`analises/comum.py`). As métricas são muito assimétricas, então a mediana é o
+valor principal; a média e a moda entram como complemento. Em dado contínuo, em
+que nenhum valor se repete, a moda fica vazia.
+
+- **RQ 07** (`rq07_sensibilidade.py`): distribuição e moda da classe geral em
+  cada combinação; para cada par (C1×C2, C1×C3, C2×C3) e cada métrica, a % de
   repositórios que mudam de classe e o kappa de Cohen ponderado
   (`cohen_kappa_score(..., weights="linear")`); as matrizes de transição; e o
   efeito de trocar um fator de cada vez em relação à C1 (unidade, lead time ou
-  CFR).
+  CFR). Gráficos: matrizes de transição (`rq07_transicoes.png`) e barras da
+  classe geral por combinação com boxplot da frequência por unidade
+  (`rq07_classes_e_unidades.png`).
 - **RQ 08** (`rq08_rework.py`): rework rate de cada repositório
   (`releases_corretivas ÷ releases_janela`, com a mesma heurística do CFR (b)),
-  mediana e IQR, e a comparação com o CFR (b): Spearman, Wilcoxon pareado e
-  diferença pareada.
+  média, mediana, moda e IQR, e a comparação com o CFR (b): Spearman, Wilcoxon
+  pareado e diferença pareada. Gráficos: histograma das duas métricas com média,
+  mediana e moda (`rq08_distribuicao.png`) e dispersão rework rate × CFR (b)
+  (`rq08_rework_x_cfr_b.png`).
 
 ## Saídas
 
