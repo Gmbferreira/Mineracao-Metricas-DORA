@@ -44,6 +44,8 @@ Opções:
 | `--config caminho` | Arquivo de configuração (padrão: `config.yaml`) |
 | `--etapas lista` | Etapas a executar, separadas por vírgula (padrão: `selecao,coleta,metricas`). Ex.: `--etapas coleta,metricas` reaproveita a `data/amostra.csv` existente |
 | `--limite-repos N` | Coleta e métricas só dos N primeiros repositórios da amostra (útil para testar) |
+| `--amostra caminho` | CSV com os repositórios da coleta e das métricas (padrão: `data/amostra.csv`); serve para rodar uma subamostra |
+| `--saida pasta` | Pasta onde gravar `dataset.csv`, `releases.csv`, `variantes.csv` e `dataset_meta.json` (padrão: `data`) |
 | `--paralelo N` | Quantos repositórios são coletados ao mesmo tempo (padrão: 4). Dentro de cada um, os meses de runs e os compares também rodam em paralelo, com no máximo 3 requisições por vez. Use `1` para coleta sequencial |
 | `--smoke` | Teste de fumaça da seleção: 20 candidatos, alvo de 3 qualificados |
 | `--max-candidatos N` | Limite de candidatos escaneados nesta execução |
@@ -58,6 +60,62 @@ específicos (gravados em `data/checkpoints/meta.json`); mudou a configuração,
 use `--reiniciar`. Na coleta, cada repositório terminado vira um arquivo em
 `data/coleta/`; rodar de novo pula os que já estão lá e tenta outra vez os que
 deram erro.
+
+## Replicação em uma subamostra (Issue #21)
+
+Para o grupo que vai replicar o estudo em 30 repositórios do nosso dataset. Não
+é preciso refazer a seleção: a subamostra sai da nossa amostra final
+(`data/amostra.csv`), e os nossos valores para os mesmos repositórios estão em
+`data/dataset.csv` e `data/variantes.csv`.
+
+1. Clone o repositório e instale as dependências (Python 3.12):
+
+   ```bash
+   git clone https://github.com/Gmbferreira/Mineracao-Metricas-DORA.git
+   cd Mineracao-Metricas-DORA
+   python -m venv .venv
+   source .venv/bin/activate        # no Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+   No Windows, clone numa pasta de caminho curto (por exemplo `C:\rep`). Um
+   arquivo do scikit-learn passa de 260 caracteres dentro de `.venv` quando o
+   caminho é longo, e o `pip install` falha com "Long Path support".
+
+2. Defina o token do GitHub (não precisa de escopo especial, os repositórios
+   são públicos): `export GITHUB_TOKEN=ghp_...`, ou no PowerShell
+   `$env:GITHUB_TOKEN = "ghp_..."`.
+
+3. Sorteie os 30 repositórios (semente fixa, o resultado é sempre o mesmo):
+
+   ```bash
+   python -m pipeline.subamostra --n 30 --semente 42 --max-runs 20000 --saida replicacao/amostra_30.csv
+   ```
+
+   O `--max-runs 20000` deixa de fora os repositórios com mais de 20 mil
+   workflow runs na janela (31 dos 300). Sem ele, a semente 42 sorteia, por
+   exemplo, o `openclaw/openclaw`, que sozinho tem 414 mil runs e consome horas
+   da cota de 5.000 chamadas REST por hora. Com o filtro, a coleta dos 30
+   repositórios leva por volta de uma a duas horas; sem ele, pode passar de seis.
+
+4. Rode a coleta e as métricas só para a subamostra, gravando os resultados em
+   outra pasta para não sobrescrever os nossos:
+
+   ```bash
+   python -m pipeline --config config.yaml --etapas coleta,metricas --amostra replicacao/amostra_30.csv --saida replicacao
+   ```
+
+   Se a execução parar (cota, rede ou `Ctrl+C`), é só rodar o mesmo comando:
+   ela continua de onde parou.
+
+5. Compare `replicacao/dataset.csv` e `replicacao/variantes.csv` com as linhas
+   dos mesmos repositórios em `data/dataset.csv` e `data/variantes.csv`. As
+   colunas estão em [`data/DICIONARIO.md`](data/DICIONARIO.md).
+
+Diferenças pequenas são esperadas: releases e tags podem ter sido apagadas ou
+reescritas depois da nossa coleta, e os quartis (`quartil_*`) são calculados
+sobre os repositórios do próprio CSV, então mudam numa subamostra de 30. A janela
+de observação é fixa (`config.yaml`), por isso commits e runs novos não entram.
 
 ## Cache, rate limit e resiliência (Issue #2)
 
