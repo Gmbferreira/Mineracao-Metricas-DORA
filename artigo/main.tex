@@ -570,8 +570,21 @@ otimista: separando os 60 repositórios em metades, o F1 variou entre 0,64 e 0,7
 As três combinações da Seção~\ref{sec:variantes} foram calculadas para os 300
 repositórios. Trocar a unidade de deploy aumenta o número de entregas: a mediana
 por repositório passa de 27 releases na janela para 34 releases e pré-releases
-e 47 tags, e nenhum repositório tem menos tags que releases. A frequência de
-deploy mediana sobe de 0,52 para 0,65 e 0,90 por semana.
+e 47 tags, e nenhum repositório tem menos tags que releases. As médias (71, 92 e
+175) ficam muito acima das medianas, puxadas por poucos repositórios com
+centenas de unidades (o \texttt{pytorch/pytorch} tem 9.674 tags), e a moda das
+releases é 5, o mínimo exigido pelo filtro E3 (14 repositórios). Por isso a
+comparação usa a mediana. A frequência de deploy mediana sobe de 0,52 para 0,65
+e 0,90 por semana (Figura~\ref{fig:rq07-unidades}b).
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/rq07_classes_e_unidades.png}
+  \caption{RQ 07: (a) proporção de repositórios em cada classe geral nas três
+    combinações; (b) frequência de deploy por unidade, com a mediana (linha) e a
+    média (triângulo); as linhas pontilhadas são os cortes das faixas DORA.}
+  \label{fig:rq07-unidades}
+\end{figure}
 
 A Tabela~\ref{tab:rq07} resume as comparações: para cada par de combinações, a
 proporção de repositórios que mudam de classe geral e o kappa de Cohen
@@ -582,8 +595,9 @@ ponderado \cite{cohen1968}, calculado com
 concordância moderada a substancial pela escala de Landis \& Koch
 \cite{landis1977}. Nove em cada dez mudanças são para uma faixa vizinha
 (Figura~\ref{fig:rq07}). A C2 é a mais severa: em relação à C1, 22\% dos
-repositórios descem de classe e 7\% sobem. A C3 é a mais generosa: 17\% sobem e
-5\% descem.
+repositórios descem de classe e 7\% sobem, e a classe mais comum (moda) passa de
+High para Medium. A C3 é a mais generosa: 17\% sobem e 5\% descem, e a moda
+continua High (Figura~\ref{fig:rq07-unidades}a).
 
 \begin{table}[t]
   \centering
@@ -640,8 +654,14 @@ pré-releases muda só 6\%.
 A \emph{rework rate} de cada repositório é a proporção das releases da janela
 que a heurística v6 marca como corretivas, a mesma usada no CFR (b). Somando a
 amostra, 11.199 das 21.203 releases foram marcadas como corretivas. Por
-repositório, a mediana foi de 48\%, mais que o dobro da do CFR (b)
-(Tabela~\ref{tab:rq08}). Nos 299 repositórios que têm as duas
+repositório, a \emph{rework rate} tem média de 0,49 e mediana de 0,48, mais que
+o dobro das do CFR (b), de 0,28 e 0,22 (Tabela~\ref{tab:rq08}). Nas duas
+métricas a moda é 0: 18 repositórios não tiveram nenhuma release corretiva, e
+52 não tiveram nenhuma release corrigida em até 7 dias. A forma das
+distribuições também difere (Figura~\ref{fig:rq08}): a \emph{rework rate} se
+espalha por quase toda a faixa de 0 a 1, com média e mediana quase iguais, e o
+CFR (b) se concentra perto de zero, com uma cauda à direita que puxa a média
+para cima da mediana. Nos 299 repositórios que têm as duas
 métricas\footnote{No \texttt{expo/expo}, as 267 releases da janela saíram nos
 últimos 7 dias e ficaram todas censuradas no CFR (b).}, a \emph{rework rate}
 foi maior em 86\% dos casos (Wilcoxon pareado, $p < 0{,}001$), e a correlação
@@ -653,16 +673,24 @@ entre as duas é moderada (Spearman $\rho = 0{,}57$, $p < 0{,}001$).
     pareada entre as duas.}
   \label{tab:rq08}
   \footnotesize
-  \begin{tabular}{@{}lrrrr@{}}
+  \begin{tabular}{@{}lrrrrrr@{}}
     \toprule
-    Métrica & Repositórios & Mediana & Q1 & Q3 \\
+    Métrica & Repositórios & Média & Mediana & Moda & Q1 & Q3 \\
     \midrule
-    \emph{Rework rate} & 300 & 0,48 & 0,28 & 0,70 \\
-    CFR (b) & 299 & 0,22 & 0,08 & 0,44 \\
-    Diferença (\emph{rework rate} $-$ CFR (b)) & 299 & 0,12 & 0,02 & 0,33 \\
+    \emph{Rework rate} & 300 & 0,49 & 0,48 & 0 & 0,28 & 0,70 \\
+    CFR (b) & 299 & 0,28 & 0,22 & 0 & 0,08 & 0,44 \\
+    Diferença (\emph{rework rate} $-$ CFR (b)) & 299 & 0,21 & 0,12 & 0 & 0,02 & 0,33 \\
     \bottomrule
   \end{tabular}
 \end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/rq08_distribuicao.png}
+  \caption{RQ 08: distribuição da \emph{rework rate} e do CFR (b) por
+    repositório, com a mediana, a média e a moda.}
+  \label{fig:rq08}
+\end{figure}
 
 A diferença está no que cada uma conta. O CFR (b) atribui a falha à release
 que foi corrigida, e só quando a correção sai em até 7 dias na mesma linha. A
@@ -754,6 +782,9 @@ as adaptadas para a disciplina, não os agrupamentos anuais do DORA.
 
 \textbf{Validade de conclusão.} Com 300 repositórios, correlações fracas já
 saem significativas, por isso discutimos o valor de $\rho$ e não só o p-valor.
+As métricas são muito assimétricas (nas tags, média de 175 por repositório
+contra mediana de 47), e por isso as comparações usam mediana, IQR e testes não
+paramétricos, com a média e a moda reportadas como complemento.
 Na RQ~06, as muitas comparações entre subgrupos aumentam a chance de falso
 positivo; os p-valores são ajustados por Holm e o tamanho de efeito é
 reportado, mas alguns subgrupos são pequenos: só 8 das 23 linguagens têm mais
