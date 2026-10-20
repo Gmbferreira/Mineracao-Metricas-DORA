@@ -76,7 +76,8 @@ def coletar_repo(cliente, cfg, nome, default_branch, paralelo=1):
 def completar_variantes(cliente, cfg, dados):
     """Pre-releases e tags (unidades de deploy da RQ 07), junto do resto da coleta."""
     resultado = variantes.coletar_variantes(
-        cliente, dados["full_name"], cfg.janela_inicio, cfg.janela_fim, dados
+        cliente, dados["full_name"], cfg.janela_inicio, cfg.janela_fim, dados,
+        paralelo=PARALELO_INTERNO,
     )
     dados.setdefault("notas", {}).update(resultado.pop("notas"))
     dados["variantes"] = resultado

@@ -1,4 +1,5 @@
 import datetime as dt
+from concurrent.futures import ThreadPoolExecutor
 
 from metricas.comum import para_datetime
 from pipeline import notas, releases
@@ -91,15 +92,17 @@ def _sozinho(cliente, nome, base, head):
     return resultado
 
 
-def commits_em_lote(cliente, nome, pares, tamanho=TAMANHO_DO_LOTE):
+def commits_em_lote(cliente, nome, pares, tamanho=TAMANHO_DO_LOTE, paralelo=1):
     """Commits de varios compares numa so consulta GraphQL.
 
-    Uma consulta com ate `tamanho` compares custa cerca de 1 ponto da cota. Compare
-    com mais de 100 commits, tag apagada ou erro sai pelo caminho normal
-    (`releases.buscar_commits`), que completa pelo REST quando preciso.
+    Uma consulta com ate `tamanho` compares custa bem menos cota que uma por
+    compare. Compare com mais de 100 commits, tag apagada ou erro sai pelo
+    caminho normal (`releases.buscar_commits`), que completa pelo REST quando
+    preciso; esses ficam para o fim e rodam ate `paralelo` de cada vez.
     """
     dono, repositorio = nome.split("/", 1)
     resultados = {}
+    sozinhos = []
     pendentes = [list(pares[i:i + tamanho]) for i in range(0, len(pares), tamanho)]
     while pendentes:
         lote = pendentes.pop()
@@ -117,12 +120,12 @@ def commits_em_lote(cliente, nome, pares, tamanho=TAMANHO_DO_LOTE):
                 metade = len(lote) // 2
                 pendentes += [lote[:metade], lote[metade:]]
             else:
-                resultados[lote[0]] = _sozinho(cliente, nome, *lote[0])
+                sozinhos.append(lote[0])
             continue
         for i, par in enumerate(lote):
             comparacao = (repo.get(f"c{i}") or {}).get("compare")
             if not comparacao or comparacao["commits"]["pageInfo"]["hasNextPage"]:
-                resultados[par] = _sozinho(cliente, nome, *par)
+                sozinhos.append(par)
                 continue
             pagina = comparacao["commits"]
             resultados[par] = {
@@ -132,6 +135,9 @@ def commits_em_lote(cliente, nome, pares, tamanho=TAMANHO_DO_LOTE):
                             for no in pagina["nodes"]],
                 "truncado": False,
             }
+    with ThreadPoolExecutor(max_workers=max(1, paralelo)) as executor:
+        feitos = executor.map(lambda par: _sozinho(cliente, nome, *par), sozinhos)
+        resultados.update(zip(sozinhos, feitos))
     return resultados
 
 
@@ -153,7 +159,7 @@ def _avaliadas(pares, ja_coletados, novos):
     return lista
 
 
-def coletar_variantes(cliente, nome, inicio, fim, dados):
+def coletar_variantes(cliente, nome, inicio, fim, dados, paralelo=1):
     """Unidades de deploy da RQ 07: release + pre-release e tag.
 
     Reaproveita os compares que ja estao em `dados["avaliadas"]` (pares iguais
@@ -173,7 +179,7 @@ def coletar_variantes(cliente, nome, inicio, fim, dados):
         chave = (anterior["tag_name"], unidade["tag_name"])
         if chave not in ja_coletados and chave not in faltam:
             faltam.append(chave)
-    novos = commits_em_lote(cliente, nome, faltam)
+    novos = commits_em_lote(cliente, nome, faltam, paralelo=paralelo)
     sem_notas = [unidade["tag_name"] for _, unidade in pares_pre
                  if unidade["tag_name"] not in dados.get("notas", {})]
     notas_novas = notas.coletar_notas(cliente, nome, inicio, sem_notas) if sem_notas else {}

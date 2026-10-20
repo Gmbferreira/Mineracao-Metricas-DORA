@@ -151,6 +151,18 @@ def test_compare_grande_tag_apagada_e_lote_unitario_falho_vao_pelo_caminho_norma
     assert sozinho == [("v1", "v2")]
 
 
+def test_compares_grandes_em_paralelo_dao_o_mesmo_resultado(sozinho):
+    compares = {(f"v{i}", f"v{i + 1}"): ["2026-01-01T00:00:00Z"] for i in range(6)}
+    grandes = [("v1", "v2"), ("v3", "v4"), ("v5", "v6")]
+    em_serie = variantes.commits_em_lote(ClienteCompares(compares, grandes=grandes), "o/r", list(compares))
+    chamados_em_serie = sorted(sozinho)
+    sozinho.clear()
+    em_paralelo = variantes.commits_em_lote(ClienteCompares(compares, grandes=grandes), "o/r",
+                                            list(compares), paralelo=3)
+    assert em_paralelo == em_serie
+    assert sorted(sozinho) == chamados_em_serie == sorted(grandes)
+
+
 class ClienteVariantes(ClienteCompares):
     """Responde a tags, compares em lote e release notes."""
 
