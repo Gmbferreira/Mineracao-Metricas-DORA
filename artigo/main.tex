@@ -104,9 +104,11 @@ deploy \textbf{(RQ~02)}, a taxa de falha das mudanças entregues
 \textbf{RQ~05} investiga a relação entre velocidade e estabilidade, a
 \textbf{RQ~06} busca características de repositório associadas a melhor
 desempenho e a \textbf{RQ~07} quantifica o quanto as conclusões dependem da
-definição operacional adotada (\emph{análise de sensibilidade}). As hipóteses
-informais que orientam cada questão, formuladas antes de qualquer análise dos
-dados, são apresentadas na Seção~\ref{sec:hipoteses}.
+definição operacional adotada (\emph{análise de sensibilidade}). Como bônus, a
+\textbf{RQ~08} calcula a \emph{rework rate}, a quinta métrica do DORA, e a
+compara com o CFR (b). As hipóteses informais que orientam as sete questões,
+formuladas antes de qualquer análise dos dados, são apresentadas na
+Seção~\ref{sec:hipoteses}.
 
 As contribuições esperadas são: (i) um pipeline próprio de coleta e cálculo das
 métricas DORA para projetos open-source; (ii) um retrato descritivo do
@@ -556,20 +558,75 @@ otimista: separando os 60 repositórios em metades, o F1 variou entre 0,64 e 0,7
   \end{tabular}
 \end{table}
 
-% ---------------------------------------------------------------------------
-% Seções a serem desenvolvidas nas próximas sprints (Lab03S03 e entrega final).
-% Mantidas aqui como esqueleto, propositalmente vazias nesta entrega.
-% ---------------------------------------------------------------------------
-% \section{Resultados}
-%   \subsection{RQ 01 a RQ 04 e classificação DORA de referência}
-%   \subsection{RQ 05 e RQ 06}
-%   \subsection{RQ 07 --- análise de sensibilidade}
-%
-% \section{Discussão}
-%
-% \section{Ameaças à Validade}
-%
-% \section{Replicação Cruzada}
+\section{Resultados}
+\label{sec:resultados}
+
+% RQ 01 a RQ 04 e classificação DORA de referência (C1): Issue #19.
+% RQ 05 e RQ 06: Issue #19.
+
+\subsection{RQ 07 --- Análise de sensibilidade}
+\label{sec:rq07}
+
+% Preenchida com data/variantes.csv completo.
+
+\subsection{RQ 08 --- \emph{Rework rate}}
+\label{sec:rq08}
+
+A \emph{rework rate} de cada repositório é a proporção das releases da janela
+que a heurística v6 marca como corretivas, a mesma usada no CFR (b). Somando a
+amostra, 11.199 das 21.203 releases foram marcadas como corretivas. Por
+repositório, a mediana foi de 48\%, mais que o dobro da do CFR (b)
+(Tabela~\ref{tab:rq08}). Nos 299 repositórios que têm as duas
+métricas\footnote{No \texttt{expo/expo}, as 267 releases da janela saíram nos
+últimos 7 dias e ficaram todas censuradas no CFR (b).}, a \emph{rework rate}
+foi maior em 86\% dos casos (Wilcoxon pareado, $p < 0{,}001$), e a correlação
+entre as duas é moderada (Spearman $\rho = 0{,}57$, $p < 0{,}001$).
+
+\begin{table}[t]
+  \centering
+  \caption{\emph{Rework rate} e CFR (b) por repositório, com a diferença
+    pareada entre as duas.}
+  \label{tab:rq08}
+  \footnotesize
+  \begin{tabular}{@{}lrrrr@{}}
+    \toprule
+    Métrica & Repositórios & Mediana & Q1 & Q3 \
+    \midrule
+    \emph{Rework rate} & 300 & 0,48 & 0,28 & 0,70 \
+    CFR (b) & 299 & 0,22 & 0,08 & 0,44 \
+    Diferença (\emph{rework rate} $-$ CFR (b)) & 299 & 0,12 & 0,02 & 0,33 \
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+A diferença está no que cada uma conta. O CFR (b) atribui a falha à release
+que foi corrigida, e só quando a correção sai em até 7 dias na mesma linha. A
+\emph{rework rate} conta a própria release corretiva, sem prazo, e inclui
+patches de defeitos antigos: das 11.199 releases corretivas, só 7.978 (71\%)
+entram no CFR (b). O CFR (b) também deixa de fora as releases dos últimos 7
+dias da janela, e é isso que o coloca acima da \emph{rework rate} nos 20
+repositórios em que ele ficou maior. As duas herdam o erro da heurística: na
+amostra-ouro, a v6 marcou 123 releases como corretivas, contra 107 do consenso,
+então a \emph{rework rate} deve estar cerca de 15\% acima do valor real. Por
+fim, o DORA define retrabalho como o deploy não planejado feito para corrigir
+um problema em produção \cite{doraguide}, e a heurística não separa um patch de
+emergência de um patch de manutenção programado.
+
+\section{Discussão}
+\label{sec:discussao}
+
+% Hipóteses x resultados das RQ 01 a RQ 06: Issue #19.
+
+% RQ 07: preenchida junto com a Seção sec:rq07.
+
+\textbf{RQ 08.} Não registramos hipótese para a RQ~08, que entrou como bônus.
+O resultado mostra que \emph{rework rate} e CFR (b) não são intercambiáveis:
+a primeira mede quanto da entrega é correção, e o segundo, quantas entregas
+precisaram de correção logo em seguida (Seção~\ref{sec:rq08}).
+
+% \section{Ameaças à Validade}: Issue #25.
+
+% \section{Replicação Cruzada}: Issue #26.
 
 % ---------------------------------------------------------------------------
 % Link do repositório e do GitHub Projects do grupo (exigido pela disciplina).
