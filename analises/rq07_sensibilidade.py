@@ -17,8 +17,11 @@ import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 from sklearn.metrics import cohen_kappa_score  # noqa: E402
 
+from matplotlib.ticker import FuncFormatter  # noqa: E402
+
 from analises.comum import (  # noqa: E402
-    DIR_DADOS, DIR_RESULTADOS, ORDEM_CLASSES, garantir_pasta, resumo, tabela_markdown,
+    CORES, DIR_DADOS, DIR_RESULTADOS, ORDEM_CLASSES, TINTA, TINTA_SECUNDARIA, eixo_limpo,
+    garantir_pasta, moda, resumo, tabela_markdown, virgula,
 )
 from metricas import classificacao  # noqa: E402
 
@@ -37,12 +40,14 @@ FATORES = (
 
 
 def distribuicao(variantes):
+    """Proporcao de cada classe geral e a classe mais comum (moda) em cada combinacao."""
     linhas = []
     for combinacao in COMBINACOES:
         classes = variantes[f"classe_geral_{combinacao}"].dropna()
         linha = {"combinacao": combinacao.upper(), "n": int(len(classes))}
         for classe in CLASSES:
             linha[classe] = float((classes == classe).mean()) if len(classes) else None
+        linha["moda"] = moda(classes)
         linhas.append(linha)
     return pd.DataFrame(linhas)
 
@@ -114,6 +119,62 @@ def unidades(variantes):
     return pd.DataFrame(linhas)
 
 
+def grafico_classes_e_unidades(variantes, caminho):
+    """(a) barras agrupadas da classe geral por combinacao; (b) boxplot da
+    frequencia de deploy em cada unidade, com a media marcada."""
+    figura, (barras, caixas) = plt.subplots(1, 2, figsize=(7.5, 2.9),
+                                            gridspec_kw={"width_ratios": [1.2, 1]})
+    largura = 0.27
+    for i, combinacao in enumerate(COMBINACOES):
+        classes = variantes[f"classe_geral_{combinacao}"].dropna()
+        if classes.empty:
+            continue
+        proporcoes = [100 * float((classes == classe).mean()) for classe in CLASSES]
+        posicoes = [x + (i - 1) * largura for x in range(len(CLASSES))]
+        retangulos = barras.bar(posicoes, proporcoes, width=largura, color=CORES[i],
+                                edgecolor="white", linewidth=1, label=combinacao.upper())
+        for retangulo, valor in zip(retangulos, proporcoes):
+            barras.text(retangulo.get_x() + retangulo.get_width() / 2, valor + 1, f"{valor:.0f}",
+                        ha="center", va="bottom", fontsize=5.5, color=TINTA_SECUNDARIA)
+    barras.set_xticks(range(len(CLASSES)), CLASSES)
+    barras.set_ylabel("% dos repositórios", fontsize=7.5, color=TINTA)
+    barras.set_title("(a) Classe geral em cada combinação", fontsize=8, color=TINTA)
+    barras.legend(frameon=False, fontsize=7, labelcolor=TINTA)
+    eixo_limpo(barras)
+
+    rotulos = {"release": "release", "release_pre": "release +\npré-release", "tag": "tag"}
+    presentes = [u for u in UNIDADES if f"deployment_frequency_{u}" in variantes]
+    dados = [variantes[f"deployment_frequency_{u}"].dropna() for u in presentes]
+    caixas.boxplot(
+        dados, widths=0.45, showmeans=True, patch_artist=True,
+        boxprops={"facecolor": "#cde2fb", "edgecolor": CORES[0], "linewidth": 0.8},
+        whiskerprops={"color": CORES[0], "linewidth": 0.8},
+        capprops={"color": CORES[0], "linewidth": 0.8},
+        medianprops={"color": TINTA, "linewidth": 1.4},
+        meanprops={"marker": "^", "markerfacecolor": CORES[1], "markeredgecolor": "white",
+                   "markersize": 6},
+        flierprops={"marker": "o", "markersize": 2.5, "markerfacecolor": "none",
+                    "markeredgecolor": TINTA_SECUNDARIA, "alpha": 0.6},
+    )
+    caixas.set_xticks(range(1, len(presentes) + 1), [rotulos[u] for u in presentes])
+    caixas.set_yscale("log")
+    caixas.yaxis.set_major_formatter(FuncFormatter(virgula))
+    for valor, nome in ((7, "Elite"), (1, "High"), (1 / 4.35, "Medium")):
+        caixas.axhline(valor, color=TINTA_SECUNDARIA, linewidth=0.6, linestyle=":")
+        caixas.text(len(presentes) + 0.48, valor * 1.08, nome, fontsize=5.5, va="bottom",
+                    ha="right", color=TINTA_SECUNDARIA)
+    caixas.set_ylabel("deploys por semana (log)", fontsize=7.5, color=TINTA)
+    caixas.set_title("(b) Frequência de deploy por unidade", fontsize=8, color=TINTA)
+    caixas.plot([], [], color=TINTA, linewidth=1.4, label="mediana")
+    caixas.plot([], [], linestyle="none", marker="^", markerfacecolor=CORES[1],
+                markeredgecolor="white", markersize=6, label="média")
+    caixas.legend(frameon=False, fontsize=6.5, loc="upper left", labelcolor=TINTA)
+    eixo_limpo(caixas)
+    figura.tight_layout()
+    figura.savefig(caminho, dpi=200)
+    plt.close(figura)
+
+
 def grafico(variantes, caminho):
     # tamanho pensado para a largura do texto no artigo (cerca de 15 cm)
     figura, eixos = plt.subplots(1, len(PARES), figsize=(7.5, 2.7))
@@ -156,6 +217,7 @@ def main(argv=None):
     for a, b in PARES:
         transicoes(variantes, a, b).to_csv(os.path.join(pasta, f"rq07_transicoes_{a}_{b}.csv"))
     grafico(variantes, os.path.join(pasta, "rq07_transicoes.png"))
+    grafico_classes_e_unidades(variantes, os.path.join(pasta, "rq07_classes_e_unidades.png"))
 
     texto = ("# RQ 07 - Sensibilidade\n\n## Distribuicao da classe geral\n\n" + tabela_markdown(dist)
              + "\n## Pares de combinacoes\n\n" + tabela_markdown(pares)

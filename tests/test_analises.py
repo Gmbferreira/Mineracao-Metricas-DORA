@@ -4,10 +4,22 @@ import pytest
 from analises import comum, rq08_rework as rq08
 
 
-def test_resumo_mediana_e_iqr():
+def test_resumo_media_mediana_e_iqr():
     resultado = comum.resumo(pd.Series([1.0, 2.0, 3.0, 4.0, None]))
-    assert resultado == {"n": 4, "mediana": 2.5, "q1": 1.75, "q3": 3.25, "iqr": 1.5}
+    assert resultado == {"n": 4, "media": 2.5, "mediana": 2.5, "moda": None,
+                         "q1": 1.75, "q3": 3.25, "iqr": 1.5}
     assert comum.resumo(pd.Series([], dtype=float))["mediana"] is None
+
+
+def test_moda():
+    # cauda longa: a media sai de perto da mediana, e a moda fica no valor que mais se repete
+    resultado = comum.resumo(pd.Series([0.0, 0.0, 0.0, 1.0, 2.0, 30.0]))
+    assert resultado["moda"] == 0.0
+    assert resultado["mediana"] == 0.5
+    assert resultado["media"] == pytest.approx(5.5)
+    assert comum.moda(pd.Series([3, 3, 1, 1, 2])) == 1  # empate: fica o menor
+    assert comum.moda(pd.Series(["High", "Medium", "High", None])) == "High"
+    assert comum.moda(pd.Series([1.5, 2.5])) is None
 
 
 def test_tabela_markdown():
@@ -44,7 +56,7 @@ def test_rq08_main_grava_resultados(dataset, tmp_path, capsys):
     dataset.to_csv(arquivo, index=False)
     rq08.main(["--dataset", str(arquivo), "--saida", str(tmp_path / "saida")])
     for nome in ("rq08_rework_por_repositorio.csv", "rq08_resumo.csv", "rq08_comparacao.csv",
-                 "rq08_rework_x_cfr_b.png", "rq08.md"):
+                 "rq08_rework_x_cfr_b.png", "rq08_distribuicao.png", "rq08.md"):
         assert (tmp_path / "saida" / nome).exists()
     resumos = pd.read_csv(tmp_path / "saida" / "rq08_resumo.csv").set_index("metrica")
     assert resumos.loc["rework_rate - cfr_b", "n"] == 3

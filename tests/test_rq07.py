@@ -28,6 +28,7 @@ def test_distribuicao_das_classes(variantes):
     assert dist.loc["C2", "n"] == 4
     assert dist.loc["C1", "High"] == pytest.approx(0.4)
     assert dist.loc["C3", "Elite"] == pytest.approx(0.25)
+    assert dist.loc["C1", "moda"] == "High"
 
 
 def test_comparar_par(variantes):
@@ -104,6 +105,7 @@ def test_rq07_main_grava_resultados(variantes, tmp_path, capsys):
     variantes.to_csv(arquivo, index=False)
     rq07.main(["--variantes", str(arquivo), "--saida", str(tmp_path / "saida")])
     for nome in ("rq07_distribuicao.csv", "rq07_pares.csv", "rq07_unidades.csv", "rq07_fatores.csv",
-                 "rq07_transicoes_c1_c2.csv", "rq07_transicoes.png", "rq07.md"):
+                 "rq07_transicoes_c1_c2.csv", "rq07_transicoes.png", "rq07_classes_e_unidades.png",
+                 "rq07.md"):
         assert (tmp_path / "saida" / nome).exists()
     assert "Sensibilidade" in capsys.readouterr().out
