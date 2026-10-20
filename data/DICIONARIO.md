@@ -144,6 +144,44 @@ Uma linha por release da janela (sem draft e sem pré-release).
 | `lead_time_horas` | decimal | horas | lead time (a) da release |
 | `html_url` | texto | — | página da release no GitHub |
 
+## `data/variantes.csv`
+
+Gerado pela etapa `metricas`, para a RQ 07. Uma linha por repositório, com as
+métricas calculadas em cada unidade de deploy e a classificação nas três
+combinações de definições:
+
+| Combinação | Unidade de deploy | Lead time | CFR |
+|---|---|---|---|
+| C1 (referência) | release | (a) | (a) |
+| C2 | release + pré-release | (b) | (b) |
+| C3 | tag | (b) | (a) |
+
+O sufixo `<unidade>` das colunas é uma destas:
+
+- `release`: a mesma unidade de `data/dataset.csv` (`draft = false` e
+  `prerelease = false`);
+- `release_pre`: releases e pré-releases (só `draft = false`). Cada uma é
+  comparada com a anterior pela data de publicação, contando as pré-releases;
+- `tag`: todas as tags do repositório, datadas pelo commit para o qual apontam
+  (`committedDate`; numa tag anotada, o commit apontado por ela). Cada tag é
+  comparada com a anterior pela mesma data.
+
+| Coluna | Tipo | Unidade | Origem / fórmula |
+|---|---|---|---|
+| `full_name` | texto | — | `owner/repo` |
+| `unidades_<unidade>` | inteiro | unidades | unidades de deploy na janela |
+| `deployment_frequency_<unidade>` | decimal | unidades por semana | `unidades_<unidade>` ÷ (365 ÷ 7) |
+| `lead_time_a_<unidade>` | decimal | horas | lead time (a) calculado com essa unidade |
+| `lead_time_b_<unidade>` | decimal | horas | lead time (b) calculado com essa unidade |
+| `cfr_b_release`, `cfr_b_release_pre` | decimal | fração (0 a 1) | CFR (b) com essa unidade. Tag não tem release notes, então não há `cfr_b_tag` |
+| `cfr_a` | decimal | fração (0 a 1) | igual a `data/dataset.csv`; não depende da unidade |
+| `recuperacao_horas` | decimal | horas | igual a `data/dataset.csv`; não depende da unidade |
+| `classe_<metrica>_<combinacao>` | texto | Elite/High/Medium/Low | faixa de `frequencia`, `lead_time`, `cfr` e `recuperacao`, e a classe `geral`, em `c1`, `c2` e `c3` |
+
+As colunas de C1 repetem a classificação de `data/dataset.csv`. As análises da
+RQ 07 e da RQ 08 ficam em `analises/` e gravam os resultados em
+`analises/resultados/` (ver o README).
+
 ## Validação manual (`validacao/`)
 
 **`validacao/amostra_ouro.csv`**: os 60 repositórios sorteados.

@@ -289,6 +289,57 @@ O passo a passo está em [`validacao/README.md`](validacao/README.md): sorteio
 da amostra-ouro com semente fixa, planilha de cada avaliador, consenso e
 avaliação da heurística com precisão, recall e F1.
 
+## Variantes da RQ 07 (Issue #14)
+
+A RQ 07 compara a classificação DORA em três combinações de definições:
+
+| Combinação | Unidade de deploy | Lead time | CFR |
+|---|---|---|---|
+| C1 (referência) | release | (a) | (a) |
+| C2 | release + pré-release | (b) | (b) |
+| C3 | tag | (b) | (a) |
+
+Para isso a etapa `coleta` junta duas unidades de deploy além da release
+(`pipeline/variantes.py`):
+
+- **release + pré-release:** sai da lista de releases já coletada, agora sem
+  tirar as pré-releases. As release notes das pré-releases são buscadas para o
+  CFR (b).
+- **tag:** a lista vem da API GraphQL (`refs` ordenadas pela data do commit),
+  porque o `GET /tags` do REST não traz data. Cada tag é datada pelo commit
+  para o qual aponta, como pede o enunciado.
+
+Os commits de cada par (unidade anterior, unidade) vêm do mesmo `compare` do
+lead time. Os pares que já existiam na release principal são reaproveitados, e
+os novos vão em consultas GraphQL de 25 pares por vez; um par com mais de 100
+commits, ou que volte com erro, é refeito sozinho pelo caminho normal (GraphQL
+e REST). Repositório que já tinha sido coletado recebe só as variantes, sem
+repetir o resto.
+
+A etapa `metricas` grava `data/variantes.csv`, com as métricas de cada unidade
+e a classificação em C1, C2 e C3 (colunas no dicionário de dados).
+
+## Análises (Issues #17 e #18)
+
+Cada análise é um script que lê os CSVs de `data/` e grava tabelas, gráfico e
+um resumo em markdown em `analises/resultados/`:
+
+```bash
+python -m analises.rq07_sensibilidade
+python -m analises.rq08_rework
+```
+
+- **RQ 07** (`rq07_sensibilidade.py`): distribuição da classe geral em cada
+  combinação; para cada par (C1×C2, C1×C3, C2×C3) e cada métrica, a % de
+  repositórios que mudam de classe e o kappa de Cohen ponderado
+  (`cohen_kappa_score(..., weights="linear")`); as matrizes de transição; e o
+  efeito de trocar um fator de cada vez em relação à C1 (unidade, lead time ou
+  CFR).
+- **RQ 08** (`rq08_rework.py`): rework rate de cada repositório
+  (`releases_corretivas ÷ releases_janela`, com a mesma heurística do CFR (b)),
+  mediana e IQR, e a comparação com o CFR (b): Spearman, Wilcoxon pareado e
+  diferença pareada.
+
 ## Saídas
 
 | Arquivo | Conteúdo |
@@ -299,7 +350,9 @@ avaliação da heurística com precisão, recall e F1.
 | `data/dataset.csv` | Dataset final: uma linha por repositório com metadados, quartis, métricas em todas as variantes e a classificação DORA |
 | `data/dataset_meta.json` | Janela, limites dos quartis e versão da heurística usada no CFR (b) |
 | `data/releases.csv` | Uma linha por release avaliada, com o resultado do compare e o lead time (a) |
+| `data/variantes.csv` | Métricas por unidade de deploy e classificação em C1, C2 e C3 (RQ 07) |
 | `data/DICIONARIO.md` | Dicionário de dados de todos os CSVs |
+| `analises/resultados/` | Tabelas, gráficos e resumos das análises da RQ 07 e da RQ 08 |
 | `data/coleta/` | Um JSON por repositório com releases, commits e runs coletados (gitignorado; base para as próximas sprints) |
 | `data/checkpoints/` | JSONL por etapa (gitignorado; permite retomada) |
 | `data/cache/` | Respostas da API em JSON (gitignorado; evita repetir chamadas) |
@@ -326,7 +379,7 @@ pela censura.
 pipeline/
 ├── __main__.py   CLI e orquestração das etapas
 ├── config.py     leitura e validação do config.yaml
-├── cliente.py    cliente HTTP próprio (REST), cache, cota e backoff
+├── cliente.py    cliente HTTP próprio (REST e GraphQL), cache, cota e backoff
 ├── cache.py      cache de respostas da API em JSON
 ├── busca.py      fatiamento por faixas de estrelas e candidatos
 ├── selecao.py    E1 (Actions), E2 (runs de push), E3 (releases)
@@ -334,9 +387,12 @@ pipeline/
 ├── funil.py      tabela do funil (csv e md)
 ├── store.py      checkpoints JSONL e retomada
 ├── releases.py   releases e commits entre releases (compare)
+├── notas.py      release notes (GraphQL)
+├── variantes.py  pré-releases e tags para a RQ 07
 ├── runs.py       workflow runs com divisão da janela por mês
 ├── coleta.py     coleta por repositório da amostra, com retomada
-└── consolidacao.py  dataset.csv, quartis e releases.csv
+├── consolidacao.py  dataset.csv, quartis, releases.csv e variantes.csv
+└── subamostra.py sorteio da subamostra para a replicação
 metricas/
 ├── comum.py      datas e mediana
 ├── frequencia.py deployment frequency
@@ -347,10 +403,16 @@ metricas/
 └── classificacao.py faixas DORA e classificação geral
 validacao/
 ├── sorteio.py    sorteio da amostra-ouro e planilhas de rotulagem
+├── concordancia.py kappa de Fleiss entre os avaliadores
+├── consenso.py   rótulos de consenso depois do desempate
 └── avaliacao.py  precisão, recall e F1 da heurística contra o consenso
+analises/
+├── comum.py      mediana, IQR e tabelas
+├── rq07_sensibilidade.py  RQ 07: mudança de classe e kappa entre C1, C2 e C3
+└── rq08_rework.py RQ 08: rework rate e comparação com o CFR (b)
 tests/            testes unitários com fixtures
 .github/workflows/testes.yml  CI: pytest com cobertura mínima de 80% em metricas/
-artigo/           artigo no template SBC (Introdução e hipóteses)
+artigo/           artigo no template SBC
 ```
 
 ## Artigo
