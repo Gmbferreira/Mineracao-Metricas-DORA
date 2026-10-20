@@ -567,7 +567,72 @@ otimista: separando os 60 repositórios em metades, o F1 variou entre 0,64 e 0,7
 \subsection{RQ 07 --- Análise de sensibilidade}
 \label{sec:rq07}
 
-% Preenchida com data/variantes.csv completo.
+As três combinações da Seção~\ref{sec:variantes} foram calculadas para os 300
+repositórios. Trocar a unidade de deploy aumenta o número de entregas: a mediana
+por repositório passa de 27 releases na janela para 34 releases e pré-releases
+e 47 tags, e nenhum repositório tem menos tags que releases. A frequência de
+deploy mediana sobe de 0,52 para 0,65 e 0,90 por semana.
+
+A Tabela~\ref{tab:rq07} resume as comparações: para cada par de combinações, a
+proporção de repositórios que mudam de classe geral e o kappa de Cohen
+ponderado \cite{cohen1968}, calculado com
+\texttt{cohen\_kappa\_score(..., weights='linear')} do scikit-learn
+\cite{pedregosa2011}, na classe geral e em cada métrica. Na classe geral, entre
+22\% e 31\% dos repositórios mudam de classe, e o kappa fica entre 0,53 e 0,68,
+concordância moderada a substancial pela escala de Landis \& Koch
+\cite{landis1977}. Nove em cada dez mudanças são para uma faixa vizinha
+(Figura~\ref{fig:rq07}). A C2 é a mais severa: em relação à C1, 22\% dos
+repositórios descem de classe e 7\% sobem. A C3 é a mais generosa: 17\% sobem e
+5\% descem.
+
+\begin{table}[t]
+  \centering
+  \caption{RQ 07: repositórios que mudam de classe geral e kappa ponderado entre
+    as combinações (acima) e trocando um fator da C1 de cada vez (abaixo). O
+    tempo de recuperação é igual nas três combinações.}
+  \label{tab:rq07}
+  \footnotesize
+  \begin{tabular}{@{}lrrrrrrrr@{}}
+    \toprule
+    & & \multicolumn{4}{c}{Classe geral} & \multicolumn{3}{c}{Kappa por métrica} \\
+    \cmidrule(lr){3-6} \cmidrule(l){7-9}
+    Comparação & $n$ & Mudou & Subiu & Desceu & Kappa & Freq. & \emph{Lead time} & CFR \\
+    \midrule
+    C1 $\times$ C2 & 300 & 29\% & 7\% & 22\% & 0,53 & 0,86 & 0,56 & 0,02 \\
+    C1 $\times$ C3 & 300 & 22\% & 17\% & 5\% & 0,68 & 0,66 & 0,51 & 1,00 \\
+    C2 $\times$ C3 & 300 & 31\% & 30\% & 1\% & 0,54 & 0,78 & 0,89 & 0,02 \\
+    \midrule
+    C1 com release + pré-release & 300 & 6\% & 6\% & 0\% & 0,91 &  &  &  \\
+    C1 com tag & 300 & 15\% & 15\% & 0\% & 0,76 &  &  &  \\
+    C1 com \emph{lead time} (b) & 300 & 13\% & 6\% & 6\% & 0,82 &  &  &  \\
+    C1 com CFR (b) & 300 & 24\% & 1\% & 23\% & 0,65 &  &  &  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/rq07_transicoes.png}
+  \caption{RQ 07: transições da classe geral entre as combinações. Cada célula
+    conta os repositórios com a classe da linha numa combinação e a da coluna na
+    outra; a diagonal reúne os que não mudaram.}
+  \label{fig:rq07}
+\end{figure}
+
+Por métrica, a concordância varia bastante. A frequência é a mais estável
+(kappa de 0,66 a 0,86), e a troca de unidade só a faz subir. O \emph{lead time}
+muda de classe em cerca de metade dos repositórios quando a variante (a) da
+release dá lugar à (b) de outra unidade (kappa de 0,51 e 0,56), mas quase não
+muda entre release + pré-release e tag, que usam a mesma variante (0,89). O CFR
+é o caso extremo: entre o proxy de CI e o de entrega, 65\% dos repositórios
+mudam de classe, e o kappa de 0,02 é o que se esperaria por acaso.
+
+Como cada par troca mais de um fator ao mesmo tempo, recalculamos a C1 trocando
+um fator de cada vez (parte de baixo da Tabela~\ref{tab:rq07}). O proxy de CFR é
+o que mais mexe na classe geral: sozinho, muda 24\% dos repositórios, quase
+todos para pior. Em seguida vêm a tag (15\%, sempre para melhor) e a variante
+(b) do \emph{lead time} (13\%, metade para cima e metade para baixo). Incluir as
+pré-releases muda só 6\%.
 
 \subsection{RQ 08 --- \emph{Rework rate}}
 \label{sec:rq08}
@@ -617,7 +682,22 @@ emergência de um patch de manutenção programado.
 
 % Hipóteses x resultados das RQ 01 a RQ 06: Issue #19.
 
-% RQ 07: preenchida junto com a Seção sec:rq07.
+\textbf{RQ 07.} A hipótese acertou o tamanho da mudança, mas não o fator
+principal. Esperávamos que de 20\% a 40\% dos repositórios mudassem de classe e
+que a concordância fosse moderada (kappa entre 0,4 e 0,6): a mudança ficou entre
+22\% e 31\%, e o kappa foi de 0,53 e 0,54 nos pares com a C2 e de 0,68 entre a C1
+e a C3. Esperávamos também que a unidade de deploy pesasse mais e o proxy de CFR
+menos, e aconteceu o contrário: trocar só o proxy de CFR muda a classe de 24\%
+dos repositórios, contra 15\% da tag e 6\% das pré-releases. A unidade aumenta a
+frequência e encurta o \emph{lead time}, mas a classe geral é a mediana de
+quatro notas, e uma ou duas notas que sobem muitas vezes não movem a mediana. Já
+o CFR (a) e o CFR (b) medem coisas diferentes, com medianas de 5\% e 22\%, e a
+troca derruba a nota de CFR da maioria dos repositórios. Para as RQ~01 a 06,
+isso quer dizer que a classe geral é razoavelmente robusta, mas as conclusões
+por métrica dependem da definição: a recuperação não muda, a frequência sobe
+quando a unidade é a tag, o \emph{lead time} depende da variante, e qualquer
+conclusão sobre a taxa de falha (RQ~03 e RQ~05) só vale para o proxy usado. Por
+isso reportamos as duas variantes lado a lado.
 
 \textbf{RQ 08.} Não registramos hipótese para a RQ~08, que entrou como bônus.
 O resultado mostra que \emph{rework rate} e CFR (b) não são intercambiáveis:

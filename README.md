@@ -438,9 +438,11 @@ artigo/           artigo no template SBC
 ## Artigo
 
 O relatório final segue o template da SBC e é escrito aos poucos, uma seção por
-sprint. Esta entrega (Issue #3) traz a Introdução e as hipóteses informais das
-RQ 01 a RQ 07 em `artigo/`. Veja [`artigo/README.md`](artigo/README.md) para
-instruções de Overleaf e compilação.
+sprint: Introdução e hipóteses na Sprint 01 (Issue #3), Metodologia na Sprint
+02 (Issue #13), Resultados e Discussão na Sprint 03 (Issues #19 e #20) e
+Ameaças à Validade e Replicação Cruzada na entrega final (Issues #25 e #26).
+Veja [`artigo/README.md`](artigo/README.md) para instruções de Overleaf e
+compilação.
 
 Artigo no Overleaf (leitura): <https://www.overleaf.com/read/rxydywpnvjym#6b20e1>
 

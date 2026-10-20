@@ -1,9 +1,9 @@
 # Artigo (template SBC)
 
 Documento do relatório final da disciplina, escrito aos poucos (uma seção por
-sprint), no template da SBC. Esta sprint entrega a **Metodologia** --- fonte de
-dados e funil de seleção, janela de observação e definições operacionais,
-variantes obrigatórias das métricas e protocolo de validação manual (Issue #13).
+sprint), no template da SBC: Introdução e hipóteses (Sprint 01), Metodologia
+(Sprint 02), Resultados e Discussão (Sprint 03), Ameaças à Validade e
+Replicação Cruzada (entrega final).
 
 Artigo no Overleaf (leitura): <https://www.overleaf.com/read/rxydywpnvjym#6b20e1>
 
@@ -11,7 +11,8 @@ Artigo no Overleaf (leitura): <https://www.overleaf.com/read/rxydywpnvjym#6b20e1
 
 | Arquivo | Papel |
 |---|---|
-| `main.tex` | Documento principal (cabeçalho, resumo/abstract, Introdução, hipóteses e Metodologia) |
+| `main.tex` | Documento principal |
+| `figuras/` | Figuras geradas pelas análises (`analises/resultados/`) |
 | `referencias.bib` | Bibliografia (DORA, Accelerate, Wohlin, SemVer, bibliotecas de análise) |
 | `sbc-template.sty` | Estilo oficial da SBC (v2017) |
 | `sbc.bst` | Estilo bibliográfico da SBC |
@@ -21,7 +22,8 @@ Artigo no Overleaf (leitura): <https://www.overleaf.com/read/rxydywpnvjym#6b20e1
 1. Acesse <https://www.overleaf.com/latex/templates/sbc-conferences-template/blbxwjwzdngr>
    e clique em **Open as Template** (ou crie um projeto em branco).
 2. Substitua o conteúdo do projeto pelos arquivos desta pasta
-   (`main.tex`, `referencias.bib`, `sbc-template.sty`, `sbc.bst`).
+   (`main.tex`, `referencias.bib`, `sbc-template.sty`, `sbc.bst` e a pasta
+   `figuras/`). O `artigo.zip` já traz tudo isso.
 3. Defina **Menu → Main document = `main.tex`**.
 4. Compile. A bibliografia exige a sequência
    `pdfLaTeX → BibTeX → pdfLaTeX → pdfLaTeX` (o Overleaf costuma fazer isso
@@ -38,22 +40,18 @@ pdflatex main
 pdflatex main
 ```
 
-## Escopo desta entrega
+## Conteúdo atual
 
-- `main.tex` contém a Introdução, a seção de hipóteses (RQ 01 a RQ 07) e a
-  Metodologia (fonte de dados e funil de seleção, janela e definições
-  operacionais, variantes obrigatórias e protocolo de validação manual).
-- As seções de Resultados, Discussão, Ameaças à Validade e Replicação Cruzada
-  estão comentadas no fim de `main.tex`, como esqueleto para as próximas
-  sprints.
-- A Metodologia traz também o resultado da validação manual (kappa de Fleiss,
-  consenso e F1 de cada versão da heurística de release corretiva), porque é ele
-  que define qual heurística entra no CFR (b) e o enunciado pede o F1 de cada
-  versão testada. Os resultados das RQ 01 a RQ 07 ficam para a Sprint 03.
-- A Metodologia registra que os rótulos e o desempate da amostra-ouro foram
-  feitos com apoio de modelos de linguagem, com autorização da disciplina.
-- As hipóteses são informais e foram redigidas **antes** da análise dos dados,
-  conforme exigido pela disciplina.
+- Introdução e hipóteses informais das RQ 01 a RQ 07, redigidas **antes** da
+  análise dos dados.
+- Metodologia: fonte de dados e funil de seleção, janela e definições
+  operacionais, variantes obrigatórias, protocolo e resultado da validação
+  manual. Os rótulos e o desempate da amostra-ouro foram feitos com apoio de
+  modelos de linguagem, com autorização da disciplina.
+- Resultados da RQ 07 (análise de sensibilidade) e da RQ 08 (rework rate),
+  com a discussão da RQ 07 (Issue #20). As RQ 01 a RQ 06 entram pela Issue #19.
+- Ameaças à Validade nas quatro categorias (Issue #25).
+- A Replicação Cruzada entra pela Issue #26.
 
 ## Observações
 
