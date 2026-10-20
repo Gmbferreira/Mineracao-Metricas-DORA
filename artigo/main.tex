@@ -704,7 +704,65 @@ O resultado mostra que \emph{rework rate} e CFR (b) não são intercambiáveis:
 a primeira mede quanto da entrega é correção, e o segundo, quantas entregas
 precisaram de correção logo em seguida (Seção~\ref{sec:rq08}).
 
-% \section{Ameaças à Validade}: Issue #25.
+\section{Ameaças à Validade}
+\label{sec:ameacas}
+
+Organizamos as ameaças nas quatro categorias de Wohlin et al.
+\cite{wohlin2012}.
+
+\textbf{Validade de construto.} O GitHub não registra deploys nem falhas em
+produção, então todas as métricas são proxies. Release não é deploy: em
+bibliotecas, quem implanta são os usuários. No consenso da amostra-ouro, 58 dos
+60 repositórios publicam releases que são entregas reais, mas o kappa dessa
+dimensão foi pobre ($-0{,}13$), sinal de que nem os avaliadores concordam sobre
+o que uma release representa. Execução de CI com falha também não é falha em
+produção, e o CFR (a) mede o pipeline. O CFR (b) e a \emph{rework rate}
+dependem da heurística de release corretiva (precisão de 0,67 e recall de
+0,78), e o F1 de 0,72 é otimista, porque a v6 foi escrita depois de olhar os
+erros nos mesmos 300 casos. O \emph{lead time} usa a data de autor do commit,
+que rebase e \emph{squash merge} podem distorcer; 1.566 commits com data de
+autor posterior à publicação foram descartados. O tempo de recuperação vai até
+o próximo sucesso do workflow, que em projetos com poucos pushes reflete o
+intervalo entre commits, e não o esforço de correção. Na variante por tag
+entram até as tags que a CI cria para disparar workflows (o
+\texttt{pytorch/pytorch} tem 9.674 na janela). A RQ~07 dá a medida desse
+problema: conforme a definição, de 22\% a 31\% dos repositórios mudam de classe
+geral, e a classe de CFR muda em 65\% deles quando se troca o proxy.
+
+\textbf{Validade interna.} Monorepos publicam uma release por pacote, às vezes
+várias a partir do mesmo commit: 45 repositórios têm mais de uma linha de
+releases, e 3.822 releases não trouxeram nenhum commit novo. Nesses casos, a
+frequência de deploy conta várias vezes o mesmo conjunto de mudanças; separar
+as linhas no CFR (b) atenua o efeito, mas não o elimina. Os fatores da RQ~06
+também andam juntos: idade e número de contribuidores têm correlação de 0,59, e
+os repositórios mais antigos publicam menos releases na janela
+($\rho = -0{,}31$), então o efeito atribuído a um fator pode vir de outro. Os
+rótulos da amostra-ouro foram produzidos
+com modelos de linguagem, a concordância foi baixa e o desempate ficou com o
+mesmo avaliador em 182 de 183 casos, de modo que o consenso usado para avaliar
+a heurística não é independente como o protocolo previa. Os episódios de falha
+sem recuperação até o fim da janela ficam fora da mediana do tempo de
+recuperação, mas são poucos (158 de 63.874).
+
+\textbf{Validade externa.} A amostra tem só repositórios populares (ao menos
+1.000 estrelas), ativos, que usam GitHub Actions e publicam releases com
+regularidade, e a varredura parou nos 646 primeiros candidatos em ordem de
+estrelas. Os resultados não se estendem a projetos menos conhecidos, a projetos
+com outro serviço de CI nem a empresas, que registram deploys e incidentes de
+outra forma. A janela é uma só, de doze meses, e as faixas de classificação são
+as adaptadas para a disciplina, não os agrupamentos anuais do DORA.
+
+\textbf{Validade de conclusão.} Com 300 repositórios, correlações fracas já
+saem significativas, por isso discutimos o valor de $\rho$ e não só o p-valor.
+Na RQ~06, as muitas comparações entre subgrupos aumentam a chance de falso
+positivo; os p-valores são ajustados por Holm e o tamanho de efeito é
+reportado, mas alguns subgrupos são pequenos: só 8 das 23 linguagens têm mais
+de 5 repositórios. As faixas de classificação são discretas: um repositório
+perto de um corte muda de classe com uma diferença pequena no valor medido, o
+que aumenta a proporção de mudanças na RQ~07; o kappa ponderado compensa em
+parte, porque uma troca entre faixas vizinhas pesa menos. O F1 da heurística
+variou de 0,64 a 0,79 entre metades da amostra-ouro, o que dá a dimensão da
+incerteza desse número.
 
 % \section{Replicação Cruzada}: Issue #26.
 
