@@ -116,6 +116,14 @@ Diferenças pequenas são esperadas: releases e tags podem ter sido apagadas ou
 reescritas depois da nossa coleta, e os quartis (`quartil_*`) são calculados
 sobre os repositórios do próprio CSV, então mudam numa subamostra de 30. A janela
 de observação é fixa (`config.yaml`), por isso commits e runs novos não entram.
+A coluna `intervalos_runs` também pode mudar sem afetar as métricas: ela conta
+as consultas feitas na API de runs, e parte dos nossos repositórios foi coletada
+mês a mês na Sprint 01, antes de a coleta passar a tentar a janela inteira
+primeiro.
+
+Testamos estes passos num clone novo do repositório, com uma subamostra de 2
+repositórios (`--n 2 --max-runs 300`): a coleta levou cerca de 1 minuto (6
+chamadas REST e 46 GraphQL), e as métricas saíram iguais às nossas.
 
 ## Cache, rate limit e resiliência (Issue #2)
 
@@ -373,6 +381,18 @@ validação com a amostra-ouro (Issue #9). Com ela, a mediana do CFR (b) ficou e
 0,22 (IQR de 0,08 a 0,44), em 299 repositórios; só o `expo/expo` fica sem valor,
 pela censura.
 
+### Situação da coleta (Sprint 03)
+
+As variantes da RQ 07 (pré-releases e tags) foram coletadas para os 300
+repositórios, sem erros. Quase todos saíram em poucas horas; o que demorou foram
+os repositórios com tags em vários branches (ClickHouse, node, php-src), em que
+a tag anterior pela data costuma estar em outro branch e o compare traz milhares
+de commits, e o `pytorch/pytorch`, com 9.674 tags na janela, quase todas criadas
+pela CI (`ciflow/*`, `trunk/<sha>`, `viable/strict/*`). No meio da coleta, a
+API GraphQL passou a recusar consultas com o erro `RATE_LIMIT` mesmo com pontos
+sobrando no cabeçalho `X-RateLimit-Remaining`; o cliente agora reconhece esse
+erro e espera o reset (Issue #21).
+
 ## Estrutura
 
 ```
@@ -465,3 +485,7 @@ ficar abaixo de 80%.
   últimos 7 dias da janela e são censuradas.
 - O tempo de recuperação usa o estado final de cada run. Se um run com falha
   foi reexecutado com sucesso, a API mostra só a última tentativa.
+- Na variante por tag (RQ 07) entram todas as tags, como pede o enunciado,
+  inclusive as que a CI cria para disparar workflows (o `pytorch/pytorch` tem
+  9.674 na janela). A tag é datada pelo commit para o qual aponta, que pode ser
+  bem anterior à criação da tag.
