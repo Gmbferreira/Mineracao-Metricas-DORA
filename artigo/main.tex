@@ -11,6 +11,14 @@
 
 \sloppy
 
+% mais figuras e tabelas por pagina, para nao sobrar espaco em branco
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{4}
+
 \title{Mineração de Métricas DORA em Repositórios Open-Source\\ que Utilizam GitHub Actions}
 
 \author{Guilherme Martini Brina Ferreira\inst{1}\\
@@ -26,538 +34,200 @@
 \maketitle
 
 \begin{abstract}
-The DevOps Research and Assessment (DORA) metrics have become the de facto
-standard for measuring software delivery performance. This work investigates
-whether those metrics, originally designed for organizations, can be inferred
-from the public activity of open-source projects that adopt GitHub Actions. We
-mine releases, workflow runs and commits over a twelve-month window to compute
-deployment frequency, lead time for changes, change failure rate and failed
-deployment recovery time, plus a sensitivity analysis of the operational
-definitions. This paper presents the context, the seven research questions and
-the informal hypotheses that guide the study, and describes the methodology:
-the data source, the selection funnel, the operational definitions of the
-metrics and the manual validation protocol. Across 300 repositories, the median
-project publishes 0.5 release per week, with a lead time of about 11 days; the
-change failure rate is 4.8\% under the CI proxy and 21.9\% under the delivery
-proxy, and the two are nearly uncorrelated. Deployment frequency correlates
-positively with the delivery failure rate, a relation that is partly an
-artifact of the seven-day correction window; older repositories and those with
-more contributors have longer lead times, and 22\% to 31\% of the repositories
-change DORA class when the operational definition changes.
+We mine releases, workflow runs and commits of 300 popular open-source
+repositories that use GitHub Actions over twelve months to infer the DORA
+metrics, compare operational definitions and validate the corrective-release
+heuristic against a labeled gold standard. The median repository publishes 0.5
+release per week, has a lead time of about 11 days and recovers from CI
+failures in 2.6 hours; the change failure rate is 4.8\% under the CI proxy and
+21.9\% under the delivery proxy. Older repositories deliver more slowly, and
+22\% to 31\% of the repositories change DORA class when the definition changes.
 \end{abstract}
 
 \begin{resumo}
-As métricas do \emph{DevOps Research and Assessment} (DORA) tornaram-se o padrão
-de fato para medir o desempenho de entrega de software. Este trabalho investiga
-se essas métricas, originalmente pensadas para organizações, podem ser
-inferidas a partir da atividade pública de projetos open-source que adotam o
-GitHub Actions. Mineramos releases, execuções de workflow e commits ao longo de
-uma janela de doze meses para calcular frequência de deploy, lead time for
-changes, taxa de falha de mudança e tempo de recuperação, além de uma análise de
-sensibilidade das definições operacionais. Este artigo apresenta o contexto, as
-sete questões de pesquisa e as hipóteses informais que orientam o estudo, e
-descreve a metodologia: a fonte de dados, o funil de seleção, as definições
-operacionais das métricas e o protocolo de validação manual. Nos 300
-repositórios, o projeto mediano publica 0,5 release por semana, com
-\emph{lead time} de cerca de 11 dias; a taxa de falha de mudança é de 4,8\% no
-proxy de CI e de 21,9\% no de entrega, e os dois são praticamente
-descorrelacionados. A frequência de deploy se correlaciona positivamente com a
-taxa de falha de entrega, relação em parte artefato da janela de sete dias;
-repositórios mais antigos e com mais contribuidores têm \emph{lead time} maior,
-e de 22\% a 31\% dos repositórios mudam de classe DORA quando a definição
-operacional muda.
+Mineramos releases, execuções de workflow e commits de 300 repositórios
+open-source populares que usam GitHub Actions, em doze meses, para inferir as
+métricas DORA, comparar definições operacionais e validar a heurística de
+release corretiva com uma amostra-ouro. O repositório mediano publica 0,5
+release por semana, tem \emph{lead time} de cerca de 11 dias e se recupera de
+falhas de CI em 2,6 horas; a taxa de falha é de 4,8\% no proxy de CI e de
+21,9\% no de entrega. Repositórios mais antigos entregam mais devagar, e de
+22\% a 31\% dos repositórios mudam de classe DORA quando a definição muda.
 \end{resumo}
 
 \section{Introdução}
 
-As métricas DORA (\emph{DevOps Research and Assessment}) consolidaram-se como a
-principal referência de mercado para medir o desempenho de entrega de software.
-Popularizadas pelo livro \emph{Accelerate} \cite{forsgren2018} e atualizadas
-anualmente pelo relatório \emph{Accelerate State of DevOps} \cite{dorastate}, elas
-resumem o desempenho de uma equipe em quatro dimensões: duas de
-\emph{velocidade} --- a frequência de deploy e o tempo de espera das mudanças
-(\emph{lead time for changes}) --- e duas de \emph{estabilidade} --- a taxa de
-falha de mudança (\emph{change failure rate}) e o tempo de recuperação após uma
-falha \cite{doraguide}. A definição dessas métricas é revisada com o tempo: o
-antigo \emph{mean time to restore} (MTTR) passou a ser chamado de
-\emph{failed deployment recovery time} em 2023 e, em 2024, o DORA acrescentou
-uma quinta métrica, a \emph{deployment rework rate} \cite{dorahistory}.
+As métricas DORA (\emph{DevOps Research and Assessment}) resumem a entrega de
+software em velocidade --- frequência de deploy e \emph{lead time for changes}
+--- e estabilidade --- taxa de falha de mudança (CFR) e tempo de recuperação
+\cite{forsgren2018,doraguide} ---, e são atualizadas todo ano pelo relatório
+\emph{Accelerate State of DevOps} \cite{dorastate}; em 2024 ganharam uma quinta
+métrica, a \emph{deployment rework rate} \cite{dorahistory}.
 
-Essas métricas foram originalmente elaboradas a partir de questionários
-respondidos por profissionais de empresas, e não de dados públicos de
-repositórios. O ecossistema open-source, no entanto, tornou-se um objeto de
-estudo atrativo por sua escala e por sua transparência: ferramentas como o
-GitHub Actions expõem, de forma aberta e auditável, a cadência de integração
-contínua, o histórico de releases e as mensagens de commit de milhares de
-projetos. Surge então uma oportunidade relevante: é possível \emph{minerar}
-métricas DORA a partir dessa atividade pública, em vez de depender de
-auto-relato?
+Elas nasceram de questionários respondidos em empresas. Projetos open-source
+deixam pública a sua cadência de releases e de integração contínua, o que
+permite \emph{minerar} as métricas em vez de perguntar, mas o GitHub não
+registra deploys nem falhas em produção: ``release publicada'' faz o papel de
+deploy e ``execução de CI com falha'' o de falha. São proxies, e um proxy sem
+questionamento ameaça a validade de construto \cite{wohlin2012}. Por isso, além
+de calcular as métricas em 300 repositórios populares que usam GitHub Actions,
+validamos o critério automático contra rótulos manuais e medimos o quanto as
+conclusões mudam com a definição.
 
-A resposta exige cautela. O GitHub \textbf{não registra} ``deploys em produção''
-nem ``falhas em produção''. Um projeto open-source publica \emph{releases}, roda
-\emph{workflows} de CI e recebe \emph{commits}, e é apenas a partir desses
-eventos que as métricas DORA precisam ser \emph{inferidas}. Uma medida indireta
-como essa é um \emph{proxy}: ``release publicada'' representa ``deploy'' e
-``execução de CI que falhou'' representa ``falha''. Proxies podem enganar. Uma
-biblioteca que publica uma release por mês pode não estar ``deployando'' nada em
-produção --- quem implanta são seus usuários. Medir um proxy sem questioná-lo
-ameaça a validade de construto do estudo \cite{wohlin2012}.
-
-Neste trabalho, portanto, a pergunta não é apenas ``qual é o valor da métrica?'',
-mas também ``o quanto podemos confiar nesse valor?''. Para responder a isso,
-mineramos, via API REST do GitHub, releases publicadas, execuções de workflow
-disparadas por \texttt{push} no \emph{default branch} e os commits contidos entre
-releases, em uma janela de observação de doze meses. A partir desses dados
-calculamos as métricas DORA em variantes operacionais obrigatórias e comparamos
-como a classificação de desempenho de um repositório muda quando a definição
-escolhida muda.
-
-O estudo é guiado por sete questões de pesquisa. As quatro primeiras medem,
-respectivamente, a frequência de deploy \textbf{(RQ~01)}, o tempo entre commit e
-deploy \textbf{(RQ~02)}, a taxa de falha das mudanças entregues
-\textbf{(RQ~03)} e o tempo de recuperação após uma falha \textbf{(RQ~04)}. A
-\textbf{RQ~05} investiga a relação entre velocidade e estabilidade, a
-\textbf{RQ~06} busca características de repositório associadas a melhor
-desempenho e a \textbf{RQ~07} quantifica o quanto as conclusões dependem da
-definição operacional adotada (\emph{análise de sensibilidade}). Como bônus, a
-\textbf{RQ~08} calcula a \emph{rework rate}, a quinta métrica do DORA, e a
-compara com o CFR (b). As hipóteses informais que orientam as sete questões,
-formuladas antes de qualquer análise dos dados, são apresentadas na
-Seção~\ref{sec:hipoteses}.
-
-As contribuições deste trabalho são: (i) um pipeline próprio de coleta e cálculo das
-métricas DORA para projetos open-source; (ii) um retrato descritivo do
-desempenho de entrega de repositórios populares sob definições operacionais
-explícitas e comparáveis; e (iii) uma avaliação da robustez dessas conclusões
-frente a escolhas metodológicas alternativas. O restante do artigo está
-organizado da seguinte forma: a Seção~\ref{sec:hipoteses} apresenta as questões
-de pesquisa e as hipóteses; a Seção~\ref{sec:metodologia} descreve a metodologia
---- fonte de dados, funil de seleção, definições operacionais e protocolo de
-validação manual; a Seção~\ref{sec:resultados} reporta os resultados das RQ~01 a
-RQ~08; a Seção~\ref{sec:discussao} confronta as hipóteses com os resultados;
-e a Seção~\ref{sec:ameacas} discute as ameaças à validade.
-
-\section{Questões de Pesquisa e Hipóteses}
+\subsection{Questões de pesquisa e hipóteses}
 \label{sec:hipoteses}
 
-Esta seção enuncia cada questão de pesquisa acompanhada da hipótese informal do
-grupo --- o que se espera encontrar e por quê --- registrada \emph{antes} de
-observar os resultados. As hipóteses são qualitativas e não comprometem a
-análise: servem de referência para a discussão posterior (hipótese
-\emph{versus} resultado) e para explicitar possíveis vieses dos autores.
+As hipóteses foram registradas antes de qualquer análise dos dados.
 
-\subsection*{RQ 01 --- Qual a frequência de deploys dos repositórios populares que usam CI/CD?}
+\textbf{RQ~01:} \emph{Qual a frequência de deploys dos repositórios populares
+que usam CI/CD?} Assimétrica, com mediana em \emph{High} (uma a três releases
+por semana): projetos populares têm entrega madura, mas poucos automatizam a
+publicação. \textbf{RQ~02:} \emph{Qual o tempo entre um commit e seu respectivo
+deploy?} Semanas na variante por release (a) e dias na por commit (b), porque
+um commit antigo ``esquecido'' faz o valor da release explodir, e na (b) ele se
+dilui.
 
-\textbf{Hipótese.} Esperamos uma distribuição fortemente assimétrica, com a
-mediana na faixa \emph{High} (ao menos um deploy por semana e menos de sete),
-tipicamente entre uma e três releases por semana. Uma minoria de projetos
-mantém cadência quase diária (\emph{Elite}, sete ou mais por semana), graças à
-automação de release, enquanto um grupo pequeno publica menos de uma release por
-mês (\emph{Low}). A justificativa é que projetos populares têm processos de
-entrega maduros, mas a maioria não automatiza totalmente a publicação, e muitos
-seguem um ciclo de releases mais conservador.
+\textbf{RQ~03:} \emph{Qual a taxa de falha das mudanças entregues?} De 20\% a
+40\% no proxy de CI (a), porque pipelines falham por testes, \emph{linters} e
+\emph{flakiness}, e até 15\% no de entrega (b), porque correções rápidas
+raramente viram release. \textbf{RQ~04:} \emph{Qual o tempo de recuperação após
+uma execução de CI/CD com falha?} Menos de um dia, provavelmente menos de uma
+hora, porque consertar um pipeline custa pouco, com alguma censura.
 
-\subsection*{RQ 02 --- Qual o tempo entre um commit e seu respectivo deploy?}
+\textbf{RQ~05:} \emph{Repositórios com maior frequência de deploy apresentam
+maior ou menor taxa de falha?} Correlação fraca, perto de zero ou negativa, como
+defende o DORA \cite{forsgren2018}. \textbf{RQ~06:} \emph{Quais características
+dos repositórios estão associadas a um melhor desempenho DORA?} Tipo de projeto
+e idade, com efeitos pequenos a médios: bibliotecas publicam mais espaçado que
+aplicações, e projetos antigos acumulam código e dívida técnica.
 
-\textbf{Hipótese.} A variante por release (a) produzirá valores bem maiores que
-a variante por commit (b): esperamos a mediana de (a) na casa de semanas a um
-mês e a de (b) na casa de dias. A razão é estrutural: na variante (a), um único
-commit antigo ``esquecido'' em uma release faz o lead time daquela release
-explodir, e esse valor extremo empurra a mediana para cima em projetos com
-histórico irregular; na variante (b), cada commit contribui individualmente, de
-modo que poucos valores extremos diluem-se no conjunto. Consequentemente,
-muitos repositórios devem migrar para categorias melhores sob a variante (b),
-e a divergência entre (a) e (b) é, ela própria, um resultado a ser discutido.
-
-\subsection*{RQ 03 --- Qual a taxa de falha das mudanças entregues por esses repositórios?}
-
-\textbf{Hipótese.} As duas variantes devem divergir bastante. O proxy de CI (a)
---- a proporção de execuções de workflow que falharam --- deve ser
-comparativamente alto, com mediana em torno de 20\% a 40\% (faixa
-\emph{Medium}), porque pipelines falham por motivos variados (testes, linters,
-\emph{flakiness}) que não chegam a afetar o usuário. Já o proxy de entrega (b)
---- releases seguidas de correção em até sete dias --- deve ser baixo, com
-mediana igual ou inferior a 15\% (\emph{Elite}/\emph{High}), pois releases
-corretivas rápidas são relativamente raras e nem toda correção sai como nova
-release. Esperamos que a diferença entre (a) e (b) seja um dos achados centrais
-sobre a distinção entre falha de pipeline e falha de entrega.
-
-\subsection*{RQ 04 --- Qual o tempo de recuperação após uma execução de CI/CD com falha?}
-
-\textbf{Hipótese.} Esperamos medianas curtas, inferiores a um dia e
-provavelmente inferiores a uma hora (faixa \emph{Elite} ou \emph{High}). Uma
-execução de CI que falha costuma ser corrigida por uma re-execução ou um
-\emph{hotfix} de pipeline no mesmo dia, já que o custo de corrigir um pipeline
-quebrado é baixo. Ainda assim, prevemos uma cauda relevante de episódios
-\emph{censurados} --- falhas que não foram resolvidas antes do fim da janela ---
-sobretudo em projetos com manutenção intermitente; a proporção de censura deve
-ser reportada por repositório.
-
-\subsection*{RQ 05 --- Repositórios com maior frequência de deploy apresentam maior ou menor taxa de falha?}
-
-\textbf{Hipótese.} Esperamos uma correlação de Spearman fraca e próxima de zero;
-se houver significância, inclinamo-nos a uma associação levemente negativa (mais
-deploys associados a menor CFR). Essa expectativa é alinhada à tese do DORA de
-que velocidade e estabilidade \emph{não} formam um \emph{trade-off}
-\cite{forsgren2018}. Não descartamos, contudo, que a variante de CFR afete o
-resultado: a correlação com o proxy de CI (a) pode ser diferente da obtida com o
-proxy de entrega (b).
-
-\subsection*{RQ 06 --- Quais características dos repositórios estão associadas a um melhor desempenho DORA?}
-
-\textbf{Hipótese.} Entre os fatores analisados (linguagem, popularidade,
-número de contribuidores, idade e tipo de projeto), acreditamos que o
-\textbf{tipo de projeto} e a \textbf{idade} sejam os mais associados ao
-desempenho. Bibliotecas e \emph{frameworks} tendem a ter releases mais
-espaçadas e \emph{lead time} maior, enquanto aplicações e serviços --- com
-entrega contínua --- tendem a maior frequência de deploy; repositórios mais
-antigos devem apresentar pior desempenho, por acúmulo de dívida técnica e base
-de código maior. Esperamos que a \textbf{linguagem principal} tenha efeito
-pequeno e que, após a correção de Holm para comparações múltiplas, a maioria
-dos efeitos significativos seja de tamanho pequeno a médio.
-
-\subsection*{RQ 07 --- O quanto a classificação DORA de um repositório depende da definição operacional escolhida?}
-
-\textbf{Hipótese.} A classificação deve mostrar-se sensível sobretudo à
-\textbf{unidade de deploy}: alternar entre ``release'', ``release +
-pré-release'' e ``tag'' tende a mover uma parcela relevante (estimamos 20\% a
-40\%) dos repositórios de categoria. A escolha do \emph{lead time} entre as
-variantes (a) e (b) também desloca repositórios, enquanto a troca do proxy de
-CFR deve ter efeito menor na categoria \emph{geral}. Esperamos concordância
-global \emph{moderada} (kappa ponderado entre 0,4 e 0,6), indicando que as
-conclusões das RQ~01 a RQ~06 são apenas parcialmente robustas e que a definição
-operacional precisa ser explicitada em qualquer comparação.
+\textbf{RQ~07:} \emph{O quanto a classificação DORA de um repositório depende
+da definição operacional escolhida?} Sobretudo da unidade de deploy; de 20\% a
+40\% dos repositórios mudariam de classe, com kappa ponderado moderado (0,4 a
+0,6). \textbf{RQ~08 (bônus):} \emph{Qual a rework rate e em que ela difere do
+CFR (b)?} Sem hipótese registrada.
 
 \section{Metodologia}
 \label{sec:metodologia}
 
-Esta seção descreve como os dados foram obtidos e o que foi medido: a fonte de
-dados e o funil de seleção dos repositórios, a janela de observação e as
-definições operacionais, as variantes obrigatórias das métricas e o protocolo de
-validação manual.
-
 \subsection{Fonte de dados e funil de seleção}
 \label{sec:fonte}
 
-Os dados provêm das APIs REST \cite{githubrest} e GraphQL \cite{githubgraphql}
-do GitHub, acessadas por um cliente HTTP próprio escrito em Python, sem
-bibliotecas de terceiros para a API. O token de acesso é lido de uma variável de
-ambiente e nunca é gravado em disco. Toda resposta é guardada em cache local e a
-execução é retomável por checkpoints: interrompida a coleta (rate limit, queda
-de rede ou \texttt{Ctrl+C}), o mesmo comando continua de onde parou sem repetir
-requisições já feitas. Quando a cota horária se esgota, o cliente pausa até a
-renovação e repete erros temporários (5xx) com espera exponencial. A seleção, a
-coleta e o cálculo das métricas rodam com um único comando
-(\texttt{python -m pipeline --config config.yaml}).
+Os dados vêm das APIs REST e GraphQL do GitHub \cite{githubrest,githubgraphql},
+por um cliente próprio em Python, com cache em disco, retomada, espera quando a
+cota acaba e repetição com espera exponencial em erros 5xx. Um único comando
+(\texttt{python -m pipeline --config config.yaml}) faz seleção, coleta e
+cálculo; as funções de métricas têm testes com \emph{fixtures} (100\% de
+cobertura), que rodam no GitHub Actions a cada push, e o CSV final tem
+dicionário de dados. A coleta reuniu 21.203 releases e cerca de 3 milhões de
+runs, sem erros.
 
-Releases, workflow runs e metadados vêm da API REST. Os workflow runs são
-consultados primeiro para a janela inteira; quando passam do teto de 1.000
-resultados por consulta, a janela é dividida em meses e, se preciso, em
-intervalos menores, até nenhum intervalo ficar no teto. Os commits incluídos em
-cada release vêm do objeto \texttt{Comparison} da API GraphQL, que devolve os
-mesmos commits do \texttt{compare} da API REST, na mesma ordem, mas no máximo os
-1.000 mais recentes; quando o \texttt{compare} é maior, os mais antigos vêm das
-páginas do REST. Antes de adotar essa troca, comparamos os dois caminhos em 150
-pares de releases sorteados entre os repositórios já coletados e obtivemos os
-mesmos commits, datas de autor e mensagens nos 150. As \emph{release notes},
-usadas pela heurística de release corretiva, também vêm da API GraphQL. A coleta
-da amostra final reuniu 21.203 releases na janela e cerca de 3 milhões de
-workflow runs, sem nenhum repositório com erro.
-
-A busca de candidatos usa os pré-filtros \texttt{stars:>=1000},
-\texttt{fork:false}, \texttt{archived:false} e \texttt{pushed:>=2025-10-02}. Como
-a API de busca devolve no máximo 1.000 resultados por consulta, a busca é
-fatiada por faixas de estrelas e percorrida em ordem decrescente de estrelas.
-Cada candidato passa por três etapas de elegibilidade, avaliadas dentro da
-janela: \textbf{E1}, ter ao menos um workflow registrado no GitHub Actions
-(\texttt{total\_count} $> 0$); \textbf{E2}, ter ao menos 50 workflow runs
-disparados por \texttt{push} no \emph{default branch}; e \textbf{E3}, ter ao
-menos 5 releases publicadas (\texttt{draft = false} e
-\texttt{prerelease = false}). A Tabela~\ref{tab:funil} resume o funil de
-seleção.
-
-A varredura de candidatos é \emph{parcial por definição}: ela percorre os
-repositórios em ordem decrescente de estrelas e para ao atingir o alvo de 300
-repositórios qualificados, deixando a maior parte dos candidatos identificados
-sem exame. O funil existe justamente para tornar esse corte explícito e
-auditável.
+A busca (\texttt{stars:>=1000}, sem forks nem arquivados, com push na janela) é
+percorrida em ordem decrescente de estrelas até reunir 300 repositórios que
+atendem, na janela, a três critérios: E1, usar GitHub Actions; E2, ter ao menos
+50 runs de \texttt{push} no \emph{default branch}; E3, ter ao menos 5 releases
+(Tabela~\ref{tab:funil}). Estrelas, linguagem, idade e contribuidores entram na
+RQ~06.
 
 \begin{table}[t]
   \centering
-  \caption{Funil de seleção da amostra final (gerado automaticamente pela etapa
-    de seleção do pipeline).}
+  \caption{Funil de seleção da amostra.}
   \label{tab:funil}
   \footnotesize
-  \begin{tabular}{@{}p{4.4cm}rrrp{3.8cm}@{}}
+  \begin{tabular}{@{}lrrrl@{}}
     \toprule
     Etapa & Entrada & Saída & Descartados & Motivo \\
     \midrule
-    Candidatos identificados (pré-filtros) & --- & 37.388 & --- & busca fatiada por faixas de estrelas \\
-    Candidatos escaneados & 37.388 & 646 & 36.742 & varredura parcial: parada ao atingir o alvo de 300 \\
-    E1 --- utiliza GitHub Actions & 646 & 611 & 35 & \texttt{total\_count} de workflows = 0 \\
-    E2 --- $\geq$ 50 runs de push na janela & 611 & 425 & 186 & menos de 50 runs de push na janela \\
-    E3 --- $\geq$ 5 releases na janela & 425 & 300 & 125 & menos de 5 releases publicadas na janela \\
-    Amostra final com metadados completos & 300 & 300 & 0 & metadados coletados para todos \\
+    Candidatos (pré-filtros) & --- & 37.388 & --- & busca fatiada por estrelas \\
+    Escaneados & 37.388 & 646 & 36.742 & parada no alvo de 300 \\
+    E1: usa GitHub Actions & 646 & 611 & 35 & nenhum workflow \\
+    E2: $\geq$ 50 runs de \texttt{push} & 611 & 425 & 186 & menos de 50 runs \\
+    E3: $\geq$ 5 releases & 425 & 300 & 125 & menos de 5 releases \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Para cada repositório da amostra final coletamos os metadados de contexto
-(estrelas, linguagem principal, data de criação convertida em idade até o fim da
-janela e número de contribuidores) e calculamos seus quartis, usados como
-fatores na RQ~06. O dicionário de dados do repositório documenta cada coluna dos
-CSVs gerados, com tipo, unidade e fórmula de origem.
-
-\subsection{Janela de observação e definições operacionais}
+\subsection{Definições operacionais e variantes}
 \label{sec:definicoes}
+\label{sec:variantes}
 
-A janela de observação vai de 2025-10-02 a 2026-10-02 (12 meses, datas
-inclusivas), fixada no início da disciplina e igual para todos os grupos, de
-modo que os resultados sejam comparáveis entre eles. Só entram no cálculo
-releases publicadas e workflow runs criados dentro da janela. As regras comuns a
-todas as métricas são:
-
-\begin{itemize}
-  \item \textbf{Branch de referência:} apenas o \emph{default branch} do
-    repositório (campo \texttt{default\_branch} da API).
-  \item \textbf{Deploy:} uma release publicada no GitHub, isto é, com
-    \texttt{draft = false} e \texttt{prerelease = false}. Pré-releases e tags sem
-    release ficam fora da definição principal e entram como variantes na RQ~07.
-  \item \textbf{Data de um commit:} \texttt{commit.author.date}, que registra
-    quando a mudança foi escrita; rebase e \emph{squash merge} podem distorcê-la
-    (tratada como ameaça à validade).
-  \item \textbf{Execuções de CI:} apenas workflow runs disparados por
-    \texttt{push} no \emph{default branch}. Execuções agendadas ou manuais não
-    representam mudanças entregues.
-  \item \textbf{Sucesso, falha e ignorados:} o campo \texttt{conclusion}
-    classifica cada run --- \texttt{success} é sucesso; \texttt{failure},
-    \texttt{timed\_out} e \texttt{startup\_failure} são falha; \texttt{cancelled},
-    \texttt{skipped}, \texttt{neutral}, \texttt{action\_required},
-    \texttt{stale} e valores vazios são ignorados e não entram em nenhum cálculo.
-  \item \textbf{Censura:} se o evento que encerra uma medição não ocorre antes do
-    fim da janela (uma falha ainda não corrigida, por exemplo), o caso não é
-    descartado: é registrado como censurado e sua proporção é reportada.
-    Descartá-los faria os projetos parecerem mais rápidos do que são.
-\end{itemize}
-
-Com essas regras, a \textbf{frequência de deploy} é o número de releases
-avaliadas na janela dividido pelo número de semanas da janela
-($365 \div 7 \approx 52{,}1$). O \textbf{tempo de recuperação} é calculado por
-workflow, em ordem cronológica: um episódio de falha começa na primeira falha
-após um sucesso e termina na próxima execução bem-sucedida do mesmo workflow; a
-duração do episódio é a diferença entre o \texttt{updated\_at} do sucesso e o
-\texttt{run\_started\_at} da primeira falha. O valor do repositório é a mediana
-dos episódios de todos os seus workflows, excluídos os censurados.
-
-A classificação de cada repositório segue as faixas fixas da
-Tabela~\ref{tab:faixas}, \emph{adaptadas} dos relatórios \emph{Accelerate State
-of DevOps} \cite{dorastate} e acordadas para toda a disciplina, de modo que os
-resultados dos grupos sejam comparáveis. A classe geral recebe 4 pontos a
-\emph{Elite}, 3 a \emph{High}, 2 a \emph{Medium} e 1 a \emph{Low} em cada uma
-das quatro métricas, e é a mediana desses quatro pontos, arredondada para baixo
-(notas 4, 3, 3, 1 $\rightarrow$ mediana 3 $\rightarrow$ \emph{High}). Métrica
-sem valor (um repositório sem episódio de falha recuperado, por exemplo) fica
-sem classe, e a classe geral usa apenas as métricas disponíveis.
+A janela de observação vai de 2025-10-02 a 2026-10-02. Entram o \emph{default
+branch}, as releases com \texttt{draft} e \texttt{prerelease} falsos (o
+deploy), a data de autor dos commits e os runs de \texttt{push}; um run com
+\texttt{success} é sucesso, com \texttt{failure}, \texttt{timed\_out} ou
+\texttt{startup\_failure} é falha, e os demais (426.873) são ignorados. Eventos
+sem desfecho até o fim da janela são censurados: ficam fora da mediana e são
+contados. A frequência é o número de releases dividido por 52,1 semanas. A
+recuperação é medida por workflow, da primeira falha após um sucesso até o
+próximo sucesso, e o repositório fica com a mediana dos episódios. A
+classificação usa as faixas da Tabela~\ref{tab:faixas}, adaptadas dos relatórios
+DORA \cite{dorastate}; a classe geral é a mediana das notas (4 a 1) das quatro
+métricas, arredondada para baixo.
 
 \begin{table}[t]
   \centering
-  \caption{Faixas de classificação DORA usadas neste estudo (adaptadas dos
-    relatórios DORA e fixadas para toda a disciplina).}
+  \caption{Faixas de classificação DORA, fixas para toda a disciplina.}
   \label{tab:faixas}
   \footnotesize
-  \begin{tabular}{@{}p{2.6cm}p{2.6cm}p{2.6cm}p{2.6cm}p{2.6cm}@{}}
+  \begin{tabular}{@{}lllll@{}}
     \toprule
     Métrica & Elite & High & Medium & Low \\
     \midrule
-    Frequência de deploy & $\geq$ 7/semana & $\geq$ 1 e $<$ 7/semana & $\geq$ 1/mês e $<$ 1/semana & $<$ 1/mês \\
-    \emph{Lead time} (mediana) & $<$ 1 dia & 1 dia a $<$ 1 semana & 1 semana a $<$ 30 dias & $\geq$ 30 dias \\
+    Frequência & $\geq$ 7/semana & 1 a $<$ 7/semana & 1/mês a $<$ 1/semana & $<$ 1/mês \\
+    \emph{Lead time} & $<$ 1 dia & 1 dia a $<$ 1 semana & 1 semana a $<$ 30 dias & $\geq$ 30 dias \\
     Taxa de falha & $\leq$ 15\% & $>$ 15\% e $\leq$ 30\% & $>$ 30\% e $\leq$ 45\% & $>$ 45\% \\
-    Recuperação (mediana) & $<$ 1 hora & 1 hora a $<$ 1 dia & 1 dia a $<$ 1 semana & $\geq$ 1 semana \\
+    Recuperação & $<$ 1 hora & 1 hora a $<$ 1 dia & 1 dia a $<$ 1 semana & $\geq$ 1 semana \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\subsection{Variantes obrigatórias}
-\label{sec:variantes}
+\textbf{\emph{Lead time}.} Na variante (a), o valor de uma release é o intervalo
+entre sua publicação e o commit mais antigo que ela inclui, e o repositório fica
+com a mediana das releases; na (b), é a mediana dos intervalos de todos os
+commits. Ficam fora, e são contadas, as releases sem anterior (60), com
+\texttt{compare} falho (5) e sem commits novos (3.822).
+\textbf{Taxa de falha.} O CFR (a), proxy de CI, é a proporção de runs com falha
+entre falhas e sucessos. No CFR (b), proxy de entrega, uma release falha se a
+próxima da mesma linha (mesmo prefixo de tag, o que separa pacotes de monorepos)
+sair em até 7 dias e for corretiva, o que é decidido por uma heurística que
+combina a versão SemVer \cite{semver} com palavras de correção nos commits e
+nas \emph{release notes}; as releases dos últimos 7 dias ficam fora do
+denominador.
+\textbf{Unidade de deploy (RQ~07).} Além da release, usamos release +
+pré-release e tag, datada pelo commit apontado, nas combinações C1 (referência:
+release, \emph{lead time} (a) e CFR (a)), C2 (release + pré-release, (b) e (b))
+e C3 (tag, (b) e (a)).
 
-Duas métricas têm definições variantes obrigatórias, porque o valor muda quando
-a regra muda. Calculá-las separadamente faz parte do estudo: a comparação entre
-variantes é justamente a RQ~07.
-
-\textbf{Lead time for changes.} Na variante \emph{(a) por release}, cada release
-R da janela é comparada à release anterior (mesmo que ela esteja fora da
-janela): o lead time de R é a diferença entre sua publicação e a data de autor
-do commit mais antigo incluído em R, e o valor do repositório é a mediana
-desses valores entre suas releases. Na variante \emph{(b) por commit}, cada
-commit de cada release contribui com a diferença entre a publicação da release e
-a data de autor do próprio commit, e o valor do repositório é a mediana de
-\emph{todos} os commits de \emph{todas} as suas releases. As duas divergem
-estruturalmente: na (a), um único commit antigo ``esquecido'' em uma release faz
-o lead time daquela release explodir e puxa a mediana para cima; na (b), esses
-valores extremos se diluem no conjunto. Releases sem anterior, com
-\texttt{compare} infrutífero (tag apagada, erro 404 ou 422) ou sem commits novos
-ficam fora do cálculo e são contabilizadas; commits com data de autor posterior à
-publicação (lead time negativo) são descartados.
-
-\textbf{Change failure rate.} A variante \emph{(a), proxy de CI}, é a proporção
-de workflow runs com falha sobre falhas mais sucessos, usando o mapeamento de
-\texttt{conclusion} da Seção~\ref{sec:definicoes}; ela mede falha de
-\emph{pipeline}, que não é a mesma coisa que falha em produção --- pipelines
-falham por testes, \emph{linters} e \emph{flakiness} que não afetam o usuário. A
-variante \emph{(b), proxy de entrega}, considera uma release R falha se a
-próxima release da \emph{mesma linha} (mesmo prefixo de tag: em monorepos,
-\texttt{vite@7.1.0} e \texttt{create-vite@8.0.1} são linhas diferentes) for
-publicada em até 7 dias e for corretiva; o CFR do repositório é a proporção de
-releases avaliadas que falharam. Releases publicadas nos últimos 7 dias da
-janela não podem ser avaliadas --- ainda não se sabe se haverá correção --- e
-ficam fora do denominador (censura).
-
-\textbf{Release corretiva.} O proxy de entrega depende de identificar releases
-cujo objetivo principal é corrigir um defeito recente. A heurística automática
-separa a tag em \emph{linha} (o prefixo) e versão SemVer \cite{semver} e combina
-três sinais: (i) apenas o número de \emph{patch} da versão mudou
-(\texttt{2.3.0} $\rightarrow$ \texttt{2.3.1}); (ii) algum commit desde a release
-anterior tem \texttt{fix}, \texttt{hotfix}, \texttt{bugfix} ou \texttt{revert}
-na mensagem (atualizações de dependência do tipo \texttt{fix(deps)} não
-contam); e (iii) as \emph{release notes} usam palavras de correção
-(\emph{fix}, \emph{bug}, \emph{regression}, \emph{crash}, \emph{security},
-\emph{CVE}...) pelo menos tantas vezes quanto palavras de funcionalidade
-(\emph{feature}, \emph{add}, \emph{new}, \emph{support}, \emph{improve}...).
-Antes da rotulagem, escrevemos cinco versões com os sinais (i) e (ii) --- só
-patch, só mensagens, patch \emph{e} mensagens, patch \emph{ou} mensagens e patch
-com maioria de commits de correção ---, porque ``fix'' é a palavra mais comum no
-começo das mensagens de commit da amostra (cerca de 20\%) e, sozinha, marcaria
-quase toda release como corretiva. Como nenhuma delas chegou a F1 de 0,70 na
-validação (Seção~\ref{sec:resultado-validacao}), criamos uma sexta versão
-(v6: patch \emph{e} release notes de correção), que é a usada no CFR (b) do
-dataset.
-
-\textbf{Unidade de deploy.} Além da release principal, a RQ~07 alterna entre
-duas outras unidades: a soma de releases e pré-releases, e a tag apontada para um
-commit (datada pelo commit apontado). Combinando unidade de deploy, escolha do
-\emph{lead time} e escolha do proxy de CFR, a análise de sensibilidade compara ao
-menos três definições: C1 (referência: release, (a) e (a)), C2 (release +
-pré-release, (b) e (b)) e C3 (tag, (b) e (a)).
-
-\subsection{Protocolo de validação manual}
+\subsection{Validação manual}
 \label{sec:validacao}
 
-Heurísticas automáticas podem errar, e o único modo de medir esse erro é
-compará-las com o julgamento humano. O conjunto rotulado por humanos e usado
-como referência é a \emph{amostra-ouro} (\emph{gold standard}). O protocolo tem
-cinco passos.
+Sorteamos 60 repositórios com semente 42 e, de cada um, 5 releases (300 no
+total). Dois avaliadores rotularam, sem ver a saída da heurística, o tipo do
+projeto, se as releases são entregas reais e se cada release é corretiva; com
+autorização da disciplina, os rótulos foram produzidos com apoio de modelos de
+linguagem, em processos separados. A concordância foi medida pelo kappa de
+Fleiss \cite{fleiss1971,seabold2010}, as divergências foram decididas por um
+terceiro avaliador (também um modelo, sem saber de quem era cada rótulo), e a
+heurística foi avaliada contra o consenso com precisão, recall e F1
+\cite{pedregosa2011}, com meta de 0,70.
 
-\begin{enumerate}
-  \item \textbf{Sorteio.} 60 repositórios são sorteados da amostra final com
-    semente fixa (42) documentada no código, de modo que o sorteio seja
-    reproduzível; de cada repositório, sorteam-se 5 releases que tenham release
-    anterior, para a planilha exibir o link da lista de commits entre as duas.
-    As saídas são \texttt{amostra\_ouro.csv} e \texttt{releases\_ouro.csv}.
-  \item \textbf{Rotulação independente.} Cada integrante do grupo preenche a
-    própria planilha (\texttt{rotulos\_<avaliador>.xlsx}) sem consultar os
-    demais e \emph{sem ver a saída da heurística}. Três dimensões são rotuladas:
-    (i) o tipo do projeto (biblioteca/framework, aplicação/serviço, ferramenta
-    CLI ou outro); (ii) se as releases do repositório representam entregas reais
-    ao usuário (sim, não ou incerto); e (iii) se cada uma das 5 releases é
-    corretiva (sim ou não), lendo as release notes e a lista de commits. As
-    colunas de resposta só aceitam os valores de uma lista fixa, e cada linha
-    traz links diretos para a release e para os commits. Com autorização da
-    disciplina, os dois conjuntos de rótulos foram produzidos com apoio de
-    modelos de linguagem, em processos separados, sem acesso à saída da
-    heurística nem aos rótulos do outro avaliador. Em um deles, o modelo recebeu
-    para cada item a descrição e o início do README do repositório, as release
-    notes, a lista de arquivos para download e as mensagens dos commits desde a
-    release anterior, além das mesmas instruções da planilha.
-  \item \textbf{Concordância.} Em cada dimensão, a concordância entre
-    avaliadores é medida pelo kappa de Fleiss \cite{fleiss1971}, que corrige a
-    concordância que ocorreria por acaso; calcula-se com
-    \texttt{aggregate\_raters} e \texttt{fleiss\_kappa} do statsmodels
-    \cite{seabold2010} e interpreta-se pela escala de Landis \& Koch
-    \cite{landis1977}: $<$ 0 pobre; 0--0,20 leve; 0,21--0,40 razoável;
-    0,41--0,60 moderada; 0,61--0,80 substancial; 0,81--1 quase perfeita. Um
-    kappa baixo indicaria ambiguidade do próprio critério --- é um achado a
-    discutir, e não apenas um defeito do rotulador.
-  \item \textbf{Desempate e consenso.} O protocolo de desempate foi registrado
-    \emph{antes} de observar as divergências: cada caso divergente seria
-    discutido pelos avaliadores com a evidência de apoio (release notes e lista
-    de commits) até que se chegasse a um acordo. Como os rótulos vieram de
-    modelos de linguagem, as divergências foram decididas por um terceiro
-    avaliador, também um modelo de linguagem, que recebeu o material de cada
-    caso e os dois rótulos identificados apenas como ``A'' e ``B'', em ordem
-    sorteada, e registrou o motivo de cada decisão em
-    \texttt{decisoes\_desempate.csv}. O rótulo de consenso de cada item é
-    gravado em \texttt{consenso\_repositorios.csv} e
-    \texttt{consenso\_releases.csv}.
-  \item \textbf{Avaliação da heurística.} Frente ao consenso das 300 releases da
-    amostra-ouro, cada versão da heurística é avaliada com precisão, recall e F1
-    (\texttt{precision\_recall\_fscore\_support} do scikit-learn
-    \cite{pedregosa2011}): a precisão é a fração das releases marcadas como
-    corretivas que o consenso confirma, o recall é a fração das corretivas do
-    consenso que a heurística encontrou e o F1 é a média harmônica das duas. A
-    versão adotada no dataset é a de melhor F1, com meta mínima de 0,70; abaixo
-    dela, a heurística é refinada e reavaliada, documentando-se cada versão
-    testada. O tipo de projeto rotulado alimenta a RQ~06, e a validação sustenta
-    o CFR (b) da RQ~03 e a seção de ameaças à validade.
-\end{enumerate}
-
-\subsection{Resultado da validação manual}
-\label{sec:resultado-validacao}
-
-A concordância entre os dois avaliadores foi baixa nas três dimensões
-(Tabela~\ref{tab:kappa}). No tipo do projeto, parte das divergências são erros
-claros de um dos conjuntos de rótulos (bibliotecas como \texttt{keras} e
-\texttt{nuxt} marcadas como ferramenta CLI, e \texttt{three.js} como
-``outro''), o que aponta mais para a qualidade da rotulagem do que para
-ambiguidade do critério. Na release corretiva, o kappa de 0,10 confirma que o
-critério é ambíguo: as divergências se concentram em releases que misturam
-correções e funcionalidades novas, nas quais decidir qual é o ``objetivo
-principal'' depende de leitura.
+A concordância foi pobre no tipo do projeto (kappa de $-0{,}03$) e nas entregas
+reais ($-0{,}13$) e leve na release corretiva ($0{,}10$) \cite{landis1977}. Nas
+entregas reais, os avaliadores concordaram em 68\% dos casos, mas quase tudo é
+``sim'' (58 dos 60 no consenso), e com essa prevalência o kappa fica negativo;
+na corretiva, o critério é ambíguo quando a release mistura correções e
+funcionalidades. O consenso tem 24 aplicações ou serviços, 21 bibliotecas ou
+\emph{frameworks}, 11 ferramentas CLI e 4 outros. As cinco versões da heurística escritas antes da rotulagem ficaram
+abaixo da meta (Tabela~\ref{tab:heuristica}), porque ``fix'' começa cerca de
+20\% das mensagens de commit. A v6, que olha as \emph{release notes}, chegou a
+F1 de 0,72 e é a usada no CFR (b), mas foi escrita depois de examinar os erros
+nesses casos, e o valor tende a ser otimista (de 0,64 a 0,79 em metades da
+amostra).
 
 \begin{table}[t]
   \centering
-  \caption{Concordância entre os dois avaliadores da amostra-ouro (kappa de
-    Fleiss, interpretado pela escala de Landis \& Koch).}
-  \label{tab:kappa}
-  \footnotesize
-  \begin{tabular}{@{}lrrrrl@{}}
-    \toprule
-    Dimensão & Itens & Divergências & Concordância & Kappa & Interpretação \\
-    \midrule
-    Tipo do projeto & 60 & 41 & 31,7\% & $-0{,}03$ & pobre \\
-    Entregas reais & 60 & 19 & 68,3\% & $-0{,}13$ & pobre \\
-    Release corretiva & 300 & 123 & 59,0\% & $0{,}10$ & leve \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-As 183 divergências passaram pelo desempate. O terceiro avaliador ficou com o
-rótulo do mesmo avaliador em 182 dos 183 casos. Como ele recebeu o mesmo
-material usado na rotulagem desse avaliador, o consenso ficou muito próximo dos
-rótulos dele, e a referência usada na avaliação da heurística não é tão
-independente quanto o protocolo previa; tratamos isso como ameaça à validade. O
-consenso tem 107 releases corretivas entre as 300; 24 repositórios do tipo
-aplicação/serviço, 21 biblioteca/framework, 11 ferramenta CLI e 4 outro; e 58 dos
-60 repositórios com releases que representam entregas reais.
-
-A Tabela~\ref{tab:heuristica} mostra o desempenho de cada versão da heurística
-de release corretiva contra o consenso. As versões baseadas em mensagens de
-commit erram muito porque quase toda release tem algum commit de correção no
-meio; a v1 (só patch) chega ao melhor recall entre as originais, mas marca como
-corretivas muitas releases de patch que trazem funcionalidade nova. Antes da v6
-testamos ainda regras exploratórias que usam só os commits: patch sem commit
-\texttt{feat:} (F1 = 0,66), patch com pelo menos tantos commits de correção
-quanto de funcionalidade (0,66), patch até 7 dias depois da release anterior
-(0,57) e
-patch com até 50 commits (0,54); a lista completa está no README do
-repositório. A v6, que olha as release notes, foi a única a passar de 0,70
-(F1 = 0,72). Como ela foi
-definida depois de examinar os erros nesses mesmos 300 casos, o valor tende a ser
-otimista: separando os 60 repositórios em metades, o F1 variou entre 0,64 e 0,79.
-
-\begin{table}[t]
-  \centering
-  \caption{Versões testadas da heurística de release corretiva contra o
-    consenso das 300 releases da amostra-ouro (107 corretivas).}
+  \caption{Versões da heurística de release corretiva contra o consenso das 300
+    releases da amostra-ouro (107 corretivas).}
   \label{tab:heuristica}
   \footnotesize
   \begin{tabular}{@{}llrrr@{}}
@@ -580,150 +250,110 @@ otimista: separando os 60 repositórios em metades, o F1 variou entre 0,64 e 0,7
 \subsection{RQ 01 a RQ 04 --- Métricas e classificação DORA}
 \label{sec:rq01-04}
 
-A Tabela~\ref{tab:rq01-04} resume as quatro métricas nos 300 repositórios e a
-Figura~\ref{fig:rq01-04} mostra as distribuições, com os cortes das faixas da
-Tabela~\ref{tab:faixas}. Como as distribuições são assimétricas, a leitura usa a
-mediana e o intervalo interquartil (IQR).
-
-\textbf{RQ 01.} A frequência de deploy tem mediana de 0,52 release por semana
-(IQR de 0,25 a 1,21) e média de 1,36, puxada por poucos repositórios com
-dezenas de releases na janela. A moda é 0,10 release por semana --- o mínimo
-exigido pelo filtro E3, de cinco releases na janela. A distribuição é
-fortemente assimétrica à direita, mas a mediana cai na faixa \emph{Medium}
-(47,3\% dos repositórios): \emph{High} concentra 28,7\%, \emph{Low} 21,3\% e
-\emph{Elite} apenas 2,7\%.
-
-\textbf{RQ 02.} O \emph{lead time} (a) tem mediana de 252,1 h (10,5 dias; IQR
-de 74,8 a 968,5 h) e o (b), de 267,3 h (11,1 dias; IQR de 79,5 a 1.218,1 h). As
-duas variantes ficam, portanto, na mesma ordem de grandeza. Por repositório,
-porém, elas divergem nas duas direções: 40,3\% têm (b) maior que (a), e a razão
-mediana (b)/(a) é 0,78, de modo que no repositório típico o valor por commit é
-menor. As duas medidas ordenam os repositórios de forma semelhante
-($\rho = 0{,}77$). Na classificação, a troca de variante move 40,7\% dos
-repositórios de faixa, 18,3\% para cima e 22,3\% para baixo.
-
-\textbf{RQ 03.} O CFR (a) tem mediana de 4,8\% (IQR de 2,3\% a 11,2\%) e o CFR
-(b), de 21,9\% (IQR de 8,3\% a 44,1\%; 299 repositórios). O CFR (b) é maior que
-o (a) em 72,6\% dos casos, e a correlação entre os dois é praticamente nula
-($\rho = 0{,}09$): os proxies medem coisas diferentes, como a RQ~07 detalha.
-
-\textbf{RQ 04.} O tempo de recuperação tem mediana de 2,56 h (IQR de 0,98 a
-6,50 h) em 284 repositórios. A censura é concentrada: 158 dos 63.874 episódios
-(0,2\%) não têm recuperação até o fim da janela, mas 92 repositórios (32\% dos
-284) têm ao menos um episódio censurado, e 16 não tiveram nenhum episódio de
-falha.
-
-Na classificação de referência (C1), a classe geral é \emph{High} em 45,7\% dos
-repositórios, \emph{Medium} em 42\%, \emph{Elite} em 7,3\% e \emph{Low} em 5\%.
-Por métrica, o CFR concentra 82,7\% em \emph{Elite}, a recuperação 64,8\% em
-\emph{High}, a frequência 47,3\% em \emph{Medium} e o \emph{lead time} 30\% em
-\emph{Low}.
+A Tabela~\ref{tab:rq01-04} e a Figura~\ref{fig:rq01-04} resumem as métricas. Todas são assimétricas à direita, com a média bem acima da
+mediana, por isso a leitura usa mediana e IQR; a moda, onde existe, é quase
+sempre um limite (o mínimo do filtro E3 ou a taxa zero).
+\textbf{RQ~01.} O repositório mediano publica 0,52 release por semana, uma a
+cada duas semanas; quase metade fica em \emph{Medium}, e só 2,7\% em
+\emph{Elite}.
+\textbf{RQ~02.} O \emph{lead time} mediano é de 10,5 dias na variante (a) e 11,1
+na (b). As variantes divergem por construção: a (a) dá um voto a cada release,
+e esse voto é o commit mais antigo; a (b) dá um voto a cada commit, e assim as
+releases grandes, que acumulam semanas de trabalho, pesam mais. O primeiro efeito
+puxa a (b) para baixo, e o segundo, para cima (ela é maior em 40,3\% dos
+repositórios). As duas ordenam os repositórios de forma parecida
+($\rho = 0{,}77$), mas a troca muda a faixa de 40,7\% deles, 18,3\% para cima e
+22,3\% para baixo.
+\textbf{RQ~03.} O CFR (a) tem mediana de 4,8\% e o (b), de 21,9\%, maior em
+72,6\% dos repositórios; a correlação entre os dois é quase nula
+($\rho = 0{,}09$). No CFR (b), 859 releases dos últimos 7 dias ficaram
+censuradas, e um repositório ficou sem valor.
+\textbf{RQ~04.} A recuperação mediana é de 2,56 h, e 16 repositórios não
+tiveram episódio de falha. Dos 63.874 episódios, 158 (0,2\%) ficaram
+censurados, em 92 repositórios; por repositório, a proporção censurada tem
+mediana 0, Q3 de 0,4\% e máximo de 67\%.
+Na referência (C1), a classe geral é \emph{High} em 45,7\% dos repositórios,
+\emph{Medium} em 42\%, \emph{Elite} em 7,3\% e \emph{Low} em 5\%.
 
 \begin{table}[t]
   \centering
-  \caption{RQ 01 a RQ 04: estatística descritiva das métricas nos 300
-    repositórios (Q1 e Q3 delimitam o IQR).}
+  \caption{RQ 01 a RQ 04: estatística descritiva por repositório e
+    classificação DORA de cada métrica (\% dos repositórios com valor). A moda
+    fica em branco (---) quando nenhum valor se repete; IQR = Q3 $-$ Q1.}
   \label{tab:rq01-04}
   \footnotesize
-  \begin{tabular}{@{}lrrrrr@{}}
+  \begin{tabular}{@{}lrrrrrr@{}}
     \toprule
-    Métrica & $n$ & Mediana & Q1 & Q3 & Média \\
+    & Frequência & \multicolumn{2}{c}{\emph{Lead time} (dias)} & \multicolumn{2}{c}{CFR (\%)} & Recuperação \\
+    \cmidrule(lr){3-4} \cmidrule(lr){5-6}
+    & (por semana) & (a) & (b) & (a) & (b) & (horas) \\
     \midrule
-    Frequência (releases/semana) & 300 & 0,52 & 0,25 & 1,21 & 1,36 \\
-    \emph{Lead time} (a) (h) & 300 & 252,1 & 74,8 & 968,5 & 1.928,0 \\
-    \emph{Lead time} (b) (h) & 300 & 267,3 & 79,5 & 1.218,1 & 2.151,4 \\
-    CFR (a) & 300 & 0,048 & 0,023 & 0,112 & 0,091 \\
-    CFR (b) & 299 & 0,219 & 0,083 & 0,441 & 0,278 \\
-    Recuperação (h) & 284 & 2,56 & 0,98 & 6,50 & 9,47 \\
+    $n$ & 300 & 300 & 300 & 300 & 299 & 284 \\
+    Média & 1,36 & 80,3 & 89,6 & 9,1 & 27,8 & 9,47 \\
+    Mediana & 0,52 & 10,5 & 11,1 & 4,8 & 21,9 & 2,56 \\
+    Moda & 0,10 & --- & --- & 0 & 0 & 0,54 \\
+    Q1 & 0,25 & 3,1 & 3,3 & 2,3 & 8,3 & 0,98 \\
+    Q3 & 1,21 & 40,4 & 50,8 & 11,2 & 44,1 & 6,50 \\
+    IQR & 0,96 & 37,2 & 47,4 & 8,9 & 35,8 & 5,52 \\
+    \midrule
+    \emph{Elite} (\%) & 2,7 & 15,0 & 10,7 & 82,7 & 36,8 & 26,1 \\
+    \emph{High} (\%) & 28,7 & 25,3 & 27,7 & 11,7 & 23,1 & 64,8 \\
+    \emph{Medium} (\%) & 47,3 & 29,7 & 30,0 & 3,3 & 15,4 & 8,5 \\
+    \emph{Low} (\%) & 21,3 & 30,0 & 31,7 & 2,3 & 24,7 & 0,7 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{figuras/rq01_04_distribuicao.png}
-  \caption{RQ 01 a RQ 04: distribuição das métricas por repositório (eixos
-    logarítmicos, exceto o CFR), com a mediana; as linhas pontilhadas são os
-    cortes das faixas DORA.}
+  \includegraphics[width=0.85\textwidth]{figuras/rq01_04_distribuicao.png}
+  \caption{RQ 01 a RQ 04: distribuição por repositório de (a) frequência, (b)
+    \emph{lead time} por release e por commit, (c) CFR nos proxies de CI e de
+    entrega e (d) recuperação. Eixos logarítmicos, exceto no CFR; a linha é a
+    mediana, o triângulo, a média, e o pontilhado, os cortes das faixas DORA.}
   \label{fig:rq01-04}
 \end{figure}
 
 \subsection{RQ 05 --- Velocidade e estabilidade}
 \label{sec:rq05}
 
-A Figura~\ref{fig:rq05} relaciona a frequência de deploy com o CFR nas duas
-variantes. Com o proxy de CI, a correlação de Spearman é fraca e positiva
-($\rho = +0{,}161$, $p = 0{,}005$, $n = 300$); com o proxy de entrega, é forte
-($\rho = +0{,}572$, $p < 0{,}001$, $n = 299$). Nos dois casos, repositórios que
-publicam mais releases têm \emph{mais} falhas, e não menos. Os pares
-complementares vão na direção esperada: a frequência se correlaciona
-negativamente com o \emph{lead time} (a) ($\rho = -0{,}564$), com o (b)
-($-0{,}426$) e com o tempo de recuperação ($-0{,}209$).
-
-A Tabela~\ref{tab:rq05-faixas} mostra por que a leitura do CFR (b) pede
-cuidado. A mediana do CFR (b) sobe de 0\% na faixa \emph{Low} para 20\%, 43\% e
-47\% nas faixas seguintes, e 54,7\% dos repositórios \emph{Low} têm CFR (b)
-exatamente zero. O motivo está na definição: uma release só conta como falha se
-houver uma release corretiva nos sete dias seguintes, e quem publica menos de
-uma vez por mês raramente tem uma release seguinte dentro dessa janela. O CFR
-(a), que não depende da cadência, fica praticamente plano entre as faixas
-(4,7\%, 4,1\%, 6,7\% e 5,9\%).
-
-\begin{table}[t]
-  \centering
-  \caption{RQ 05: CFR mediano por faixa de frequência de deploy (C1). A última
-    coluna é a proporção de repositórios da faixa com CFR (b) igual a zero.}
-  \label{tab:rq05-faixas}
-  \footnotesize
-  \begin{tabular}{@{}lrrrrr@{}}
-    \toprule
-    Faixa & $n$ & Frequência (sem.) & CFR (a) & CFR (b) & CFR (b) $= 0$ \\
-    \midrule
-    \emph{Low} & 64 & 0,15 & 0,047 & 0,000 & 54,7\% \\
-    \emph{Medium} & 142 & 0,46 & 0,041 & 0,200 & 10,6\% \\
-    \emph{High} & 86 & 1,91 & 0,067 & 0,431 & 1,2\% \\
-    \emph{Elite} & 8 & 9,56 & 0,059 & 0,467 & 12,5\% \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+A frequência de deploy se correlaciona positivamente com a taxa de falha
+(Figura~\ref{fig:rq05}): de forma fraca com o CFR (a) ($\rho = +0{,}16$,
+$p = 0{,}005$, $n = 300$) e forte com o CFR (b) ($\rho = +0{,}57$,
+$p < 0{,}001$, $n = 299$). Com o \emph{lead time} (a), a correlação é negativa
+($\rho = -0{,}56$): quem publica mais entrega mais rápido. Da faixa \emph{Low}
+para a \emph{Elite} de frequência, a mediana do CFR (b) sobe de 0\% para 20\%,
+43\% e 47\% (54,7\% dos repositórios \emph{Low} têm CFR (b) zero), enquanto o
+CFR (a) fica entre 4\% e 7\%.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{figuras/rq05_dispersao.png}
-  \caption{RQ 05: frequência de deploy contra o CFR, nas variantes (a) e (b);
-    a linha é a mediana do CFR em cada quintil da frequência.}
+  \includegraphics[width=0.85\textwidth]{figuras/rq05_dispersao.png}
+  \caption{RQ 05: frequência de deploy (escala logarítmica) contra o CFR (a) e
+    (b); a linha é a mediana do CFR em cada quintil da frequência.}
   \label{fig:rq05}
 \end{figure}
 
 \subsection{RQ 06 --- Características associadas ao desempenho}
 \label{sec:rq06}
 
-A Figura~\ref{fig:rq06} mostra o tamanho de efeito de cada fator em cada
-métrica, com Kruskal-Wallis e Mann-Whitney \cite{virtanen2020}, correção de
-Holm \cite{holm1979} dentro de duas famílias (as quatro métricas de referência
-(C1) e as duas variantes (b)) e, nas comparações par a par, o Cliff's $\delta$
-\cite{romano2006}. Dos 30 testes, seis passam pela correção
-(Tabela~\ref{tab:rq06}), e todos envolvem o \emph{lead time} ou a frequência.
-Nenhum fator se associa ao CFR, ao tempo de recuperação ou à popularidade
-(quartis de estrelas), e o tipo de projeto não tem efeito significativo em
-métrica alguma.
-
-A idade é o fator mais associado: $\varepsilon^2 = 0{,}348$ no \emph{lead time}
-(a) e $0{,}102$ na frequência. Os repositórios mais antigos publicam menos e
-demoram mais: da Q1 para a Q4 de idade, a mediana do \emph{lead time} (a) sobe
-de 55,4 h para 1.058,9 h (Cliff's $\delta = -0{,}81$) e a da frequência cai de
-0,92 para 0,38 release por semana ($\delta = +0{,}48$). O número de
-contribuidores vem em seguida ($\varepsilon^2 = 0{,}168$ no \emph{lead time}
-(a)): da Q1 para a Q4, a mediana sobe de 131,0 h para 998,3 h
-($\delta = -0{,}62$). A linguagem só aparece na variante (b) do \emph{lead
-time} ($\varepsilon^2 = 0{,}077$, efeito médio), e o pós-hoc aponta o Python
-como o mais rápido (mediana de 112,7 h, contra 446,9 h do Go).
+Comparamos quartis de idade, contribuidores e estrelas, a linguagem principal
+(as cinco com ao menos 15 repositórios) e o tipo do projeto (nos 60 da
+amostra-ouro) nas seis métricas, com Kruskal-Wallis \cite{virtanen2020},
+correção de Holm \cite{holm1979} e $\varepsilon^2$, lido com os limiares de
+0,01, 0,06 e 0,14 \cite{cohen1988}; entre grupos extremos, usamos Mann-Whitney e
+Cliff's $\delta$ \cite{romano2006}. Seis dos 30 testes passam pela correção
+(Tabela~\ref{tab:rq06}), todos no \emph{lead time} ou na frequência. A idade é
+o fator mais forte: do quartil mais novo ao mais antigo, o \emph{lead time} (a)
+mediano sobe de 55,4 h para 1.058,9 h ($\delta = -0{,}81$), e a frequência cai
+de 0,92 para 0,38 release por semana. Nenhum fator se associa ao CFR ou à
+recuperação, e nem a popularidade nem o tipo do projeto se associam a métrica
+alguma.
 
 \begin{table}[t]
   \centering
-  \caption{RQ 06: os seis testes que passaram pela correção de Holm, com o
-    tamanho de efeito ($\varepsilon^2$) e a classificação usual. A idade e os
-    contribuidores entram em quartis.}
+  \caption{RQ 06: os seis testes de Kruskal-Wallis que passaram pela correção de
+    Holm (idade e contribuidores em quartis).}
   \label{tab:rq06}
   \footnotesize
   \begin{tabular}{@{}llrrrr@{}}
@@ -740,54 +370,26 @@ como o mais rápido (mediana de 112,7 h, contra 446,9 h do Go).
   \end{tabular}
 \end{table}
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figuras/rq06_efeitos.png}
-  \caption{RQ 06: tamanho de efeito ($\varepsilon^2$) de cada fator em cada
-    métrica; em azul, os testes com $p$ corrigido por Holm abaixo de 0,05.}
-  \label{fig:rq06}
-\end{figure}
-
 \subsection{RQ 07 --- Análise de sensibilidade}
 \label{sec:rq07}
 
-As três combinações da Seção~\ref{sec:variantes} foram calculadas para os 300
-repositórios. Trocar a unidade de deploy aumenta o número de entregas: a mediana
-por repositório passa de 27 releases na janela para 34 releases e pré-releases
-e 47 tags, e nenhum repositório tem menos tags que releases. As médias (71, 92 e
-175) ficam muito acima das medianas, puxadas por poucos repositórios com
-centenas de unidades (o \texttt{pytorch/pytorch} tem 9.674 tags), e a moda das
-releases é 5, o mínimo exigido pelo filtro E3 (14 repositórios). Por isso a
-comparação usa a mediana. A frequência de deploy mediana sobe de 0,52 para 0,65
-e 0,90 por semana (Figura~\ref{fig:rq07-unidades}b).
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figuras/rq07_classes_e_unidades.png}
-  \caption{RQ 07: (a) proporção de repositórios em cada classe geral nas três
-    combinações; (b) frequência de deploy por unidade, com a mediana (linha) e a
-    média (triângulo); as linhas pontilhadas são os cortes das faixas DORA.}
-  \label{fig:rq07-unidades}
-\end{figure}
-
-A Tabela~\ref{tab:rq07} resume as comparações: para cada par de combinações, a
-proporção de repositórios que mudam de classe geral e o kappa de Cohen
-ponderado \cite{cohen1968}, calculado com
-\texttt{cohen\_kappa\_score(..., weights='linear')} do scikit-learn
-\cite{pedregosa2011}, na classe geral e em cada métrica. Na classe geral, entre
-22\% e 31\% dos repositórios mudam de classe, e o kappa fica entre 0,53 e 0,68,
-concordância moderada a substancial pela escala de Landis \& Koch
-\cite{landis1977}. Nove em cada dez mudanças são para uma faixa vizinha
-(Figura~\ref{fig:rq07}). A C2 é a mais severa: em relação à C1, 22\% dos
-repositórios descem de classe e 7\% sobem, e a classe mais comum (moda) passa de
-High para Medium. A C3 é a mais generosa: 17\% sobem e 5\% descem, e a moda
-continua High (Figura~\ref{fig:rq07-unidades}a).
+Trocar a unidade aumenta as entregas: a mediana passa de 27 releases para 34
+com as pré-releases e 47 tags, e a frequência mediana, de 0,52 para 0,65 e 0,90
+por semana (Figura~\ref{fig:rq07-unidades}b). Entre as combinações, de 22\% a
+31\% dos repositórios mudam de classe geral, com kappa de Cohen ponderado
+\cite{cohen1968,pedregosa2011} de 0,53 a 0,68 (Tabela~\ref{tab:rq07}), e nove
+em cada dez mudanças são para uma faixa vizinha. A C2 é a mais severa (22\%
+descem, e a classe mais comum passa a \emph{Medium},
+Figura~\ref{fig:rq07-unidades}a); a C3, a mais generosa (17\% sobem). Por
+métrica, a frequência é a mais estável, e o CFR, o extremo: entre os proxies,
+65\% mudam de classe, com kappa de 0,02. Trocando um fator de cada vez a partir
+da C1, o proxy de CFR muda a classe geral de 24\% dos repositórios, a tag de
+15\%, o \emph{lead time} (b) de 13\% e as pré-releases de 6\%.
 
 \begin{table}[t]
   \centering
-  \caption{RQ 07: repositórios que mudam de classe geral e kappa ponderado entre
-    as combinações (acima) e trocando um fator da C1 de cada vez (abaixo). O
-    tempo de recuperação é igual nas três combinações.}
+  \caption{RQ 07: repositórios que mudam de classe geral e kappa ponderado
+    entre as combinações.}
   \label{tab:rq07}
   \footnotesize
   \begin{tabular}{@{}lrrrrrrrr@{}}
@@ -799,283 +401,157 @@ continua High (Figura~\ref{fig:rq07-unidades}a).
     C1 $\times$ C2 & 300 & 29\% & 7\% & 22\% & 0,53 & 0,86 & 0,56 & 0,02 \\
     C1 $\times$ C3 & 300 & 22\% & 17\% & 5\% & 0,68 & 0,66 & 0,51 & 1,00 \\
     C2 $\times$ C3 & 300 & 31\% & 30\% & 1\% & 0,54 & 0,78 & 0,89 & 0,02 \\
-    \midrule
-    C1 com release + pré-release & 300 & 6\% & 6\% & 0\% & 0,91 &  &  &  \\
-    C1 com tag & 300 & 15\% & 15\% & 0\% & 0,76 &  &  &  \\
-    C1 com \emph{lead time} (b) & 300 & 13\% & 6\% & 6\% & 0,82 &  &  &  \\
-    C1 com CFR (b) & 300 & 24\% & 1\% & 23\% & 0,65 &  &  &  \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{figuras/rq07_transicoes.png}
-  \caption{RQ 07: transições da classe geral entre as combinações. Cada célula
-    conta os repositórios com a classe da linha numa combinação e a da coluna na
-    outra; a diagonal reúne os que não mudaram.}
-  \label{fig:rq07}
+  \includegraphics[width=\textwidth]{figuras/rq07_classes_e_unidades.png}
+  \caption{RQ 07: (a) classe geral nas três combinações; (b) frequência de
+    deploy por unidade, com a mediana (linha), a média (triângulo) e os cortes
+    das faixas DORA.}
+  \label{fig:rq07-unidades}
 \end{figure}
-
-Por métrica, a concordância varia bastante. A frequência é a mais estável
-(kappa de 0,66 a 0,86), e a troca de unidade só a faz subir. O \emph{lead time}
-muda de classe em cerca de metade dos repositórios quando a variante (a) da
-release dá lugar à (b) de outra unidade (kappa de 0,51 e 0,56), mas quase não
-muda entre release + pré-release e tag, que usam a mesma variante (0,89). O CFR
-é o caso extremo: entre o proxy de CI e o de entrega, 65\% dos repositórios
-mudam de classe, e o kappa de 0,02 é o que se esperaria por acaso.
-
-Como cada par troca mais de um fator ao mesmo tempo, recalculamos a C1 trocando
-um fator de cada vez (parte de baixo da Tabela~\ref{tab:rq07}). O proxy de CFR é
-o que mais mexe na classe geral: sozinho, muda 24\% dos repositórios, quase
-todos para pior. Em seguida vêm a tag (15\%, sempre para melhor) e a variante
-(b) do \emph{lead time} (13\%, metade para cima e metade para baixo). Incluir as
-pré-releases muda só 6\%.
 
 \subsection{RQ 08 --- \emph{Rework rate}}
 \label{sec:rq08}
 
-A \emph{rework rate} de cada repositório é a proporção das releases da janela
-que a heurística v6 marca como corretivas, a mesma usada no CFR (b). Somando a
-amostra, 11.199 das 21.203 releases foram marcadas como corretivas. Por
-repositório, a \emph{rework rate} tem média de 0,49 e mediana de 0,48, mais que
-o dobro das do CFR (b), de 0,28 e 0,22 (Tabela~\ref{tab:rq08}). Nas duas
-métricas a moda é 0: 18 repositórios não tiveram nenhuma release corretiva, e
-52 não tiveram nenhuma release corrigida em até 7 dias. A forma das
-distribuições também difere (Figura~\ref{fig:rq08}): a \emph{rework rate} se
-espalha por quase toda a faixa de 0 a 1, com média e mediana quase iguais, e o
-CFR (b) se concentra perto de zero, com uma cauda à direita que puxa a média
-para cima da mediana. Nos 299 repositórios que têm as duas
-métricas\footnote{No \texttt{expo/expo}, as 267 releases da janela saíram nos
-últimos 7 dias e ficaram todas censuradas no CFR (b).}, a \emph{rework rate}
-foi maior em 86\% dos casos (Wilcoxon pareado, $p < 0{,}001$), e a correlação
-entre as duas é moderada (Spearman $\rho = 0{,}57$, $p < 0{,}001$).
+A \emph{rework rate} é a proporção das releases que a heurística v6 marca como
+corretivas (11.199 das 21.203). Por repositório, tem média de 0,49 e mediana de
+0,48, contra 0,28 e 0,22 do CFR (b), e nas duas a moda é 0
+(Tabela~\ref{tab:rq08}). Ela foi maior em 86\% dos 299
+repositórios com as duas métricas (Wilcoxon pareado, $p < 0{,}001$), com
+correlação moderada ($\rho = 0{,}57$): o CFR (b) só conta a correção que sai em
+até 7 dias, e a \emph{rework rate} conta toda release corretiva, inclusive de
+defeitos antigos.
 
 \begin{table}[t]
   \centering
-  \caption{\emph{Rework rate} e CFR (b) por repositório, com a diferença
-    pareada entre as duas.}
+  \caption{RQ 08: \emph{rework rate} e CFR (b) por repositório.}
   \label{tab:rq08}
   \footnotesize
   \begin{tabular}{@{}lrrrrrr@{}}
     \toprule
-    Métrica & Repositórios & Média & Mediana & Moda & Q1 & Q3 \\
+    Métrica & $n$ & Média & Mediana & Moda & Q1 & Q3 \\
     \midrule
     \emph{Rework rate} & 300 & 0,49 & 0,48 & 0 & 0,28 & 0,70 \\
     CFR (b) & 299 & 0,28 & 0,22 & 0 & 0,08 & 0,44 \\
-    Diferença (\emph{rework rate} $-$ CFR (b)) & 299 & 0,21 & 0,12 & 0 & 0,02 & 0,33 \\
+    Diferença pareada & 299 & 0,21 & 0,12 & 0 & 0,02 & 0,33 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figuras/rq08_distribuicao.png}
-  \caption{RQ 08: distribuição da \emph{rework rate} e do CFR (b) por
-    repositório, com a mediana, a média e a moda.}
-  \label{fig:rq08}
-\end{figure}
-
-A diferença está no que cada uma conta. O CFR (b) atribui a falha à release
-que foi corrigida, e só quando a correção sai em até 7 dias na mesma linha. A
-\emph{rework rate} conta a própria release corretiva, sem prazo, e inclui
-patches de defeitos antigos: das 11.199 releases corretivas, só 7.978 (71\%)
-entram no CFR (b). O CFR (b) também deixa de fora as releases dos últimos 7
-dias da janela, e é isso que o coloca acima da \emph{rework rate} nos 20
-repositórios em que ele ficou maior. As duas herdam o erro da heurística: na
-amostra-ouro, a v6 marcou 123 releases como corretivas, contra 107 do consenso,
-então a \emph{rework rate} deve estar cerca de 15\% acima do valor real. Por
-fim, o DORA define retrabalho como o deploy não planejado feito para corrigir
-um problema em produção \cite{doraguide}, e a heurística não separa um patch de
-emergência de um patch de manutenção programado.
-
 \section{Discussão}
 \label{sec:discussao}
 
-\textbf{RQ 01.} A hipótese acertou a forma da distribuição, mas superestimou a
-cadência. Esperávamos uma distribuição fortemente assimétrica, com mediana em
-\emph{High} (uma a três releases por semana), uma minoria em \emph{Elite} e um
-grupo pequeno em \emph{Low}: a assimetria veio, a minoria \emph{Elite} também
-(2,7\%), mas a mediana ficou em 0,52 release por semana (faixa \emph{Medium}) e
-quase um quarto dos repositórios (21,3\%) publica menos de uma release por mês.
-O projeto popular típico entrega uma release a cada duas semanas, e não uma por
-semana. Isso é compatível com o perfil da amostra: são em grande parte
-bibliotecas, que publicam quando acumulam mudanças, e o filtro E3 exige apenas
-cinco releases na janela.
+\textbf{RQ 01 e RQ 02.} Acertamos a assimetria, mas não a cadência: o projeto
+típico publica a cada duas semanas, e não toda semana, como bibliotecas que
+publicam quando acumulam mudanças. A divergência prevista entre as variantes de
+\emph{lead time} não apareceu nas medianas: o commit ``esquecido'' existe, mas a
+mediana entre releases o absorve, e o peso das releases grandes na (b) compensa
+o resto.
 
-\textbf{RQ 02.} A divergência estrutural prevista entre as variantes não
-apareceu nas medianas. Esperávamos (a) na casa de semanas a um mês e (b) na casa
-de dias, com muitos repositórios subindo de faixa em (b); as duas medianas
-ficaram em torno de 11 dias (10,5 e 11,1), e a troca de variante move 40,7\% dos
-repositórios, mas em direções opostas (18,3\% sobem, 22,3\% descem). O efeito
-do commit ``esquecido'' existe, mas é pequeno: no repositório típico o
-\emph{lead time} por commit é 22\% menor que o por release, e 40\% dos
-repositórios vão na direção contrária. As duas medidas ordenam os repositórios
-de forma parecida ($\rho = 0{,}77$), o que limita o impacto da escolha sobre as
-conclusões.
+\textbf{RQ 03 e RQ 04.} A hipótese errou nos dois proxies de CFR. O de CI ficou
+baixo porque soma todos os workflows, e a maioria passa; além disso, ele mede
+falha de pipeline, e não de produção: um run que falha costuma ser a CI barrando
+uma mudança antes do usuário, ou um teste instável. A correlação quase nula com
+o CFR (b) confirma que os dois medem coisas diferentes. O de entrega ficou alto
+porque a heurística erra para mais (precisão de 0,67) e a janela de sete dias
+conta qualquer correção rápida como falha. A recuperação ficou em horas, e não
+abaixo de uma hora, e quase não houve censura: falhas de CI costumam ser
+consertadas no mesmo dia.
 
-\textbf{RQ 03.} A hipótese errou o sinal. Esperávamos o proxy de CI alto (20\% a
-40\%, faixa \emph{Medium}) e o de entrega baixo (até 15\%, \emph{Elite} ou
-\emph{High}); aconteceu o contrário: 4,8\% (\emph{Elite}) e 21,9\%
-(\emph{Medium}), com o proxy de entrega maior que o de CI em 72,6\% dos
-repositórios. Duas explicações se somam. No proxy de CI, a maior parte das
-execuções tem sucesso: o denominador soma todos os workflows --- testes,
-\emph{lint}, documentação, publicação ---, e a maioria deles passa, o que dilui
-as falhas de teste; 5\% é uma taxa de falha de \emph{pipeline} plausível. No
-proxy de entrega, a heurística v6 erra para mais (precisão de 0,67, cerca de
-15\% acima do consenso) e a janela de sete dias transforma qualquer correção
-rápida em uma nova falha. A RQ~07 reforça essa leitura: os dois proxies não
-medem a mesma coisa ($\rho = 0{,}09$), e chamar ambos de ``taxa de falha''
-esconde essa diferença.
+\textbf{RQ 05.} A correlação, que esperávamos perto de zero, é positiva, o que à
+primeira vista contradiz o DORA, para quem velocidade e estabilidade não formam
+um \emph{trade-off} \cite{forsgren2018}. No CFR (b), boa parte vem da
+definição: quem publica menos de uma vez por mês raramente tem outra release em
+sete dias e fica com taxa zero mesmo quando corrige algo. No CFR (a), que não
+depende da cadência, a correlação é fraca. Como correlação não implica
+causalidade, e o desenho é observacional, a leitura segura é que estes proxies
+não mostram ganho de estabilidade com a velocidade, nem um \emph{trade-off}
+forte.
 
-\textbf{RQ 04.} A ordem de grandeza foi confirmada, mas não o piso. Esperávamos
-menos de um dia e provavelmente menos de uma hora (\emph{Elite} ou \emph{High});
-a mediana ficou em 2,56 h, na faixa \emph{High}, com 26,1\% em \emph{Elite} e
-64,8\% em \emph{High}. Recuperar um \emph{pipeline} em algumas horas é rápido,
-mas o ``menos de uma hora'' não se sustentou. A censura também se comportou
-como previsto, mas mais concentrada do que imaginávamos: só 0,2\% dos episódios
-ficam sem recuperação até o fim da janela, porém 32\% dos repositórios têm ao
-menos um episódio censurado --- a censura é um problema de poucos repositórios
-com manutenção intermitente, não da amostra.
+\textbf{RQ 06.} A idade foi, como previsto, o fator mais forte, mas com efeito
+grande, e não pequeno: projetos antigos têm base de código e processo de release
+mais pesados. O tipo do projeto não teve efeito, mas foi rotulado só em 60
+repositórios, o que reduz o poder do teste.
 
-\textbf{RQ 05.} A hipótese era de uma correlação fraca, próxima de zero e, se
-significativa, levemente negativa, seguindo a tese do DORA de que velocidade e
-estabilidade não formam um \emph{trade-off} \cite{forsgren2018}. O resultado vai
-na direção oposta: a correlação é positiva nas duas variantes e forte na de
-entrega ($\rho = +0{,}161$ no CFR (a) e $+0{,}572$ no CFR (b)). Nesta amostra,
-quem publica mais releases tem mais falhas, e não menos.
-
-Boa parte da associação com o CFR (b) é efeito da definição
-(Tabela~\ref{tab:rq05-faixas}). A mediana do CFR (b) vai de zero na faixa
-\emph{Low} a 43\% e 47\% nas faixas \emph{High} e \emph{Elite}, e mais da metade
-dos repositórios \emph{Low} têm CFR (b) exatamente zero. A causa é a janela de
-sete dias: uma release só é contada como falha se a correção sair em outra
-release dentro desse prazo; em um projeto que publica uma vez por mês, a
-correção normalmente entra na release seguinte, fora da janela, e o repositório
-fica com CFR (b) zero mesmo tendo entregado uma correção. O CFR (a), que não
-depende da cadência, é plano entre as faixas e se correlaciona só fracamente
-com a frequência. Isso não elimina a associação --- ela aparece também, mais
-fraca, na variante (a), que não tem esse viés ---, mas impede tratá-la como
-medida de qualidade.
-
-O que se pode concluir sobre o \emph{trade-off}? Com estes proxies, não há
-evidência de que mais velocidade venha acompanhada de mais estabilidade: a
-associação observada aponta para o lado oposto, e a explicação mais provável
-mistura efeito real (entregas menores e mais frequentes expõem defeitos mais
-cedo, e cada correção vira uma nova release) com o viés de definição do CFR (b).
-Como o desenho é observacional e o CFR depende da cadência, não é possível
-separar os dois. A resposta à RQ~05 depende, portanto, do proxy: fraca e
-positiva no de CI, forte e positiva no de entrega --- e este último não é
-comparável entre repositórios de cadências diferentes. Isso reforça a decisão de
-reportar as duas variantes lado a lado e de não usar a taxa de falha para
-comparar projetos com ritmos distintos.
-
-\textbf{RQ 06.} A hipótese acertou um fator e errou o outro. Esperávamos que o
-tipo de projeto e a idade fossem os mais associados; a idade foi, de fato, o
-fator com maior efeito ($\varepsilon^2 = 0{,}348$ no \emph{lead time} (a) e
-$0{,}102$ na frequência), e na direção prevista --- repositórios mais antigos
-entregam mais devagar e com menos frequência ---, mas o tipo de projeto não teve
-efeito significativo em nenhuma métrica ($p$ corrigido igual a 1). O número de
-contribuidores, que não estava entre os favoritos, apareceu em segundo lugar
-(0,168 e 0,225 no \emph{lead time}). A linguagem, que esperávamos ter efeito
-pequeno, só apareceu na variante (b) do \emph{lead time}, com efeito médio
-(0,077) e o Python à frente. E os efeitos significativos são grandes, não
-pequenos a médios como prevíamos. Duas ressalvas: o tipo de projeto tem só 60
-repositórios e quatro grupos, o que limita o poder do teste, e idade e
-contribuidores andam juntos ($\rho = 0{,}59$,
-Seção~\ref{sec:ameacas}), então não é possível atribuir o efeito a um deles
-isoladamente.
-
-\textbf{RQ 07.} A hipótese acertou o tamanho da mudança, mas não o fator
-principal. Esperávamos que de 20\% a 40\% dos repositórios mudassem de classe e
-que a concordância fosse moderada (kappa entre 0,4 e 0,6): a mudança ficou entre
-22\% e 31\%, e o kappa foi de 0,53 e 0,54 nos pares com a C2 e de 0,68 entre a C1
-e a C3. Esperávamos também que a unidade de deploy pesasse mais e o proxy de CFR
-menos, e aconteceu o contrário: trocar só o proxy de CFR muda a classe de 24\%
-dos repositórios, contra 15\% da tag e 6\% das pré-releases. A unidade aumenta a
-frequência e encurta o \emph{lead time}, mas a classe geral é a mediana de
-quatro notas, e uma ou duas notas que sobem muitas vezes não movem a mediana. Já
-o CFR (a) e o CFR (b) medem coisas diferentes, com medianas de 5\% e 22\%, e a
-troca derruba a nota de CFR da maioria dos repositórios. Para as RQ~01 a 06,
-isso quer dizer que a classe geral é razoavelmente robusta, mas as conclusões
-por métrica dependem da definição: a recuperação não muda, a frequência sobe
-quando a unidade é a tag, o \emph{lead time} depende da variante, e qualquer
-conclusão sobre a taxa de falha (RQ~03 e RQ~05) só vale para o proxy usado. Por
-isso reportamos as duas variantes lado a lado.
-
-\textbf{RQ 08.} Não registramos hipótese para a RQ~08, que entrou como bônus.
-O resultado mostra que \emph{rework rate} e CFR (b) não são intercambiáveis:
-a primeira mede quanto da entrega é correção, e o segundo, quantas entregas
-precisaram de correção logo em seguida (Seção~\ref{sec:rq08}).
+\textbf{RQ 07 e RQ 08.} A mudança de classe ficou na faixa prevista, mas o fator
+principal foi o proxy de CFR, e não a unidade: a classe geral é a mediana de
+quatro notas, e a unidade melhora uma ou duas sem mover a mediana. Para as
+RQ~01 a 06, a classe geral é razoavelmente robusta; a classe por frequência
+concorda bem entre as unidades (kappa de 0,66 a 0,86); o \emph{lead time}
+depende da variante, mas o efeito da idade aparece nas duas; e as conclusões
+sobre taxa de falha (RQ~03 e RQ~05) só valem para o proxy usado. A \emph{rework
+rate} e o CFR (b) não são intercambiáveis: uma mede quanto da entrega é
+correção; o outro, quantas entregas precisaram de correção logo em seguida.
 
 \section{Ameaças à Validade}
 \label{sec:ameacas}
 
-Organizamos as ameaças nas quatro categorias de Wohlin et al.
-\cite{wohlin2012}.
+Seguimos as quatro categorias de Wohlin et al. \cite{wohlin2012}.
+\textbf{Validade de construto.} Release não é deploy (em bibliotecas, quem
+implanta são os usuários) e falha de CI não é falha em produção. Na
+amostra-ouro, 58 dos 60 repositórios publicam releases que são entregas reais,
+o que apoia o proxy de deploy, mas com concordância baixa. O CFR (b) e a
+\emph{rework rate} herdam o erro da heurística (precisão de 0,67), a data de
+autor pode ser distorcida por rebase e \emph{squash} (1.566 commits posteriores
+à release foram descartados), e na variante por tag entram tags criadas pela CI.
+A RQ~07 dá a medida: de 22\% a 31\% dos repositórios mudam de classe conforme a
+definição.
 
-\textbf{Validade de construto.} O GitHub não registra deploys nem falhas em
-produção, então todas as métricas são proxies. Release não é deploy: em
-bibliotecas, quem implanta são os usuários. No consenso da amostra-ouro, 58 dos
-60 repositórios publicam releases que são entregas reais, mas o kappa dessa
-dimensão foi pobre ($-0{,}13$), sinal de que nem os avaliadores concordam sobre
-o que uma release representa. Execução de CI com falha também não é falha em
-produção, e o CFR (a) mede o pipeline. O CFR (b) e a \emph{rework rate}
-dependem da heurística de release corretiva (precisão de 0,67 e recall de
-0,78), e o F1 de 0,72 é otimista, porque a v6 foi escrita depois de olhar os
-erros nos mesmos 300 casos. O \emph{lead time} usa a data de autor do commit,
-que rebase e \emph{squash merge} podem distorcer; 1.566 commits com data de
-autor posterior à publicação foram descartados. O tempo de recuperação vai até
-o próximo sucesso do workflow, que em projetos com poucos pushes reflete o
-intervalo entre commits, e não o esforço de correção. Na variante por tag
-entram até as tags que a CI cria para disparar workflows (o
-\texttt{pytorch/pytorch} tem 9.674 na janela). A RQ~07 dá a medida desse
-problema: conforme a definição, de 22\% a 31\% dos repositórios mudam de classe
-geral, e a classe de CFR muda em 65\% deles quando se troca o proxy.
+\textbf{Validade interna.} Monorepos publicam várias releases do mesmo commit
+(3.822 sem commits novos), o que infla a frequência. Idade e contribuidores
+andam juntos ($\rho = 0{,}59$), e repositórios antigos acumulam releases e tags,
+então os efeitos da RQ~06 não se atribuem a um fator isolado. Os rótulos vieram
+de modelos de linguagem, com concordância baixa, e no desempate o terceiro
+avaliador ficou com o mesmo lado em 182 dos 183 casos, então a referência da
+heurística não é independente.
 
-\textbf{Validade interna.} Monorepos publicam uma release por pacote, às vezes
-várias a partir do mesmo commit: 45 repositórios têm mais de uma linha de
-releases, e 3.822 releases não trouxeram nenhum commit novo. Nesses casos, a
-frequência de deploy conta várias vezes o mesmo conjunto de mudanças; separar
-as linhas no CFR (b) atenua o efeito, mas não o elimina. Os fatores da RQ~06
-também andam juntos: idade e número de contribuidores têm correlação de 0,59, e
-os repositórios mais antigos publicam menos releases na janela
-($\rho = -0{,}31$), então o efeito atribuído a um fator pode vir de outro. Os
-rótulos da amostra-ouro foram produzidos
-com modelos de linguagem, a concordância foi baixa e o desempate ficou com o
-mesmo avaliador em 182 de 183 casos, de modo que o consenso usado para avaliar
-a heurística não é independente como o protocolo previa. Os episódios de falha
-sem recuperação até o fim da janela ficam fora da mediana do tempo de
-recuperação, mas são poucos (158 de 63.874).
+\textbf{Validade externa.} A amostra tem só repositórios populares, ativos e com
+GitHub Actions, e a varredura parou nos 646 primeiros candidatos; os resultados
+não se estendem a projetos pequenos, a outros serviços de CI nem a empresas.
 
-\textbf{Validade externa.} A amostra tem só repositórios populares (ao menos
-1.000 estrelas), ativos, que usam GitHub Actions e publicam releases com
-regularidade, e a varredura parou nos 646 primeiros candidatos em ordem de
-estrelas. Os resultados não se estendem a projetos menos conhecidos, a projetos
-com outro serviço de CI nem a empresas, que registram deploys e incidentes de
-outra forma. A janela é uma só, de doze meses, e as faixas de classificação são
-as adaptadas para a disciplina, não os agrupamentos anuais do DORA.
+\textbf{Validade de conclusão.} Com 300 repositórios, correlações fracas saem
+significativas, por isso discutimos o tamanho de $\rho$; e usamos mediana,
+testes não paramétricos, Holm e tamanho de efeito. Alguns subgrupos são
+pequenos: o tipo do projeto tem só 60 repositórios (4 em ``outro''), e as
+linguagens com menos de 15 ficaram de fora. Repositórios perto de um corte de
+faixa mudam de classe com pouca diferença, o que infla a RQ~07; o kappa
+ponderado compensa em parte.
 
-\textbf{Validade de conclusão.} Com 300 repositórios, correlações fracas já
-saem significativas, por isso discutimos o valor de $\rho$ e não só o p-valor.
-As métricas são muito assimétricas (nas tags, média de 175 por repositório
-contra mediana de 47), e por isso as comparações usam mediana, IQR e testes não
-paramétricos, com a média e a moda reportadas como complemento.
-Na RQ~06, as muitas comparações entre subgrupos aumentam a chance de falso
-positivo; os p-valores são ajustados por Holm e o tamanho de efeito é
-reportado, mas alguns subgrupos são pequenos: só 8 das 23 linguagens têm mais
-de 5 repositórios. As faixas de classificação são discretas: um repositório
-perto de um corte muda de classe com uma diferença pequena no valor medido, o
-que aumenta a proporção de mudanças na RQ~07; o kappa ponderado compensa em
-parte, porque uma troca entre faixas vizinhas pesa menos. O F1 da heurística
-variou de 0,64 a 0,79 entre metades da amostra-ouro, o que dá a dimensão da
-incerteza desse número.
+\section{Replicação Cruzada}
+\label{sec:replicacao}
 
-% \section{Replicação Cruzada}: Issue #26.
+Replicamos o pipeline do grupo de Víctor G. C. Pereira, Jonathan S. da Silva e
+Matheus F. de Oliveira (commit \texttt{24b366e}) em 30 repositórios do dataset
+deles, sorteados com semente 42, seguindo só o README. A instalação e os testes
+funcionaram (1.170 de 1.171 passaram; a falha é de codificação no Windows), mas,
+para rodar só a subamostra, foi preciso ler o código para descobrir o formato do
+arquivo de candidatos. A coleta levou cerca de 1 h 48 min e abortou uma vez, na
+virada da cota da API, porque as repetições depois do reset saíram sem espera;
+repetir o comando, como o README orienta, retomou e concluiu. A diferença
+relativa foi zero nas seis métricas dos 30 repositórios, e todos mantiveram a
+classe DORA: esperávamos pequenas diferenças, mas a janela deles já estava
+fechada nas duas coletas, e só mudaram dados de fora dela, como estrelas e
+contribuidores. O estudo é reproduzível; o que dificultou foi a documentação e
+uma falha de execução. Relatamos os quatro problemas em issues no repositório
+do grupo, com as evidências. O nosso pipeline não foi replicado por outro grupo
+nesta edição, e não recebemos issues.
 
-% ---------------------------------------------------------------------------
-% Link do repositório e do GitHub Projects do grupo (exigido pela disciplina).
-% ---------------------------------------------------------------------------
+\section{Conclusão}
+\label{sec:conclusao}
+
+Dá para minerar métricas DORA da atividade pública de projetos open-source, mas
+o valor depende da definição. O projeto popular típico publica a cada duas
+semanas, entrega mudanças em cerca de 11 dias e recupera o CI em poucas horas, e
+os mais antigos entregam mais devagar; a taxa de falha vai de 4,8\% a 21,9\%
+conforme o proxy. A classe geral resistiu razoavelmente à troca de definição,
+mas as conclusões sobre falha só valem para o proxy escolhido. Ficam como
+trabalho futuro uma heurística de release corretiva validada por pessoas, a
+separação de pacotes em monorepos e a evolução das métricas no tempo.
+
 \section*{Link do Repositório e do GitHub Projects}
 
 \noindent Repositório: \url{https://github.com/Gmbferreira/Mineracao-Metricas-DORA}\\
