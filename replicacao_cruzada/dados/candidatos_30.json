@@ -1,0 +1,215 @@
+{
+  "total_candidatos": 30,
+  "candidatos": [
+    {
+      "id": 671269505,
+      "full_name": "BerriAI/litellm",
+      "html_url": "https://github.com/BerriAI/litellm",
+      "estrelas": 61260,
+      "linguagem": "Python"
+    },
+    {
+      "id": 5736080,
+      "full_name": "FreeCAD/FreeCAD",
+      "html_url": "https://github.com/FreeCAD/FreeCAD",
+      "estrelas": 34546,
+      "linguagem": "C++"
+    },
+    {
+      "id": 7613257,
+      "full_name": "SeleniumHQ/selenium",
+      "html_url": "https://github.com/SeleniumHQ/selenium",
+      "estrelas": 34560,
+      "linguagem": "Java"
+    },
+    {
+      "id": 4008931,
+      "full_name": "StevenBlack/hosts",
+      "html_url": "https://github.com/StevenBlack/hosts",
+      "estrelas": 31271,
+      "linguagem": "Python"
+    },
+    {
+      "id": 207645083,
+      "full_name": "TanStack/query",
+      "html_url": "https://github.com/TanStack/query",
+      "estrelas": 50437,
+      "linguagem": "TypeScript"
+    },
+    {
+      "id": 144590939,
+      "full_name": "VSCodium/vscodium",
+      "html_url": "https://github.com/VSCodium/vscodium",
+      "estrelas": 33721,
+      "linguagem": "Shell"
+    },
+    {
+      "id": 146633589,
+      "full_name": "alibaba/arthas",
+      "html_url": "https://github.com/alibaba/arthas",
+      "estrelas": 37585,
+      "linguagem": "Java"
+    },
+    {
+      "id": 224663696,
+      "full_name": "alpinejs/alpine",
+      "html_url": "https://github.com/alpinejs/alpine",
+      "estrelas": 31984,
+      "linguagem": "HTML"
+    },
+    {
+      "id": 803014189,
+      "full_name": "better-auth/better-auth",
+      "html_url": "https://github.com/better-auth/better-auth",
+      "estrelas": 30381,
+      "linguagem": "TypeScript"
+    },
+    {
+      "id": 710601088,
+      "full_name": "crewAIInc/crewAI",
+      "html_url": "https://github.com/crewAIInc/crewAI",
+      "estrelas": 59693,
+      "linguagem": "Python"
+    },
+    {
+      "id": 248372441,
+      "full_name": "filamentphp/filament",
+      "html_url": "https://github.com/filamentphp/filament",
+      "estrelas": 32301,
+      "linguagem": "PHP"
+    },
+    {
+      "id": 664013991,
+      "full_name": "gitroomhq/postiz-app",
+      "html_url": "https://github.com/gitroomhq/postiz-app",
+      "estrelas": 37426,
+      "linguagem": "TypeScript"
+    },
+    {
+      "id": 47394776,
+      "full_name": "lerna/lerna",
+      "html_url": "https://github.com/lerna/lerna",
+      "estrelas": 36038,
+      "linguagem": "TypeScript"
+    },
+    {
+      "id": 615869301,
+      "full_name": "mudler/LocalAI",
+      "html_url": "https://github.com/mudler/LocalAI",
+      "estrelas": 49553,
+      "linguagem": "Go"
+    },
+    {
+      "id": 908607,
+      "full_name": "numpy/numpy",
+      "html_url": "https://github.com/numpy/numpy",
+      "estrelas": 33053,
+      "linguagem": "Python"
+    },
+    {
+      "id": 1170821064,
+      "full_name": "paperclipai/paperclip",
+      "html_url": "https://github.com/paperclipai/paperclip",
+      "estrelas": 102056,
+      "linguagem": "TypeScript"
+    },
+    {
+      "id": 2810292,
+      "full_name": "pbatard/rufus",
+      "html_url": "https://github.com/pbatard/rufus",
+      "estrelas": 38041,
+      "linguagem": "C"
+    },
+    {
+      "id": 109145553,
+      "full_name": "podman-container-tools/podman",
+      "html_url": "https://github.com/podman-container-tools/podman",
+      "estrelas": 33081,
+      "linguagem": "Go"
+    },
+    {
+      "id": 75104123,
+      "full_name": "prettier/prettier",
+      "html_url": "https://github.com/prettier/prettier",
+      "estrelas": 52375,
+      "linguagem": "JavaScript"
+    },
+    {
+      "id": 6838921,
+      "full_name": "prometheus/prometheus",
+      "html_url": "https://github.com/prometheus/prometheus",
+      "estrelas": 66557,
+      "linguagem": "Go"
+    },
+    {
+      "id": 8514,
+      "full_name": "rails/rails",
+      "html_url": "https://github.com/rails/rails",
+      "estrelas": 58838,
+      "linguagem": "Ruby"
+    },
+    {
+      "id": 156018,
+      "full_name": "redis/redis",
+      "html_url": "https://github.com/redis/redis",
+      "estrelas": 76813,
+      "linguagem": "C"
+    },
+    {
+      "id": 995029641,
+      "full_name": "ruvnet/ruflo",
+      "html_url": "https://github.com/ruvnet/ruflo",
+      "estrelas": 74664,
+      "linguagem": "TypeScript"
+    },
+    {
+      "id": 107286889,
+      "full_name": "schollz/croc",
+      "html_url": "https://github.com/schollz/croc",
+      "estrelas": 40670,
+      "linguagem": "Go"
+    },
+    {
+      "id": 42408804,
+      "full_name": "traefik/traefik",
+      "html_url": "https://github.com/traefik/traefik",
+      "estrelas": 65215,
+      "linguagem": "Go"
+    },
+    {
+      "id": 535360445,
+      "full_name": "ultralytics/ultralytics",
+      "html_url": "https://github.com/ultralytics/ultralytics",
+      "estrelas": 62504,
+      "linguagem": "Python"
+    },
+    {
+      "id": 197018189,
+      "full_name": "xyflow/xyflow",
+      "html_url": "https://github.com/xyflow/xyflow",
+      "estrelas": 38720,
+      "linguagem": "TypeScript"
+    },
+    {
+      "id": 114466145,
+      "full_name": "yewstack/yew",
+      "html_url": "https://github.com/yewstack/yew",
+      "estrelas": 32830,
+      "linguagem": "Rust"
+    },
+    {
+      "id": 292014229,
+      "full_name": "zellij-org/zellij",
+      "html_url": "https://github.com/zellij-org/zellij",
+      "estrelas": 35771,
+      "linguagem": "Rust"
+    },
+    {
+      "id": 1156956890,
+      "full_name": "zeroclaw-labs/zeroclaw",
+      "html_url": "https://github.com/zeroclaw-labs/zeroclaw",
+      "estrelas": 33010,
+      "linguagem": "Rust"
+    }
+  ]
+}
