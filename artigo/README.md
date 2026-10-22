@@ -43,13 +43,16 @@ pdflatex main
 ## Conteúdo atual
 
 - Introdução e hipóteses informais das RQ 01 a RQ 07, redigidas **antes** da
-  análise dos dados.
+  análise dos dados (RQ 08 é bônus, sem hipótese).
 - Metodologia: fonte de dados e funil de seleção, janela e definições
   operacionais, variantes obrigatórias, protocolo e resultado da validação
   manual. Os rótulos e o desempate da amostra-ouro foram feitos com apoio de
   modelos de linguagem, com autorização da disciplina.
-- Resultados da RQ 07 (análise de sensibilidade) e da RQ 08 (rework rate),
-  com a discussão da RQ 07 (Issue #20). As RQ 01 a RQ 06 entram pela Issue #19.
+- Resultados das RQ 01 a RQ 08: métricas e classificação DORA (RQ 01-04),
+  relação velocidade × estabilidade (RQ 05), características associadas ao
+  desempenho (RQ 06), análise de sensibilidade (RQ 07) e \emph{rework rate}
+  (RQ 08).
+- Discussão confrontando as hipóteses com os resultados (RQ 01-07).
 - Ameaças à Validade nas quatro categorias (Issue #25).
 - A Replicação Cruzada entra pela Issue #26.
 

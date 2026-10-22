@@ -28,6 +28,8 @@ from metricas import classificacao  # noqa: E402
 COMBINACOES = ("c1", "c2", "c3")
 PARES = (("c1", "c2"), ("c1", "c3"), ("c2", "c3"))
 METRICAS = ("geral", "frequencia", "lead_time", "cfr", "recuperacao")
+# as metricas na ordem em que o artigo as apresenta, com a classe geral no fim
+METRICAS_ORDEM = ("frequencia", "lead_time", "cfr", "recuperacao", "geral")
 CLASSES = ("Elite", "High", "Medium", "Low")
 UNIDADES = ("release", "release_pre", "tag")
 # C1 com um fator trocado de cada vez: (nome, unidade, lead time, CFR)
@@ -37,6 +39,21 @@ FATORES = (
     ("lead time (b)", "release", "lead_time_b", "cfr_a"),
     ("CFR (b)", "release", "lead_time_a", "cfr_b"),
 )
+# rotulos dos graficos, com acentuacao
+ROTULOS_METRICA = {
+    "frequencia": "frequência",
+    "lead_time": "lead time",
+    "cfr": "CFR",
+    "recuperacao": "recuperação",
+    "geral": "classe geral",
+}
+ROTULOS_FATOR = {
+    "unidade: release + pre-release": "unidade: release + pré-release",
+    "unidade: tag": "unidade: tag",
+    "lead time (b)": "lead time (b)",
+    "CFR (b)": "CFR (b)",
+}
+CINZA = "#c9c9c9"
 
 
 def distribuicao(variantes):
@@ -80,16 +97,44 @@ def _valor(linha, coluna):
     return None if valor is None or pd.isna(valor) else float(valor)
 
 
-def classe_geral(linha, unidade, lead_time, cfr):
-    """Classe geral de um repositorio numa combinacao qualquer de definicoes."""
+def classes_combinacao(linha, unidade, lead_time, cfr):
+    """Classes de cada metrica de um repositorio numa combinacao qualquer.
+
+    Devolve as cinco classes (frequencia, lead time, CFR, recuperacao e a
+    geral); None quando a metrica nao tem dado na combinacao.
+    """
     if _valor(linha, f"unidades_{unidade}") is None:
-        return None
+        return {metrica: None for metrica in METRICAS_ORDEM}
     taxa = _valor(linha, "cfr_a") if cfr == "cfr_a" else _valor(linha, f"cfr_b_{unidade}")
     classes = classificacao.classificar_repositorio(
         _valor(linha, f"deployment_frequency_{unidade}"), _valor(linha, f"{lead_time}_{unidade}"),
         taxa, _valor(linha, "recuperacao_horas"),
     )
-    return classes["classe_geral"] or None
+    return {chave.replace("classe_", ""): (valor or None)
+            for chave, valor in classes.items() if chave.startswith("classe_")}
+
+
+def classe_geral(linha, unidade, lead_time, cfr):
+    """Classe geral de um repositorio numa combinacao qualquer de definicoes."""
+    return classes_combinacao(linha, unidade, lead_time, cfr)["geral"]
+
+
+def distribuicao_metricas(variantes):
+    """Proporcao de cada classe, por metrica, em cada combinacao."""
+    linhas = []
+    for metrica in METRICAS_ORDEM:
+        for combinacao in COMBINACOES:
+            coluna = f"classe_{metrica}_{combinacao}"
+            if coluna not in variantes:
+                continue
+            classes = variantes[coluna].dropna()
+            linha = {"metrica": metrica, "combinacao": combinacao.upper(),
+                     "n": int(len(classes))}
+            for classe in CLASSES:
+                linha[classe] = float((classes == classe).mean()) if len(classes) else None
+            linha["moda"] = moda(classes)
+            linhas.append(linha)
+    return pd.DataFrame(linhas)
 
 
 def fatores_isolados(variantes):
@@ -98,6 +143,28 @@ def fatores_isolados(variantes):
     for nome, unidade, lead_time, cfr in FATORES:
         classes = variantes.apply(lambda linha: classe_geral(linha, unidade, lead_time, cfr), axis=1)
         linhas.append({"fator": nome, **_concordancia(variantes["classe_geral_c1"], classes)})
+    return pd.DataFrame(linhas)
+
+
+def fatores_metricas(variantes):
+    """Troca um fator de C1 por vez e mede a mudanca de classe de cada metrica.
+
+    A troca da unidade de deploy mexe na frequencia e no lead time (a), que e
+    ancorado na mesma unidade; a variante do lead time mexe so no lead time; e
+    a variante do CFR mexe so no CFR.
+    """
+    linhas = []
+    for nome, unidade, lead_time, cfr in FATORES:
+        classes = [classes_combinacao(linha, unidade, lead_time, cfr)
+                   for _, linha in variantes.iterrows()]
+        for metrica in METRICAS_ORDEM:
+            coluna = f"classe_{metrica}_c1"
+            if coluna not in variantes:
+                continue
+            novo = pd.Series([classe.get(metrica) for classe in classes],
+                             index=variantes.index, dtype=object)
+            linhas.append({"fator": nome, "metrica": metrica,
+                           **_concordancia(variantes[coluna], novo)})
     return pd.DataFrame(linhas)
 
 
@@ -175,6 +242,57 @@ def grafico_classes_e_unidades(variantes, caminho):
     plt.close(figura)
 
 
+def _percentual(tabela, metrica, coluna):
+    """Porcentual de uma celula da tabela de fatores, zero quando falta."""
+    if metrica not in tabela.index:
+        return 0.0
+    valor = tabela.loc[metrica, coluna]
+    if valor is None or pd.isna(valor):
+        return 0.0
+    return 100.0 * float(valor)
+
+
+def grafico_migracao(tabela, caminho):
+    """Migracao de classe por metrica em cada troca isolada.
+
+    Cada barra mostra, de um lado, os repositorios que descem de classe, no
+    meio os que ficam e do outro os que sobem.
+    """
+    figura, eixos = plt.subplots(2, 2, figsize=(7.5, 4.4))
+    for eixo, (nome, _unidade, _lt, _cfr) in zip(eixos.ravel(), FATORES):
+        parte = tabela[tabela["fator"] == nome].set_index("metrica")
+        posicoes = list(range(len(METRICAS_ORDEM)))
+        desce = [_percentual(parte, metrica, "desceu") for metrica in METRICAS_ORDEM]
+        sobe = [_percentual(parte, metrica, "subiu") for metrica in METRICAS_ORDEM]
+        fica = [max(0.0, 100.0 - d - s) for d, s in zip(desce, sobe)]
+        eixo.barh(posicoes, desce, color=CORES[1], edgecolor="white", linewidth=0.8)
+        eixo.barh(posicoes, fica, left=desce, color=CINZA, edgecolor="white", linewidth=0.8)
+        eixo.barh(posicoes, sobe, left=[d + f for d, f in zip(desce, fica)],
+                  color=CORES[2], edgecolor="white", linewidth=0.8)
+        for posicao, valores in enumerate(zip(desce, fica, sobe)):
+            inicio = 0.0
+            for valor, cor in zip(valores, (CORES[1], CINZA, CORES[2])):
+                if 9 <= valor <= 99.5:
+                    eixo.text(inicio + valor / 2, posicao, f"{valor:.0f}%", ha="center",
+                              va="center", fontsize=5.5, color="white" if cor != CINZA else TINTA)
+                inicio += valor
+            mudou = desce[posicao] + sobe[posicao]
+            if mudou:
+                eixo.text(103, posicao, f"mudou {mudou:.0f}%", va="center", fontsize=5.5,
+                          color=TINTA_SECUNDARIA)
+        eixo.set_yticks(posicoes, [ROTULOS_METRICA[metrica] for metrica in METRICAS_ORDEM],
+                        fontsize=6.5)
+        eixo.set_xlim(0, 125)
+        eixo.set_xticks([0, 25, 50, 75, 100])
+        eixo.invert_yaxis()
+        eixo.set_title(ROTULOS_FATOR[nome], fontsize=8, color=TINTA)
+        eixo.set_xlabel("% dos repositórios", fontsize=7, color=TINTA)
+        eixo_limpo(eixo, grade="x")
+    figura.tight_layout()
+    figura.savefig(caminho, dpi=200)
+    plt.close(figura)
+
+
 def grafico(variantes, caminho):
     # tamanho pensado para a largura do texto no artigo (cerca de 15 cm)
     figura, eixos = plt.subplots(1, len(PARES), figsize=(7.5, 2.7))
@@ -206,22 +324,41 @@ def main(argv=None):
 
     variantes = pd.read_csv(args.variantes)
     dist = distribuicao(variantes)
+    dist_metricas = distribuicao_metricas(variantes)
     pares = pd.DataFrame([comparar_par(variantes, a, b, metrica)
                           for metrica in METRICAS for a, b in PARES])
     tabela_unidades = unidades(variantes)
     fatores = fatores_isolados(variantes)
+    fatores_por_metrica = fatores_metricas(variantes)
     dist.to_csv(os.path.join(pasta, "rq07_distribuicao.csv"), index=False)
+    dist_metricas.to_csv(os.path.join(pasta, "rq07_classes_metricas.csv"), index=False)
     pares.to_csv(os.path.join(pasta, "rq07_pares.csv"), index=False)
     tabela_unidades.to_csv(os.path.join(pasta, "rq07_unidades.csv"), index=False)
     fatores.to_csv(os.path.join(pasta, "rq07_fatores.csv"), index=False)
+    fatores_por_metrica.to_csv(os.path.join(pasta, "rq07_fatores_metricas.csv"), index=False)
     for a, b in PARES:
         transicoes(variantes, a, b).to_csv(os.path.join(pasta, f"rq07_transicoes_{a}_{b}.csv"))
     grafico(variantes, os.path.join(pasta, "rq07_transicoes.png"))
     grafico_classes_e_unidades(variantes, os.path.join(pasta, "rq07_classes_e_unidades.png"))
+    grafico_migracao(fatores_por_metrica, os.path.join(pasta, "rq07_migracao_metricas.png"))
 
-    texto = ("# RQ 07 - Sensibilidade\n\n## Distribuicao da classe geral\n\n" + tabela_markdown(dist)
-             + "\n## Pares de combinacoes\n\n" + tabela_markdown(pares)
+    texto = ("# RQ 07 - Sensibilidade\n\n## Distribuição da classe geral\n\n" + tabela_markdown(dist)
+             + "\n## Classes por métrica\n\n"
+             + "Cada métrica tem sua própria distribuição de classes: para cada combinação, a "
+             + "tabela traz a proporção de repositórios em cada uma das quatro classes e a "
+             + "classe mais comum (moda). O tempo de recuperação é o mesmo nas três "
+             + "combinações, porque não depende da definição operacional.\n\n"
+             + tabela_markdown(dist_metricas)
+             + "\n## Pares de combinações\n\n" + tabela_markdown(pares)
              + "\n## Um fator de cada vez (contra C1)\n\n" + tabela_markdown(fatores)
+             + "\n## Um fator de cada vez, por métrica\n\n"
+             + "Cada troca isolada mexe em uma métrica por vez: trocar a unidade de deploy "
+             + "altera a frequência (e o lead time (a), que é ancorado na mesma unidade), "
+             + "trocar a variante do lead time altera a classe de lead time e trocar a "
+             + "variante do CFR altera a classe de CFR. Em todos os casos a classe geral, "
+             + "que combina as quatro métricas, também se move: a última linha da tabela "
+             + "mostra quanto.\n\n"
+             + tabela_markdown(fatores_por_metrica)
              + "\n## Unidades de deploy\n\n" + tabela_markdown(tabela_unidades))
     with open(os.path.join(pasta, "rq07.md"), "w", encoding="utf-8") as f:
         f.write(texto)

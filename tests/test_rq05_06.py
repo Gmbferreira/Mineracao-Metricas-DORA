@@ -123,6 +123,44 @@ def test_matriz_spearman():
     assert matriz.loc["cfr_a", "cfr_b"] == pytest.approx(matriz.loc["cfr_b", "cfr_a"])
 
 
+def test_cfr_por_faixa_ordenado_e_com_as_medianas():
+    """Duas releases por faixa: o CFR (b) sobe com a cadencia, o (a) nao."""
+    dados = pd.DataFrame({
+        "deployment_frequency_semana": [0.1, 0.1, 0.5, 0.5, 2.0, 2.0, 10.0, 10.0],
+        "cfr_a": [0.02, 0.04, 0.03, 0.05, 0.06, 0.08, 0.05, 0.07],
+        "cfr_b": [0.0, 0.0, 0.1, 0.3, 0.4, 0.6, 0.5, None],
+    })
+    tabela = rq.cfr_por_faixa(dados).set_index("faixa")
+    assert list(tabela.index) == ["Low", "Medium", "High", "Elite"]
+    assert tabela.loc["Low", "n"] == 2
+    assert tabela.loc["Low", "cfr_b_mediana"] == pytest.approx(0.0)
+    assert tabela.loc["Low", "cfr_b_zero"] == pytest.approx(1.0)
+    assert tabela.loc["Medium", "cfr_b_mediana"] == pytest.approx(0.2)
+    assert tabela.loc["High", "cfr_b_mediana"] == pytest.approx(0.5)
+    assert tabela.loc["High", "cfr_b_zero"] == pytest.approx(0.0)
+    assert tabela.loc["Medium", "cfr_a_mediana"] == pytest.approx(0.04)
+    assert tabela.loc["Elite", "cfr_b_n"] == 1
+    assert tabela["cfr_b_mediana"].is_monotonic_increasing
+
+
+def test_cfr_por_faixa_ignora_frequencia_ausente():
+    dados = pd.DataFrame({
+        "deployment_frequency_semana": [None, 0.5],
+        "cfr_a": [0.5, 0.04],
+        "cfr_b": [0.5, 0.2],
+    })
+    tabela = rq.cfr_por_faixa(dados).set_index("faixa")
+    assert tabela.loc["Medium", "n"] == 1
+    assert tabela.loc["Elite", "n"] == 0
+    assert math.isnan(tabela.loc["Elite", "cfr_b_mediana"])
+
+
+def test_p_valor_do_rotulo():
+    assert rq._p_valor(0.00519) == "p = 0,005"
+    assert rq._p_valor(2.52e-27) == "p < 0,001"
+    assert rq._p_valor(float("nan")) == "-"
+
+
 def test_cliffs_delta_nos_extremos():
     assert rq.cliffs_delta([1, 2, 3], [4, 5, 6]) == pytest.approx(-1.0)
     assert rq.cliffs_delta([4, 5, 6], [1, 2, 3]) == pytest.approx(1.0)
@@ -264,7 +302,7 @@ def test_main_grava_resultados(dataset, consenso, tmp_path, capsys):
     rq.main(["--dataset", str(arquivo), "--consenso", str(arquivo_consenso),
              "--saida", str(saida)])
     for nome in ("rq05_06.md", "rq05_spearman.csv", "rq05_matriz_spearman.csv",
-                 "rq05_dispersao.png", "rq06_grupos.csv", "rq06_medianas.csv",
-                 "rq06_pos_hoc.csv", "rq06_efeitos.png"):
+                 "rq05_cfr_por_faixa.csv", "rq05_dispersao.png", "rq06_grupos.csv",
+                 "rq06_medianas.csv", "rq06_pos_hoc.csv", "rq06_efeitos.png"):
         assert (saida / nome).exists()
     assert "RQ 05" in capsys.readouterr().out

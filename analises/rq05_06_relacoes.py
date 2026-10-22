@@ -6,7 +6,8 @@ graficos e um resumo em markdown:
     python -m analises.rq05_06_relacoes
 
 RQ 05: correlacao de Spearman entre a frequencia de deploy (RQ 01) e a taxa de
-falha (RQ 03), separada nas variantes (a) e (b).
+falha (RQ 03), separada nas variantes (a) e (b), e o CFR mediano por faixa de
+frequencia, que mostra a dependencia do CFR (b) com a cadencia de releases.
 
 RQ 06: comparacao das metricas DORA entre subgrupos de repositorios, com
 Kruskal-Wallis (ou Mann-Whitney quando o fator tem so dois grupos), correcao
@@ -31,6 +32,8 @@ from analises.comum import (  # noqa: E402
     CORES, DIR_DADOS, DIR_RESULTADOS, TINTA, TINTA_SECUNDARIA, eixo_limpo,
     garantir_pasta, resumo, virgula,
 )
+from metricas.classificacao import ROTULOS as ROTULOS_CLASSE  # noqa: E402
+from metricas.classificacao import nota_frequencia  # noqa: E402
 
 # metricas: chave, rotulo, coluna do dataset e unidade
 METRICAS = (
@@ -82,12 +85,23 @@ MINIMO_LINGUAGEM = 15
 MINIMO_GRUPO = 2
 ALFA = 0.05
 CINZA = "#c9c9c9"
+# faixas de frequencia da C1 (RQ 01), na ordem das notas
+FAIXAS_FREQUENCIA = ("Low", "Medium", "High", "Elite")
 
 
 def _ptbr(valor, casas=0):
     """Numero no formato brasileiro: ponto de milhar e virgula decimal."""
     texto = f"{valor:,.{casas}f}"
     return texto.replace(",", "\x00").replace(".", ",").replace("\x00", ".")
+
+
+def _p_valor(p):
+    """p-valor para rotulo de grafico: virgula decimal e 'p < 0,001' no piso."""
+    if p is None or (isinstance(p, float) and math.isnan(p)):
+        return "-"
+    if p < 0.001:
+        return "p < 0,001"
+    return f"p = {p:.3f}".replace(".", ",")
 
 
 def _formatar(valor, casas):
@@ -247,6 +261,48 @@ def matriz_spearman(dataset):
                 pares.loc[x, y] = float("nan")
     pares.index.name = "metrica"
     return pares
+
+
+def cfr_por_faixa(dataset):
+    """CFR mediano em cada faixa de frequencia de deploy (C1).
+
+    O CFR (b) conta uma release como falha quando existe uma release corretiva
+    nos sete dias seguintes: quem publica menos de uma vez por mes raramente
+    tem uma release seguinte dentro da janela e fica perto de zero, enquanto
+    quem publica toda semana quase sempre tem. A tabela mede esse gradiente e
+    e a ressalva da correlacao da RQ 05: o CFR (a), que nao depende da
+    cadencia, serve de contraste.
+    """
+    frequencia = _numerico(dataset, ROTULOS["frequencia"][1])
+    faixa = frequencia.map(
+        lambda valor: ROTULOS_CLASSE.get(nota_frequencia(valor)) if pd.notna(valor) else None)
+    frame = pd.DataFrame({
+        "faixa": faixa,
+        "frequencia": frequencia,
+        "cfr_a": _numerico(dataset, ROTULOS["cfr_a"][1]),
+        "cfr_b": _numerico(dataset, ROTULOS["cfr_b"][1]),
+    })
+    frame = frame[frame["faixa"].notna()]
+    linhas = []
+    for nome in FAIXAS_FREQUENCIA:
+        parte = frame[frame["faixa"] == nome]
+        cfr_b = parte["cfr_b"].dropna()
+        linhas.append({
+            "faixa": nome,
+            "n": int(len(parte)),
+            "frequencia_mediana": _mediana(parte["frequencia"]),
+            "cfr_a_mediana": _mediana(parte["cfr_a"]),
+            "cfr_b_mediana": _mediana(cfr_b),
+            "cfr_b_n": int(len(cfr_b)),
+            "cfr_b_zero": float((cfr_b == 0).mean()) if len(cfr_b) else float("nan"),
+        })
+    return pd.DataFrame(linhas)
+
+
+def _mediana(serie):
+    """Mediana de uma serie, nan quando nao ha valor."""
+    serie = serie.dropna()
+    return float(serie.median()) if len(serie) else float("nan")
 
 
 def montar_fatores(dataset, consenso):
@@ -497,8 +553,10 @@ def grafico_dispersao(dataset, tabela_spearman, caminho):
         linha = tabela_spearman[tabela_spearman["metrica_y"] == chave]
         if len(linha):
             item = linha.iloc[0]
-            eixo.set_title(f"{titulo}: rho = {item['rho']:+.3f} (p = {item['p']:.2g}, "
-                           f"n = {int(item['n'])})", fontsize=7.5, color=TINTA)
+            rho = f"{item['rho']:+.3f}".replace(".", ",")
+            eixo.set_title(f"{titulo}: \u03c1 = {rho} "
+                           f"({_p_valor(item['p'])}, n = {int(item['n'])})",
+                           fontsize=7.5, color=TINTA)
         eixo.set_xscale("log")
         eixo.set_ylim(-0.03, 1.03)
         eixo.set_xlabel("releases por semana (log)", fontsize=7.5, color=TINTA)
@@ -565,6 +623,7 @@ def main(argv=None):
 
     tabela_spearman = correlacoes(dataset)
     matriz = matriz_spearman(dataset)
+    tabela_faixas = cfr_por_faixa(dataset)
     fatores = montar_fatores(dataset, consenso)
     tabela_fatores = descricao_fatores(dataset, fatores)
     tabela_grupos = comparar_fatores(dataset, fatores)
@@ -573,21 +632,22 @@ def main(argv=None):
 
     tabela_spearman.to_csv(os.path.join(pasta, "rq05_spearman.csv"), index=False)
     matriz.to_csv(os.path.join(pasta, "rq05_matriz_spearman.csv"))
+    tabela_faixas.to_csv(os.path.join(pasta, "rq05_cfr_por_faixa.csv"), index=False)
     tabela_grupos.to_csv(os.path.join(pasta, "rq06_grupos.csv"), index=False)
     tabela_medianas.to_csv(os.path.join(pasta, "rq06_medianas.csv"), index=False)
     tabela_pos.to_csv(os.path.join(pasta, "rq06_pos_hoc.csv"), index=False)
     grafico_dispersao(dataset, tabela_spearman, os.path.join(pasta, "rq05_dispersao.png"))
     grafico_efeitos(tabela_grupos, os.path.join(pasta, "rq06_efeitos.png"))
 
-    texto = _texto_resultado(dataset, tabela_fatores, tabela_spearman, matriz,
-                              tabela_grupos, tabela_pos, tabela_medianas)
+    texto = _texto_resultado(dataset, tabela_fatores, tabela_spearman, tabela_faixas,
+                              matriz, tabela_grupos, tabela_pos, tabela_medianas)
     with open(os.path.join(pasta, "rq05_06.md"), "w", encoding="utf-8") as f:
         f.write(texto)
     print(texto, flush=True)
 
 
-def _texto_resultado(dataset, tabela_fatores, tabela_spearman, matriz, tabela_grupos,
-                      tabela_pos, tabela_medianas):
+def _texto_resultado(dataset, tabela_fatores, tabela_spearman, tabela_faixas, matriz,
+                      tabela_grupos, tabela_pos, tabela_medianas):
     """Resumo em markdown das duas RQs."""
     n = len(dataset)
     casas_p = {"p": 5, "p_holm": 5, "rho": 3, "eps2": 4, "delta": 4, "H": 3, "U": 3,
@@ -633,7 +693,15 @@ def _texto_resultado(dataset, tabela_fatores, tabela_spearman, matriz, tabela_gr
         "frequencia: Spearman mede monotonicidade, e nao ajuste de reta.\n\n"
         "### Pares\n\n" + tabela_md(tabela_spearman, casas_coluna=casas_p)
         + "\nOs dois pares exigidos pela RQ 05:\n\n" + "\n".join(linhas_destaque) + "\n\n"
-        + "### Matriz de Spearman\n\n" + tabela_md(matriz, casas=3)
+        + "### CFR por faixa de frequencia\n\n"
+        "A taxa de falha (b) depende da cadencia: uma release so conta como falha quando "
+        "existe uma release corretiva nos sete dias seguintes. Quem publica menos de uma vez "
+        "por mes raramente tem uma release seguinte dentro da janela, e o CFR (b) fica perto "
+        "de zero; quem publica toda semana quase sempre tem. A coluna `cfr_b_zero` e a "
+        "proporcao de repositorios da faixa com CFR (b) exatamente zero. O CFR (a), que nao "
+        "depende da cadencia de releases, fica estavel entre as faixas e serve de contraste.\n\n"
+        + tabela_md(tabela_faixas, casas=3)
+        + "\n### Matriz de Spearman\n\n" + tabela_md(matriz, casas=3)
         + "\n## RQ 06 - metricas DORA entre subgrupos\n\n"
         "### Fatores\n\n" + tabela_md(tabela_fatores)
         + "\nOs quartis vem das colunas da coleta (`data/dataset_meta.json` tem os limites). "

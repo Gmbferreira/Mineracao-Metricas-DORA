@@ -367,13 +367,16 @@ que nenhum valor se repete, a moda fica vazia.
   variantes (`rq05_dispersao.png`) e tamanho de efeito por fator e métrica
   (`rq06_efeitos.png`).
 - **RQ 07** (`rq07_sensibilidade.py`): distribuição e moda da classe geral em
-  cada combinação; para cada par (C1×C2, C1×C3, C2×C3) e cada métrica, a % de
-  repositórios que mudam de classe e o kappa de Cohen ponderado
-  (`cohen_kappa_score(..., weights="linear")`); as matrizes de transição; e o
-  efeito de trocar um fator de cada vez em relação à C1 (unidade, lead time ou
-  CFR). Gráficos: matrizes de transição (`rq07_transicoes.png`) e barras da
-  classe geral por combinação com boxplot da frequência por unidade
-  (`rq07_classes_e_unidades.png`).
+  cada combinação, e a distribuição de cada métrica isolada (frequência, lead
+  time, CFR e recuperação) em cada combinação; para cada par (C1×C2, C1×C3,
+  C2×C3) e cada métrica, a % de repositórios que mudam de classe e o kappa de
+  Cohen ponderado (`cohen_kappa_score(..., weights="linear")`); as matrizes de
+  transição; e o efeito de trocar um fator de cada vez em relação à C1
+  (unidade, lead time ou CFR), na classe geral e em cada métrica isolada.
+  Gráficos: matrizes de transição (`rq07_transicoes.png`), barras da classe
+  geral por combinação com boxplot da frequência por unidade
+  (`rq07_classes_e_unidades.png`) e barras de migração (sobe, fica e desce) por
+  métrica em cada troca isolada (`rq07_migracao_metricas.png`).
 - **RQ 08** (`rq08_rework.py`): rework rate de cada repositório
   (`releases_corretivas ÷ releases_janela`, com a mesma heurística do CFR (b)),
   média, mediana, moda e IQR, e a comparação com o CFR (b): Spearman, Wilcoxon

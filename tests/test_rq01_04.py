@@ -61,6 +61,29 @@ def test_resumo_em_dias_so_para_metricas_em_horas(dataset):
     assert pd.isna(tabela.loc["cfr_a"]["mediana_dias"])
 
 
+def test_pares_variantes(dataset):
+    tabela = rq01.pares_variantes(dataset).set_index("par")
+    lead = tabela.loc["lead_time (a) x (b)"]
+    assert lead["n"] == 4
+    assert lead["mediana_a"] == pytest.approx(74.0)
+    assert lead["mediana_b"] == pytest.approx(112.0)
+    assert lead["proporcao_b_maior"] == pytest.approx(0.25)
+    assert lead["razao_mediana_b_a"] == pytest.approx(0.65)
+    assert lead["diferenca_mediana_b_a"] == pytest.approx(-14.5)
+    cfr = tabela.loc["cfr (a) x (b)"]
+    assert cfr["n"] == 3
+    assert cfr["proporcao_b_maior"] == pytest.approx(1.0)
+    assert cfr["razao_mediana_b_a"] == pytest.approx(2.5)
+    assert cfr["diferenca_mediana_b_a"] == pytest.approx(0.15)
+
+
+def test_pares_variantes_sem_razao_quando_a_tem_zero():
+    """No CFR ha repositorios com (a) = 0: a razao (b)/(a) nao e calculada."""
+    dados = pd.DataFrame({"cfr_a": [0.0, 0.2], "cfr_b": [0.1, 0.1]})
+    tabela = rq01.pares_variantes(dados).set_index("par")
+    assert pd.isna(tabela.loc["cfr (a) x (b)", "razao_mediana_b_a"])
+
+
 def test_censura_dos_episodios(dataset):
     tabela = rq01.censura(dataset).set_index("indicador")
     assert tabela.loc["episodios no total", "valor"] == 9
@@ -140,7 +163,8 @@ def test_main_grava_resultados(dataset, tmp_path, capsys):
     arquivo = tmp_path / "dataset.csv"
     dataset.to_csv(arquivo, index=False)
     rq01.main(["--dataset", str(arquivo), "--saida", str(tmp_path / "saida")])
-    for nome in ("rq01_04_resumo.csv", "rq01_04_censura.csv", "rq01_04_classes.csv",
-                 "rq01_04_distribuicao.png", "rq01_04_classes.png", "rq01_04.md"):
+    for nome in ("rq01_04_resumo.csv", "rq01_04_pares.csv", "rq01_04_censura.csv",
+                 "rq01_04_classes.csv", "rq01_04_distribuicao.png", "rq01_04_classes.png",
+                 "rq01_04.md"):
         assert (tmp_path / "saida" / nome).exists()
     assert "classificação DORA" in capsys.readouterr().out

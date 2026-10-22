@@ -36,7 +36,14 @@ deployment recovery time, plus a sensitivity analysis of the operational
 definitions. This paper presents the context, the seven research questions and
 the informal hypotheses that guide the study, and describes the methodology:
 the data source, the selection funnel, the operational definitions of the
-metrics and the manual validation protocol.
+metrics and the manual validation protocol. Across 300 repositories, the median
+project publishes 0.5 release per week, with a lead time of about 11 days; the
+change failure rate is 4.8\% under the CI proxy and 21.9\% under the delivery
+proxy, and the two are nearly uncorrelated. Deployment frequency correlates
+positively with the delivery failure rate, a relation that is partly an
+artifact of the seven-day correction window; older repositories and those with
+more contributors have longer lead times, and 22\% to 31\% of the repositories
+change DORA class when the operational definition changes.
 \end{abstract}
 
 \begin{resumo}
@@ -50,7 +57,15 @@ changes, taxa de falha de mudança e tempo de recuperação, além de uma análi
 sensibilidade das definições operacionais. Este artigo apresenta o contexto, as
 sete questões de pesquisa e as hipóteses informais que orientam o estudo, e
 descreve a metodologia: a fonte de dados, o funil de seleção, as definições
-operacionais das métricas e o protocolo de validação manual.
+operacionais das métricas e o protocolo de validação manual. Nos 300
+repositórios, o projeto mediano publica 0,5 release por semana, com
+\emph{lead time} de cerca de 11 dias; a taxa de falha de mudança é de 4,8\% no
+proxy de CI e de 21,9\% no de entrega, e os dois são praticamente
+descorrelacionados. A frequência de deploy se correlaciona positivamente com a
+taxa de falha de entrega, relação em parte artefato da janela de sete dias;
+repositórios mais antigos e com mais contribuidores têm \emph{lead time} maior,
+e de 22\% a 31\% dos repositórios mudam de classe DORA quando a definição
+operacional muda.
 \end{resumo}
 
 \section{Introdução}
@@ -110,7 +125,7 @@ compara com o CFR (b). As hipóteses informais que orientam as sete questões,
 formuladas antes de qualquer análise dos dados, são apresentadas na
 Seção~\ref{sec:hipoteses}.
 
-As contribuições esperadas são: (i) um pipeline próprio de coleta e cálculo das
+As contribuições deste trabalho são: (i) um pipeline próprio de coleta e cálculo das
 métricas DORA para projetos open-source; (ii) um retrato descritivo do
 desempenho de entrega de repositórios populares sob definições operacionais
 explícitas e comparáveis; e (iii) uma avaliação da robustez dessas conclusões
@@ -118,8 +133,9 @@ frente a escolhas metodológicas alternativas. O restante do artigo está
 organizado da seguinte forma: a Seção~\ref{sec:hipoteses} apresenta as questões
 de pesquisa e as hipóteses; a Seção~\ref{sec:metodologia} descreve a metodologia
 --- fonte de dados, funil de seleção, definições operacionais e protocolo de
-validação manual; os Resultados e a Discussão serão desenvolvidos nas próximas
-etapas do projeto.
+validação manual; a Seção~\ref{sec:resultados} reporta os resultados das RQ~01 a
+RQ~08; a Seção~\ref{sec:discussao} confronta as hipóteses com os resultados;
+e a Seção~\ref{sec:ameacas} discute as ameaças à validade.
 
 \section{Questões de Pesquisa e Hipóteses}
 \label{sec:hipoteses}
@@ -561,8 +577,176 @@ otimista: separando os 60 repositórios em metades, o F1 variou entre 0,64 e 0,7
 \section{Resultados}
 \label{sec:resultados}
 
-% RQ 01 a RQ 04 e classificação DORA de referência (C1): Issue #19.
-% RQ 05 e RQ 06: Issue #19.
+\subsection{RQ 01 a RQ 04 --- Métricas e classificação DORA}
+\label{sec:rq01-04}
+
+A Tabela~\ref{tab:rq01-04} resume as quatro métricas nos 300 repositórios e a
+Figura~\ref{fig:rq01-04} mostra as distribuições, com os cortes das faixas da
+Tabela~\ref{tab:faixas}. Como as distribuições são assimétricas, a leitura usa a
+mediana e o intervalo interquartil (IQR).
+
+\textbf{RQ 01.} A frequência de deploy tem mediana de 0,52 release por semana
+(IQR de 0,25 a 1,21) e média de 1,36, puxada por poucos repositórios com
+dezenas de releases na janela. A moda é 0,10 release por semana --- o mínimo
+exigido pelo filtro E3, de cinco releases na janela. A distribuição é
+fortemente assimétrica à direita, mas a mediana cai na faixa \emph{Medium}
+(47,3\% dos repositórios): \emph{High} concentra 28,7\%, \emph{Low} 21,3\% e
+\emph{Elite} apenas 2,7\%.
+
+\textbf{RQ 02.} O \emph{lead time} (a) tem mediana de 252,1 h (10,5 dias; IQR
+de 74,8 a 968,5 h) e o (b), de 267,3 h (11,1 dias; IQR de 79,5 a 1.218,1 h). As
+duas variantes ficam, portanto, na mesma ordem de grandeza. Por repositório,
+porém, elas divergem nas duas direções: 40,3\% têm (b) maior que (a), e a razão
+mediana (b)/(a) é 0,78, de modo que no repositório típico o valor por commit é
+menor. As duas medidas ordenam os repositórios de forma semelhante
+($\rho = 0{,}77$). Na classificação, a troca de variante move 40,7\% dos
+repositórios de faixa, 18,3\% para cima e 22,3\% para baixo.
+
+\textbf{RQ 03.} O CFR (a) tem mediana de 4,8\% (IQR de 2,3\% a 11,2\%) e o CFR
+(b), de 21,9\% (IQR de 8,3\% a 44,1\%; 299 repositórios). O CFR (b) é maior que
+o (a) em 72,6\% dos casos, e a correlação entre os dois é praticamente nula
+($\rho = 0{,}09$): os proxies medem coisas diferentes, como a RQ~07 detalha.
+
+\textbf{RQ 04.} O tempo de recuperação tem mediana de 2,56 h (IQR de 0,98 a
+6,50 h) em 284 repositórios. A censura é concentrada: 158 dos 63.874 episódios
+(0,2\%) não têm recuperação até o fim da janela, mas 92 repositórios (32\% dos
+284) têm ao menos um episódio censurado, e 16 não tiveram nenhum episódio de
+falha.
+
+Na classificação de referência (C1), a classe geral é \emph{High} em 45,7\% dos
+repositórios, \emph{Medium} em 42\%, \emph{Elite} em 7,3\% e \emph{Low} em 5\%.
+Por métrica, o CFR concentra 82,7\% em \emph{Elite}, a recuperação 64,8\% em
+\emph{High}, a frequência 47,3\% em \emph{Medium} e o \emph{lead time} 30\% em
+\emph{Low}.
+
+\begin{table}[t]
+  \centering
+  \caption{RQ 01 a RQ 04: estatística descritiva das métricas nos 300
+    repositórios (Q1 e Q3 delimitam o IQR).}
+  \label{tab:rq01-04}
+  \footnotesize
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    Métrica & $n$ & Mediana & Q1 & Q3 & Média \\
+    \midrule
+    Frequência (releases/semana) & 300 & 0,52 & 0,25 & 1,21 & 1,36 \\
+    \emph{Lead time} (a) (h) & 300 & 252,1 & 74,8 & 968,5 & 1.928,0 \\
+    \emph{Lead time} (b) (h) & 300 & 267,3 & 79,5 & 1.218,1 & 2.151,4 \\
+    CFR (a) & 300 & 0,048 & 0,023 & 0,112 & 0,091 \\
+    CFR (b) & 299 & 0,219 & 0,083 & 0,441 & 0,278 \\
+    Recuperação (h) & 284 & 2,56 & 0,98 & 6,50 & 9,47 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/rq01_04_distribuicao.png}
+  \caption{RQ 01 a RQ 04: distribuição das métricas por repositório (eixos
+    logarítmicos, exceto o CFR), com a mediana; as linhas pontilhadas são os
+    cortes das faixas DORA.}
+  \label{fig:rq01-04}
+\end{figure}
+
+\subsection{RQ 05 --- Velocidade e estabilidade}
+\label{sec:rq05}
+
+A Figura~\ref{fig:rq05} relaciona a frequência de deploy com o CFR nas duas
+variantes. Com o proxy de CI, a correlação de Spearman é fraca e positiva
+($\rho = +0{,}161$, $p = 0{,}005$, $n = 300$); com o proxy de entrega, é forte
+($\rho = +0{,}572$, $p < 0{,}001$, $n = 299$). Nos dois casos, repositórios que
+publicam mais releases têm \emph{mais} falhas, e não menos. Os pares
+complementares vão na direção esperada: a frequência se correlaciona
+negativamente com o \emph{lead time} (a) ($\rho = -0{,}564$), com o (b)
+($-0{,}426$) e com o tempo de recuperação ($-0{,}209$).
+
+A Tabela~\ref{tab:rq05-faixas} mostra por que a leitura do CFR (b) pede
+cuidado. A mediana do CFR (b) sobe de 0\% na faixa \emph{Low} para 20\%, 43\% e
+47\% nas faixas seguintes, e 54,7\% dos repositórios \emph{Low} têm CFR (b)
+exatamente zero. O motivo está na definição: uma release só conta como falha se
+houver uma release corretiva nos sete dias seguintes, e quem publica menos de
+uma vez por mês raramente tem uma release seguinte dentro dessa janela. O CFR
+(a), que não depende da cadência, fica praticamente plano entre as faixas
+(4,7\%, 4,1\%, 6,7\% e 5,9\%).
+
+\begin{table}[t]
+  \centering
+  \caption{RQ 05: CFR mediano por faixa de frequência de deploy (C1). A última
+    coluna é a proporção de repositórios da faixa com CFR (b) igual a zero.}
+  \label{tab:rq05-faixas}
+  \footnotesize
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    Faixa & $n$ & Frequência (sem.) & CFR (a) & CFR (b) & CFR (b) $= 0$ \\
+    \midrule
+    \emph{Low} & 64 & 0,15 & 0,047 & 0,000 & 54,7\% \\
+    \emph{Medium} & 142 & 0,46 & 0,041 & 0,200 & 10,6\% \\
+    \emph{High} & 86 & 1,91 & 0,067 & 0,431 & 1,2\% \\
+    \emph{Elite} & 8 & 9,56 & 0,059 & 0,467 & 12,5\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/rq05_dispersao.png}
+  \caption{RQ 05: frequência de deploy contra o CFR, nas variantes (a) e (b);
+    a linha é a mediana do CFR em cada quintil da frequência.}
+  \label{fig:rq05}
+\end{figure}
+
+\subsection{RQ 06 --- Características associadas ao desempenho}
+\label{sec:rq06}
+
+A Figura~\ref{fig:rq06} mostra o tamanho de efeito de cada fator em cada
+métrica, com Kruskal-Wallis e Mann-Whitney \cite{virtanen2020}, correção de
+Holm \cite{holm1979} dentro de duas famílias (as quatro métricas de referência
+(C1) e as duas variantes (b)) e, nas comparações par a par, o Cliff's $\delta$
+\cite{romano2006}. Dos 30 testes, seis passam pela correção
+(Tabela~\ref{tab:rq06}), e todos envolvem o \emph{lead time} ou a frequência.
+Nenhum fator se associa ao CFR, ao tempo de recuperação ou à popularidade
+(quartis de estrelas), e o tipo de projeto não tem efeito significativo em
+métrica alguma.
+
+A idade é o fator mais associado: $\varepsilon^2 = 0{,}348$ no \emph{lead time}
+(a) e $0{,}102$ na frequência. Os repositórios mais antigos publicam menos e
+demoram mais: da Q1 para a Q4 de idade, a mediana do \emph{lead time} (a) sobe
+de 55,4 h para 1.058,9 h (Cliff's $\delta = -0{,}81$) e a da frequência cai de
+0,92 para 0,38 release por semana ($\delta = +0{,}48$). O número de
+contribuidores vem em seguida ($\varepsilon^2 = 0{,}168$ no \emph{lead time}
+(a)): da Q1 para a Q4, a mediana sobe de 131,0 h para 998,3 h
+($\delta = -0{,}62$). A linguagem só aparece na variante (b) do \emph{lead
+time} ($\varepsilon^2 = 0{,}077$, efeito médio), e o pós-hoc aponta o Python
+como o mais rápido (mediana de 112,7 h, contra 446,9 h do Go).
+
+\begin{table}[t]
+  \centering
+  \caption{RQ 06: os seis testes que passaram pela correção de Holm, com o
+    tamanho de efeito ($\varepsilon^2$) e a classificação usual. A idade e os
+    contribuidores entram em quartis.}
+  \label{tab:rq06}
+  \footnotesize
+  \begin{tabular}{@{}llrrrr@{}}
+    \toprule
+    Fator & Métrica & $n$ & $\varepsilon^2$ & $p$ (Holm) & Efeito \\
+    \midrule
+    Idade & \emph{Lead time} (b) & 300 & 0,360 & $< 0{,}001$ & grande \\
+    Idade & \emph{Lead time} (a) & 300 & 0,348 & $< 0{,}001$ & grande \\
+    Contribuidores & \emph{Lead time} (b) & 300 & 0,225 & $< 0{,}001$ & grande \\
+    Contribuidores & \emph{Lead time} (a) & 300 & 0,168 & $< 0{,}001$ & grande \\
+    Idade & Frequência & 300 & 0,102 & $< 0{,}001$ & médio \\
+    Linguagem & \emph{Lead time} (b) & 244 & 0,077 & 0,007 & médio \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/rq06_efeitos.png}
+  \caption{RQ 06: tamanho de efeito ($\varepsilon^2$) de cada fator em cada
+    métrica; em azul, os testes com $p$ corrigido por Holm abaixo de 0,05.}
+  \label{fig:rq06}
+\end{figure}
 
 \subsection{RQ 07 --- Análise de sensibilidade}
 \label{sec:rq07}
@@ -708,7 +892,99 @@ emergência de um patch de manutenção programado.
 \section{Discussão}
 \label{sec:discussao}
 
-% Hipóteses x resultados das RQ 01 a RQ 06: Issue #19.
+\textbf{RQ 01.} A hipótese acertou a forma da distribuição, mas superestimou a
+cadência. Esperávamos uma distribuição fortemente assimétrica, com mediana em
+\emph{High} (uma a três releases por semana), uma minoria em \emph{Elite} e um
+grupo pequeno em \emph{Low}: a assimetria veio, a minoria \emph{Elite} também
+(2,7\%), mas a mediana ficou em 0,52 release por semana (faixa \emph{Medium}) e
+quase um quarto dos repositórios (21,3\%) publica menos de uma release por mês.
+O projeto popular típico entrega uma release a cada duas semanas, e não uma por
+semana. Isso é compatível com o perfil da amostra: são em grande parte
+bibliotecas, que publicam quando acumulam mudanças, e o filtro E3 exige apenas
+cinco releases na janela.
+
+\textbf{RQ 02.} A divergência estrutural prevista entre as variantes não
+apareceu nas medianas. Esperávamos (a) na casa de semanas a um mês e (b) na casa
+de dias, com muitos repositórios subindo de faixa em (b); as duas medianas
+ficaram em torno de 11 dias (10,5 e 11,1), e a troca de variante move 40,7\% dos
+repositórios, mas em direções opostas (18,3\% sobem, 22,3\% descem). O efeito
+do commit ``esquecido'' existe, mas é pequeno: no repositório típico o
+\emph{lead time} por commit é 22\% menor que o por release, e 40\% dos
+repositórios vão na direção contrária. As duas medidas ordenam os repositórios
+de forma parecida ($\rho = 0{,}77$), o que limita o impacto da escolha sobre as
+conclusões.
+
+\textbf{RQ 03.} A hipótese errou o sinal. Esperávamos o proxy de CI alto (20\% a
+40\%, faixa \emph{Medium}) e o de entrega baixo (até 15\%, \emph{Elite} ou
+\emph{High}); aconteceu o contrário: 4,8\% (\emph{Elite}) e 21,9\%
+(\emph{Medium}), com o proxy de entrega maior que o de CI em 72,6\% dos
+repositórios. Duas explicações se somam. No proxy de CI, a maior parte das
+execuções tem sucesso: o denominador soma todos os workflows --- testes,
+\emph{lint}, documentação, publicação ---, e a maioria deles passa, o que dilui
+as falhas de teste; 5\% é uma taxa de falha de \emph{pipeline} plausível. No
+proxy de entrega, a heurística v6 erra para mais (precisão de 0,67, cerca de
+15\% acima do consenso) e a janela de sete dias transforma qualquer correção
+rápida em uma nova falha. A RQ~07 reforça essa leitura: os dois proxies não
+medem a mesma coisa ($\rho = 0{,}09$), e chamar ambos de ``taxa de falha''
+esconde essa diferença.
+
+\textbf{RQ 04.} A ordem de grandeza foi confirmada, mas não o piso. Esperávamos
+menos de um dia e provavelmente menos de uma hora (\emph{Elite} ou \emph{High});
+a mediana ficou em 2,56 h, na faixa \emph{High}, com 26,1\% em \emph{Elite} e
+64,8\% em \emph{High}. Recuperar um \emph{pipeline} em algumas horas é rápido,
+mas o ``menos de uma hora'' não se sustentou. A censura também se comportou
+como previsto, mas mais concentrada do que imaginávamos: só 0,2\% dos episódios
+ficam sem recuperação até o fim da janela, porém 32\% dos repositórios têm ao
+menos um episódio censurado --- a censura é um problema de poucos repositórios
+com manutenção intermitente, não da amostra.
+
+\textbf{RQ 05.} A hipótese era de uma correlação fraca, próxima de zero e, se
+significativa, levemente negativa, seguindo a tese do DORA de que velocidade e
+estabilidade não formam um \emph{trade-off} \cite{forsgren2018}. O resultado vai
+na direção oposta: a correlação é positiva nas duas variantes e forte na de
+entrega ($\rho = +0{,}161$ no CFR (a) e $+0{,}572$ no CFR (b)). Nesta amostra,
+quem publica mais releases tem mais falhas, e não menos.
+
+Boa parte da associação com o CFR (b) é efeito da definição
+(Tabela~\ref{tab:rq05-faixas}). A mediana do CFR (b) vai de zero na faixa
+\emph{Low} a 43\% e 47\% nas faixas \emph{High} e \emph{Elite}, e mais da metade
+dos repositórios \emph{Low} têm CFR (b) exatamente zero. A causa é a janela de
+sete dias: uma release só é contada como falha se a correção sair em outra
+release dentro desse prazo; em um projeto que publica uma vez por mês, a
+correção normalmente entra na release seguinte, fora da janela, e o repositório
+fica com CFR (b) zero mesmo tendo entregado uma correção. O CFR (a), que não
+depende da cadência, é plano entre as faixas e se correlaciona só fracamente
+com a frequência. Isso não elimina a associação --- ela aparece também, mais
+fraca, na variante (a), que não tem esse viés ---, mas impede tratá-la como
+medida de qualidade.
+
+O que se pode concluir sobre o \emph{trade-off}? Com estes proxies, não há
+evidência de que mais velocidade venha acompanhada de mais estabilidade: a
+associação observada aponta para o lado oposto, e a explicação mais provável
+mistura efeito real (entregas menores e mais frequentes expõem defeitos mais
+cedo, e cada correção vira uma nova release) com o viés de definição do CFR (b).
+Como o desenho é observacional e o CFR depende da cadência, não é possível
+separar os dois. A resposta à RQ~05 depende, portanto, do proxy: fraca e
+positiva no de CI, forte e positiva no de entrega --- e este último não é
+comparável entre repositórios de cadências diferentes. Isso reforça a decisão de
+reportar as duas variantes lado a lado e de não usar a taxa de falha para
+comparar projetos com ritmos distintos.
+
+\textbf{RQ 06.} A hipótese acertou um fator e errou o outro. Esperávamos que o
+tipo de projeto e a idade fossem os mais associados; a idade foi, de fato, o
+fator com maior efeito ($\varepsilon^2 = 0{,}348$ no \emph{lead time} (a) e
+$0{,}102$ na frequência), e na direção prevista --- repositórios mais antigos
+entregam mais devagar e com menos frequência ---, mas o tipo de projeto não teve
+efeito significativo em nenhuma métrica ($p$ corrigido igual a 1). O número de
+contribuidores, que não estava entre os favoritos, apareceu em segundo lugar
+(0,168 e 0,225 no \emph{lead time}). A linguagem, que esperávamos ter efeito
+pequeno, só apareceu na variante (b) do \emph{lead time}, com efeito médio
+(0,077) e o Python à frente. E os efeitos significativos são grandes, não
+pequenos a médios como prevíamos. Duas ressalvas: o tipo de projeto tem só 60
+repositórios e quatro grupos, o que limita o poder do teste, e idade e
+contribuidores andam juntos ($\rho = 0{,}59$,
+Seção~\ref{sec:ameacas}), então não é possível atribuir o efeito a um deles
+isoladamente.
 
 \textbf{RQ 07.} A hipótese acertou o tamanho da mudança, mas não o fator
 principal. Esperávamos que de 20\% a 40\% dos repositórios mudassem de classe e

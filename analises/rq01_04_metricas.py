@@ -3,6 +3,10 @@
 Le data/dataset.csv e grava tabelas, graficos e um resumo em markdown:
 
     python -m analises.rq01_04_metricas
+
+Inclui a comparacao pareada das variantes (a) e (b) do lead time (RQ 02) e do
+CFR (RQ 03), repositorio a repositorio, que complementa a comparacao entre as
+medianas agregadas.
 """
 import argparse
 import os
@@ -43,6 +47,12 @@ METRICAS = (
      ((0.15, "Elite"), (0.30, "High"), (0.45, "Medium"))),
     ("recuperacao", "Tempo de recuperacao (RQ 04)", "recuperacao_horas", "horas", True,
      ((1, "Elite"), (DIA, "High"), (SEMANA, "Medium"))),
+)
+
+# pares (a) x (b): nome, coluna de (a), coluna de (b), unidade
+PARES = (
+    ("lead_time", "lead_time_a_horas", "lead_time_b_horas", "horas"),
+    ("cfr", "cfr_a", "cfr_b", "proporcao"),
 )
 
 # colunas de classe do dataset, na ordem em que entram na tabela de resumo
@@ -97,6 +107,34 @@ def resumo_metricas(dataset):
         linha["iqr_dias"] = linha["iqr"] / DIA if em_dias else None
         linhas.append(linha)
     return pd.DataFrame(linhas)
+
+
+def pares_variantes(dataset):
+    """Comparacao pareada das variantes (a) e (b), repositorio a repositorio.
+
+    A tabela de resumo compara as medianas agregadas; aqui cada repositorio e
+    comparado consigo mesmo. A razao (b)/(a) so e calculada quando todos os
+    valores de (a) sao positivos -- no CFR, doze repositorios tem (a) = 0, e a
+    razao nao faz sentido.
+    """
+    linhas = []
+    for nome, coluna_a, coluna_b, unidade in PARES:
+        par = pd.concat([coluna(dataset, coluna_a).rename("a"),
+                         coluna(dataset, coluna_b).rename("b")], axis=1).dropna()
+        razao = (par["b"] / par["a"]).median() if (par["a"] > 0).all() else None
+        linhas.append({
+            "par": f"{nome} (a) x (b)",
+            "n": int(len(par)),
+            "unidade": unidade,
+            "mediana_a": float(par["a"].median()),
+            "mediana_b": float(par["b"].median()),
+            "proporcao_b_maior": float((par["b"] > par["a"]).mean()),
+            "razao_mediana_b_a": razao,
+            "diferenca_mediana_b_a": float((par["b"] - par["a"]).median()),
+        })
+    return pd.DataFrame(linhas, columns=["par", "n", "unidade", "mediana_a", "mediana_b",
+                                         "proporcao_b_maior", "razao_mediana_b_a",
+                                         "diferenca_mediana_b_a"])
 
 
 def censura(dataset):
@@ -315,11 +353,13 @@ def main(argv=None):
 
     dataset = pd.read_csv(args.dataset)
     resumos = resumo_metricas(dataset)
+    tabela_pares = pares_variantes(dataset)
     tabela_censura = censura(dataset)
     tabela_classes = classes_dora(dataset)
     divergencias = conferir_classificacao(dataset)
 
     resumos.to_csv(os.path.join(pasta, "rq01_04_resumo.csv"), index=False)
+    tabela_pares.to_csv(os.path.join(pasta, "rq01_04_pares.csv"), index=False)
     tabela_censura.to_csv(os.path.join(pasta, "rq01_04_censura.csv"), index=False)
     tabela_classes.to_csv(os.path.join(pasta, "rq01_04_classes.csv"), index=False)
     grafico_distribuicao(dataset, os.path.join(pasta, "rq01_04_distribuicao.png"))
@@ -342,6 +382,13 @@ def main(argv=None):
             f"**{len(divergencias)} divergências** entre a classificação C1 recalculada e as "
             f"colunas `classe_*` do dataset:\n\n" + tabela_markdown(divergencias)
         )
+    zeros_cfr = int((coluna(dataset, "cfr_a") == 0).sum())
+    nota_razao = (
+        f"A razão só é calculada quando todos os valores de (a) são positivos; no CFR, "
+        f"{zeros_cfr} repositórios têm (a) = 0, então ela fica vazia."
+        if zeros_cfr else
+        "A razão só é calculada quando todos os valores de (a) são positivos."
+    )
     texto = (
         "# RQ 01 a RQ 04 - Métricas e classificação DORA\n\n"
         f"Estatística descritiva das RQ 01 a RQ 04 e classificação DORA de referência (C1), "
@@ -350,6 +397,12 @@ def main(argv=None):
         "entram como complemento. Lead time e tempo de recuperação também são mostrados em "
         "dias, para facilitar a leitura.\n\n"
         "## Resumo das métricas\n\n" + tabela_markdown(resumos)
+        + "\n## Comparação entre as variantes (a) e (b)\n\n"
+        "Cada repositório comparado consigo mesmo: `proporcao_b_maior` é a fração de "
+        "repositórios em que (b) > (a), `razao_mediana_b_a` é a mediana da razão (b)/(a) e "
+        "`diferenca_mediana_b_a` é a mediana da diferença (b) - (a), na unidade da métrica. "
+        + nota_razao + "\n\n"
+        + tabela_markdown(tabela_pares)
         + "\n## Censura\n\n" + tabela_markdown(tabela_censura)
         + "\n## Classes DORA (C1)\n\n" + tabela_markdown(tabela_classes)
         + f"\nNa classe geral, {contagem}.\n\n"
