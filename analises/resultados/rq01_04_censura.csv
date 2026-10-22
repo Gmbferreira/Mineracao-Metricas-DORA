@@ -1,0 +1,17 @@
+categoria,indicador,valor,detalhe
+RQ 04 - episodios de falha,episodios no total,63874,soma de `episodios` dos repositorios
+RQ 04 - episodios de falha,episodios censurados,158,falha sem sucesso ate o fim da janela
+RQ 04 - episodios de falha,proporcao censurada agregada,0.002473619939255409,episodios censurados / episodios
+RQ 04 - episodios de falha,repositorios com tempo de recuperacao,284,episodios recuperados no total
+RQ 04 - episodios de falha,repositorios sem episodio de falha,16,nenhuma falha depois de um sucesso na janela
+RQ 04 - episodios de falha,repositorios com ao menos um episodio censurado,92,repositorios com pelo menos um episodio sem fim
+RQ 04 - episodios de falha,proporcao desses repositorios,0.323943661971831,sobre os repositorios com tempo de recuperacao
+RQ 04 - episodios de falha,repositorios com todos os episodios censurados,0,toda falha da janela ficou sem recuperacao
+RQ 04 - censura por repositorio,mediana da proporcao,0.0,`proporcao_censurados` de cada repositorio
+RQ 04 - censura por repositorio,q1 da proporcao,0.0,1o quartil
+RQ 04 - censura por repositorio,q3 da proporcao,0.0036249999999999998,3o quartil
+RQ 04 - censura por repositorio,iqr da proporcao,0.0036249999999999998,q3 - q1
+RQ 04 - falhas sem inicio,runs de falha antes do primeiro sucesso,27312,"falhas no comeco da janela, sem sucesso antes: nao abrem episodio"
+RQ 03 (b) - censura,releases censuradas,859,"releases dos ultimos 7 dias da janela, sem como saber se houve correcao"
+RQ 03 (b) - censura,releases avaliadas,20344,releases com os 7 dias seguintes ainda dentro da janela
+RQ 03 (b) - censura,repositorios sem CFR (b),1,todas as releases do repositorio ficaram censuradas

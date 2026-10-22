@@ -7,6 +7,9 @@ ORDEM_CLASSES = {"Low": 1, "Medium": 2, "High": 3, "Elite": 4}
 # cores dos graficos: as tres primeiras de uma paleta categorica checada para
 # daltonismo; texto e eixos ficam em cinza, nunca na cor da serie
 CORES = ("#2a78d6", "#eb6834", "#1baf7a")
+# rampa sequencial para as classes DORA, que sao ordenadas: Elite e a mais
+# escura e Low a mais clara
+CORES_CLASSES = ("#0b3d70", "#2a78d6", "#8dbdf0", "#d9e7f8")
 TINTA = "#0b0b0b"
 TINTA_SECUNDARIA = "#52514e"
 GRADE = "#e4e3df"

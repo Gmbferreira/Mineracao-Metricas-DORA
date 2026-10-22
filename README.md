@@ -327,12 +327,13 @@ repetir o resto.
 A etapa `metricas` grava `data/variantes.csv`, com as métricas de cada unidade
 e a classificação em C1, C2 e C3 (colunas no dicionário de dados).
 
-## Análises (Issues #17 e #18)
+## Análises (Issues #15, #17 e #18)
 
 Cada análise é um script que lê os CSVs de `data/` e grava tabelas, gráficos e
 um resumo em markdown em `analises/resultados/`:
 
 ```bash
+python -m analises.rq01_04_metricas
 python -m analises.rq07_sensibilidade
 python -m analises.rq08_rework
 ```
@@ -342,6 +343,16 @@ Os resumos de cada métrica trazem média, mediana, moda, quartis e IQR
 valor principal; a média e a moda entram como complemento. Em dado contínuo, em
 que nenhum valor se repete, a moda fica vazia.
 
+- **RQ 01 a RQ 04** (`rq01_04_metricas.py`): estatística descritiva das quatro
+  métricas — frequência de deploy (RQ 01), lead time (a) e (b) (RQ 02), CFR (a) e
+  (b) (RQ 03) e tempo de recuperação (RQ 04) — com média, mediana, moda, quartis
+  e IQR, e lead time e recuperação também em dias; a censura dos episódios de
+  falha da RQ 04 (episódios censurados, repositórios afetados e falhas sem
+  início) e das releases do CFR (b); e a classificação DORA de referência (C1),
+  na classe geral e em cada métrica, recalculada do zero e conferida contra as
+  colunas `classe_*` do dataset. Gráficos: boxplot das quatro métricas com os
+  cortes das faixas DORA (`rq01_04_distribuicao.png`) e classes geral e por
+  métrica (`rq01_04_classes.png`).
 - **RQ 07** (`rq07_sensibilidade.py`): distribuição e moda da classe geral em
   cada combinação; para cada par (C1×C2, C1×C3, C2×C3) e cada métrica, a % de
   repositórios que mudam de classe e o kappa de Cohen ponderado
@@ -369,7 +380,7 @@ que nenhum valor se repete, a moda fica vazia.
 | `data/releases.csv` | Uma linha por release avaliada, com o resultado do compare e o lead time (a) |
 | `data/variantes.csv` | Métricas por unidade de deploy e classificação em C1, C2 e C3 (RQ 07) |
 | `data/DICIONARIO.md` | Dicionário de dados de todos os CSVs |
-| `analises/resultados/` | Tabelas, gráficos e resumos das análises da RQ 07 e da RQ 08 |
+| `analises/resultados/` | Tabelas, gráficos e resumos das análises das RQ 01 a RQ 04, da RQ 07 e da RQ 08 |
 | `data/coleta/` | Um JSON por repositório com releases, commits e runs coletados (gitignorado; base para as próximas sprints) |
 | `data/checkpoints/` | JSONL por etapa (gitignorado; permite retomada) |
 | `data/cache/` | Respostas da API em JSON (gitignorado; evita repetir chamadas) |
@@ -437,6 +448,7 @@ validacao/
 └── avaliacao.py  precisão, recall e F1 da heurística contra o consenso
 analises/
 ├── comum.py      mediana, IQR e tabelas
+├── rq01_04_metricas.py  RQ 01 a RQ 04: estatística descritiva e classificação DORA
 ├── rq07_sensibilidade.py  RQ 07: mudança de classe e kappa entre C1, C2 e C3
 └── rq08_rework.py RQ 08: rework rate e comparação com o CFR (b)
 tests/            testes unitários com fixtures
