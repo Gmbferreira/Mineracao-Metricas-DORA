@@ -1,0 +1,57 @@
+{
+  "contrato": "lab03-dataset-v1",
+  "colunas": [
+    "id",
+    "full_name",
+    "janela_inicio",
+    "janela_fim_exclusivo",
+    "estrelas",
+    "linguagem",
+    "created_at",
+    "idade_dias",
+    "idade_anos",
+    "default_branch",
+    "contribuidores",
+    "contribuidores_obs",
+    "coletado_em",
+    "deployment_frequency",
+    "classe_deployment_frequency",
+    "lead_time_a",
+    "classe_lead_time_a",
+    "lead_time_b",
+    "classe_lead_time_b",
+    "cfr_a",
+    "classe_cfr_a",
+    "cfr_b",
+    "classe_cfr_b",
+    "tempo_recuperacao",
+    "classe_tempo_recuperacao",
+    "coleta_incompleta",
+    "calculo_parcial",
+    "metricas_ausentes"
+  ],
+  "total_repositorios": 30,
+  "janela": {
+    "inicio": "2025-10-01T00:00:00Z",
+    "fim_exclusivo": "2026-10-01T00:00:00Z"
+  },
+  "entradas_sha256": {
+    "metadados.json": "0d11f2b96dc6ab29ee86f55d323a659cbbced88a8c68c04bd08241a1cf8b331a",
+    "deployment_frequency.json": "01353cd2bd075148f3699c9b80b52112be6770cb31ece303822990ea271de5fd",
+    "metricas.json": "f663b147a775e515c2e166f74f1bf9a8c7e857bb4628e0c3b4cdd5515f61d028"
+  },
+  "csv_sha256": "6b88d101de228b4b551e2429f07d9410f73849787beff563f65cc356219fa1b1",
+  "ordem": "id crescente",
+  "nulos": "celula vazia; zero observado preservado",
+  "listas": "JSON",
+  "metricas_disponiveis": {
+    "deployment_frequency": 30,
+    "lead_time_a": 30,
+    "lead_time_b": 30,
+    "cfr_a": 30,
+    "cfr_b": 30,
+    "tempo_recuperacao": 30
+  },
+  "coleta_incompleta": 0,
+  "calculo_parcial": 2
+}

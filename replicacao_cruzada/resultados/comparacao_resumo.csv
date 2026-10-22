@@ -1,0 +1,8 @@
+metrica,pares,dif_rel_mediana,dif_rel_media,dif_rel_max,ate_1pct,mesma_classe,pares_classe
+deployment_frequency,30,0.0,0.0,0.0,1.0,1.0,30
+lead_time_a,30,0.0,0.0,0.0,1.0,1.0,30
+lead_time_b,30,0.0,0.0,0.0,1.0,1.0,30
+cfr_a,30,0.0,0.0,0.0,1.0,1.0,30
+cfr_b,30,0.0,0.0,0.0,1.0,1.0,30
+tempo_recuperacao,30,0.0,0.0,0.0,1.0,1.0,30
+classe_geral,30,,,,,1.0,30
