@@ -125,6 +125,20 @@ Testamos estes passos num clone novo do repositório, com uma subamostra de 2
 repositórios (`--n 2 --max-runs 300`): a coleta levou cerca de 1 minuto (6
 chamadas REST e 46 GraphQL), e as métricas saíram iguais às nossas.
 
+## Replicação cruzada do outro grupo (Issues #22 e #23)
+
+Replicamos o pipeline do grupo de Víctor Gabriel Cruz Pereira, Jonathan Sena da
+Silva e Matheus Fernandes de Oliveira numa subamostra de 30 repositórios do
+dataset deles. As seis métricas saíram iguais às do CSV original. O registro
+completo (versão usada, comandos, tempo, problemas encontrados e comparação)
+está em [`replicacao_cruzada/README.md`](replicacao_cruzada/README.md), e os
+scripts em `replicacao_cruzada/`:
+
+```bash
+python -m replicacao_cruzada.sorteio --dataset <dataset-500.csv do outro grupo> --saida replicacao_cruzada/dados
+python -m replicacao_cruzada.comparar --original <dataset-500.csv> --replicado replicacao_cruzada/dados/dataset-30.csv --saida replicacao_cruzada/resultados
+```
+
 ## Cache, rate limit e resiliência (Issue #2)
 
 - **Cache de respostas:** toda resposta `200` é salva em
