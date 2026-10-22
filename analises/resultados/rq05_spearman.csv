@@ -1,0 +1,6 @@
+par,papel,metrica_x,metrica_y,rotulo,n,rho,p,p_holm,forca
+frequencia x cfr_a,RQ 05,frequencia,cfr_a,Deployment frequency (RQ 01) x CFR proxy de CI (RQ 03 a),300,0.16099701348295015,0.00518731619078246,0.00518731619078246,fraco
+frequencia x cfr_b,RQ 05,frequencia,cfr_b,Deployment frequency (RQ 01) x CFR proxy de entrega (RQ 03 b),299,0.5715081582665754,2.5218527016296718e-27,1.2609263508148359e-26,forte
+frequencia x lead_time_a,complemento,frequencia,lead_time_a,Deployment frequency (RQ 01) x Lead time por release (RQ 02 a),300,-0.5643781412299966,1.2419730124119326e-26,4.96789204964773e-26,forte
+frequencia x lead_time_b,complemento,frequencia,lead_time_b,Deployment frequency (RQ 01) x Lead time por commit (RQ 02 b),300,-0.4256327670567563,1.246002627108861e-14,3.738007881326583e-14,moderado
+frequencia x recuperacao,complemento,frequencia,recuperacao,Deployment frequency (RQ 01) x Tempo de recuperacao (RQ 04),284,-0.208750023220692,0.0003978619520737193,0.0007957239041474386,fraco

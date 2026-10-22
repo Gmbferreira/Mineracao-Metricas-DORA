@@ -327,13 +327,14 @@ repetir o resto.
 A etapa `metricas` grava `data/variantes.csv`, com as métricas de cada unidade
 e a classificação em C1, C2 e C3 (colunas no dicionário de dados).
 
-## Análises (Issues #15, #17 e #18)
+## Análises (Issues #15, #16, #17 e #18)
 
 Cada análise é um script que lê os CSVs de `data/` e grava tabelas, gráficos e
 um resumo em markdown em `analises/resultados/`:
 
 ```bash
 python -m analises.rq01_04_metricas
+python -m analises.rq05_06_relacoes
 python -m analises.rq07_sensibilidade
 python -m analises.rq08_rework
 ```
@@ -353,6 +354,18 @@ que nenhum valor se repete, a moda fica vazia.
   colunas `classe_*` do dataset. Gráficos: boxplot das quatro métricas com os
   cortes das faixas DORA (`rq01_04_distribuicao.png`) e classes geral e por
   métrica (`rq01_04_classes.png`).
+- **RQ 05 e RQ 06** (`rq05_06_relacoes.py`): correlação de Spearman entre a
+  frequência de deploy (RQ 01) e o CFR (RQ 03), separada nas variantes (a) e (b),
+  com ρ, p e n, mais a matriz de Spearman entre todas as métricas; e a comparação
+  das métricas DORA entre subgrupos de repositórios, com cinco fatores — linguagem
+  principal (só as linguagens com repositórios suficientes para comparar), quartis
+  de estrelas, de contribuidores e de idade, e o tipo de projeto rotulado na
+  amostra-ouro — por Kruskal-Wallis (ou Mann-Whitney quando o fator tem dois
+  grupos), com correção de Holm dentro de cada família de testes e tamanho de
+  efeito (ε² = H/(n−1) e Cliff's δ). As comparações que passam pela correção
+  ganham o pós-hoc par a par. Gráficos: dispersão frequência × CFR nas duas
+  variantes (`rq05_dispersao.png`) e tamanho de efeito por fator e métrica
+  (`rq06_efeitos.png`).
 - **RQ 07** (`rq07_sensibilidade.py`): distribuição e moda da classe geral em
   cada combinação; para cada par (C1×C2, C1×C3, C2×C3) e cada métrica, a % de
   repositórios que mudam de classe e o kappa de Cohen ponderado
@@ -380,7 +393,7 @@ que nenhum valor se repete, a moda fica vazia.
 | `data/releases.csv` | Uma linha por release avaliada, com o resultado do compare e o lead time (a) |
 | `data/variantes.csv` | Métricas por unidade de deploy e classificação em C1, C2 e C3 (RQ 07) |
 | `data/DICIONARIO.md` | Dicionário de dados de todos os CSVs |
-| `analises/resultados/` | Tabelas, gráficos e resumos das análises das RQ 01 a RQ 04, da RQ 07 e da RQ 08 |
+| `analises/resultados/` | Tabelas, gráficos e resumos das análises das RQ 01 a RQ 04, da RQ 05, da RQ 06, da RQ 07 e da RQ 08 |
 | `data/coleta/` | Um JSON por repositório com releases, commits e runs coletados (gitignorado; base para as próximas sprints) |
 | `data/checkpoints/` | JSONL por etapa (gitignorado; permite retomada) |
 | `data/cache/` | Respostas da API em JSON (gitignorado; evita repetir chamadas) |
@@ -449,6 +462,7 @@ validacao/
 analises/
 ├── comum.py      mediana, IQR e tabelas
 ├── rq01_04_metricas.py  RQ 01 a RQ 04: estatística descritiva e classificação DORA
+├── rq05_06_relacoes.py  RQ 05 e RQ 06: Spearman e comparação entre grupos
 ├── rq07_sensibilidade.py  RQ 07: mudança de classe e kappa entre C1, C2 e C3
 └── rq08_rework.py RQ 08: rework rate e comparação com o CFR (b)
 tests/            testes unitários com fixtures

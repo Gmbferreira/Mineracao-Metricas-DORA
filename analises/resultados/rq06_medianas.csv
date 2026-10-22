@@ -1,0 +1,127 @@
+fator,rotulo_fator,metrica,rotulo_metrica,grupo,faixa,n,media,mediana,moda,q1,q3,iqr
+linguagem,Linguagem principal,frequencia,Deployment frequency (RQ 01),Go,Go,34,0.7298911764705883,0.46985,0.0959,0.215775,0.90615,0.690375
+linguagem,Linguagem principal,frequencia,Deployment frequency (RQ 01),JavaScript,JavaScript,27,0.6449518518518519,0.3836,0.3452,0.28765,0.863,0.57535
+linguagem,Linguagem principal,frequencia,Deployment frequency (RQ 01),Python,Python,69,1.4919971014492752,0.6904,0.0959,0.3068,1.5342,1.2274
+linguagem,Linguagem principal,frequencia,Deployment frequency (RQ 01),Rust,Rust,31,1.1154290322580644,0.4027,0.1151,0.22055,1.5246499999999998,1.3040999999999998
+linguagem,Linguagem principal,frequencia,Deployment frequency (RQ 01),TypeScript,TypeScript,83,1.9926734939759039,0.8438,0.1534,0.3836,1.8699,1.4863
+linguagem,Linguagem principal,lead_time_a,Lead time por release (RQ 02 a),Go,Go,34,2784.2176470588233,591.56,,152.9475,998.22,845.2725
+linguagem,Linguagem principal,lead_time_a,Lead time por release (RQ 02 a),JavaScript,JavaScript,27,4430.658518518518,374.07,,106.095,3247.17,3141.0750000000003
+linguagem,Linguagem principal,lead_time_a,Lead time por release (RQ 02 a),Python,Python,69,370.4655072463767,128.68,,33.09,406.07,372.98
+linguagem,Linguagem principal,lead_time_a,Lead time por release (RQ 02 a),Rust,Rust,31,1096.3087096774195,216.57,,69.07,890.605,821.5350000000001
+linguagem,Linguagem principal,lead_time_a,Lead time por release (RQ 02 a),TypeScript,TypeScript,83,773.6208433734942,211.11,,60.34,430.01,369.66999999999996
+linguagem,Linguagem principal,lead_time_b,Lead time por commit (RQ 02 b),Go,Go,34,2978.1423529411763,446.86,,176.60750000000002,2476.6,2299.9925
+linguagem,Linguagem principal,lead_time_b,Lead time por commit (RQ 02 b),JavaScript,JavaScript,27,2415.8325925925924,361.66,,99.31,3196.135,3096.8250000000003
+linguagem,Linguagem principal,lead_time_b,Lead time por commit (RQ 02 b),Python,Python,69,278.513768115942,112.69,,39.15,330.67,291.52000000000004
+linguagem,Linguagem principal,lead_time_b,Lead time por commit (RQ 02 b),Rust,Rust,31,735.158064516129,223.2,,103.495,719.525,616.03
+linguagem,Linguagem principal,lead_time_b,Lead time por commit (RQ 02 b),TypeScript,TypeScript,83,3182.004819277108,264.53,,96.07,1591.77,1495.7
+linguagem,Linguagem principal,cfr_a,CFR proxy de CI (RQ 03 a),Go,Go,34,0.07727058823529413,0.0413,,0.02745,0.09109999999999999,0.06364999999999998
+linguagem,Linguagem principal,cfr_a,CFR proxy de CI (RQ 03 a),JavaScript,JavaScript,27,0.0742037037037037,0.0351,0.0,0.017349999999999997,0.06435,0.04700000000000001
+linguagem,Linguagem principal,cfr_a,CFR proxy de CI (RQ 03 a),Python,Python,69,0.08234492753623188,0.0409,0.0,0.0199,0.1,0.0801
+linguagem,Linguagem principal,cfr_a,CFR proxy de CI (RQ 03 a),Rust,Rust,31,0.12261935483870968,0.0875,,0.03485,0.1513,0.11645
+linguagem,Linguagem principal,cfr_a,CFR proxy de CI (RQ 03 a),TypeScript,TypeScript,83,0.10415180722891566,0.062,0.0,0.0343,0.12685,0.09255
+linguagem,Linguagem principal,cfr_b,CFR proxy de entrega (RQ 03 b),Go,Go,34,0.2510117647058824,0.1899,0.0,0.015625,0.420875,0.40525
+linguagem,Linguagem principal,cfr_b,CFR proxy de entrega (RQ 03 b),JavaScript,JavaScript,27,0.28101481481481483,0.2,0.0,0.060649999999999996,0.49639999999999995,0.43574999999999997
+linguagem,Linguagem principal,cfr_b,CFR proxy de entrega (RQ 03 b),Python,Python,69,0.28257681159420295,0.2192,0.0,0.1,0.4074,0.3074
+linguagem,Linguagem principal,cfr_b,CFR proxy de entrega (RQ 03 b),Rust,Rust,31,0.255358064516129,0.2222,0.0,0.06925,0.3751,0.30584999999999996
+linguagem,Linguagem principal,cfr_b,CFR proxy de entrega (RQ 03 b),TypeScript,TypeScript,82,0.3191353658536585,0.2913,0.0,0.15095,0.5194000000000001,0.36845000000000006
+linguagem,Linguagem principal,recuperacao,Tempo de recuperacao (RQ 04),Go,Go,34,6.880294117647059,3.26,0.51,0.5675,5.485,4.9175
+linguagem,Linguagem principal,recuperacao,Tempo de recuperacao (RQ 04),JavaScript,JavaScript,22,17.900909090909092,2.46,0.1,1.5825,4.5025,2.9200000000000004
+linguagem,Linguagem principal,recuperacao,Tempo de recuperacao (RQ 04),Python,Python,65,10.624461538461535,2.14,0.99,0.85,5.64,4.79
+linguagem,Linguagem principal,recuperacao,Tempo de recuperacao (RQ 04),Rust,Rust,30,11.030333333333337,3.95,,1.55,12.15,10.6
+linguagem,Linguagem principal,recuperacao,Tempo de recuperacao (RQ 04),TypeScript,TypeScript,80,5.7764999999999995,1.9849999999999999,0.47,0.8625,4.125,3.2625
+quartil_estrelas,Popularidade (quartis de estrelas),frequencia,Deployment frequency (RQ 01),Q1,Q1: 40.444-47.692 estrelas,75,1.0790853333333332,0.4219,0.0959,0.2301,1.0836000000000001,0.8535000000000001
+quartil_estrelas,Popularidade (quartis de estrelas),frequencia,Deployment frequency (RQ 01),Q2,Q2: 47.816-61.397 estrelas,75,1.3089693333333334,0.4795,0.3836,0.2493,1.0452,0.7958999999999999
+quartil_estrelas,Popularidade (quartis de estrelas),frequencia,Deployment frequency (RQ 01),Q3,Q3: 61.946-90.515 estrelas,75,1.3151066666666664,0.5562,0.2301,0.24930000000000002,1.4,1.1506999999999998
+quartil_estrelas,Popularidade (quartis de estrelas),frequencia,Deployment frequency (RQ 01),Q4,Q4: 90.583-391.480 estrelas,75,1.7186133333333335,0.7288,0.1726,0.2685,1.55345,1.28495
+quartil_estrelas,Popularidade (quartis de estrelas),lead_time_a,Lead time por release (RQ 02 a),Q1,Q1: 40.444-47.692 estrelas,75,1162.2269333333331,292.65,,84.86000000000001,915.585,830.725
+quartil_estrelas,Popularidade (quartis de estrelas),lead_time_a,Lead time por release (RQ 02 a),Q2,Q2: 47.816-61.397 estrelas,75,2938.7709333333332,359.34,,105.305,982.615,877.31
+quartil_estrelas,Popularidade (quartis de estrelas),lead_time_a,Lead time por release (RQ 02 a),Q3,Q3: 61.946-90.515 estrelas,75,1406.9428000000003,213.39,,52.865,697.81,644.9449999999999
+quartil_estrelas,Popularidade (quartis de estrelas),lead_time_a,Lead time por release (RQ 02 a),Q4,Q4: 90.583-391.480 estrelas,75,2203.9692000000005,249.98,,96.36,994.23,897.87
+quartil_estrelas,Popularidade (quartis de estrelas),lead_time_b,Lead time por commit (RQ 02 b),Q1,Q1: 40.444-47.692 estrelas,75,1282.0122666666666,241.12,,59.565,1078.4,1018.835
+quartil_estrelas,Popularidade (quartis de estrelas),lead_time_b,Lead time por commit (RQ 02 b),Q2,Q2: 47.816-61.397 estrelas,75,2695.2225333333336,399.55,,107.78,1737.4299999999998,1629.6499999999999
+quartil_estrelas,Popularidade (quartis de estrelas),lead_time_b,Lead time por commit (RQ 02 b),Q3,Q3: 61.946-90.515 estrelas,75,2950.069466666667,236.35,,56.815,787.1949999999999,730.3799999999999
+quartil_estrelas,Popularidade (quartis de estrelas),lead_time_b,Lead time por commit (RQ 02 b),Q4,Q4: 90.583-391.480 estrelas,75,1678.1164,307.37,,97.06,1110.6599999999999,1013.5999999999999
+quartil_estrelas,Popularidade (quartis de estrelas),cfr_a,CFR proxy de CI (RQ 03 a),Q1,Q1: 40.444-47.692 estrelas,75,0.10066533333333333,0.0586,0.0,0.017550000000000003,0.1416,0.12405
+quartil_estrelas,Popularidade (quartis de estrelas),cfr_a,CFR proxy de CI (RQ 03 a),Q2,Q2: 47.816-61.397 estrelas,75,0.07831333333333333,0.0409,0.0,0.0242,0.094,0.0698
+quartil_estrelas,Popularidade (quartis de estrelas),cfr_a,CFR proxy de CI (RQ 03 a),Q3,Q3: 61.946-90.515 estrelas,75,0.08036000000000001,0.0449,0.0,0.0238,0.10389999999999999,0.08009999999999999
+quartil_estrelas,Popularidade (quartis de estrelas),cfr_a,CFR proxy de CI (RQ 03 a),Q4,Q4: 90.583-391.480 estrelas,75,0.10371199999999998,0.0608,0.0,0.0248,0.127,0.1022
+quartil_estrelas,Popularidade (quartis de estrelas),cfr_b,CFR proxy de entrega (RQ 03 b),Q1,Q1: 40.444-47.692 estrelas,75,0.26758533333333334,0.2,0.0,0.06485,0.44465,0.37979999999999997
+quartil_estrelas,Popularidade (quartis de estrelas),cfr_b,CFR proxy de entrega (RQ 03 b),Q2,Q2: 47.816-61.397 estrelas,74,0.26938243243243243,0.21715,0.0,0.070325,0.38989999999999997,0.31957499999999994
+quartil_estrelas,Popularidade (quartis de estrelas),cfr_b,CFR proxy de entrega (RQ 03 b),Q3,Q3: 61.946-90.515 estrelas,75,0.29397066666666666,0.2586,0.0,0.09545000000000001,0.4718,0.37634999999999996
+quartil_estrelas,Popularidade (quartis de estrelas),cfr_b,CFR proxy de entrega (RQ 03 b),Q4,Q4: 90.583-391.480 estrelas,75,0.280112,0.2192,0.0,0.101,0.4615,0.36050000000000004
+quartil_estrelas,Popularidade (quartis de estrelas),recuperacao,Tempo de recuperacao (RQ 04),Q1,Q1: 40.444-47.692 estrelas,69,5.641304347826087,2.15,0.25,0.65,5.04,4.39
+quartil_estrelas,Popularidade (quartis de estrelas),recuperacao,Tempo de recuperacao (RQ 04),Q2,Q2: 47.816-61.397 estrelas,72,12.629861111111111,2.95,0.54,0.98,5.88,4.9
+quartil_estrelas,Popularidade (quartis de estrelas),recuperacao,Tempo de recuperacao (RQ 04),Q3,Q3: 61.946-90.515 estrelas,72,10.112916666666669,2.895,0.59,1.2475,9.165,7.917499999999999
+quartil_estrelas,Popularidade (quartis de estrelas),recuperacao,Tempo de recuperacao (RQ 04),Q4,Q4: 90.583-391.480 estrelas,71,9.335211267605631,2.77,0.62,1.03,5.775,4.745
+quartil_contribuidores,Contribuidores (quartis),frequencia,Deployment frequency (RQ 01),Q1,Q1: 8-223 contribuidores,75,0.83642,0.4411,0.211,0.211,0.9109499999999999,0.69995
+quartil_contribuidores,Contribuidores (quartis),frequencia,Deployment frequency (RQ 01),Q2,Q2: 225-472 contribuidores,75,1.4068999999999998,0.6712,0.0959,0.24930000000000002,2.05205,1.8027499999999999
+quartil_contribuidores,Contribuidores (quartis),frequencia,Deployment frequency (RQ 01),Q3,Q3: 479-1.026 contribuidores,75,1.2435133333333335,0.5562,0.0959,0.2781,1.3041,1.026
+quartil_contribuidores,Contribuidores (quartis),frequencia,Deployment frequency (RQ 01),Q4,Q4: 1.047-9.915 contribuidores,75,1.9349413333333332,0.537,0.1151,0.29725,1.2273999999999998,0.9301499999999998
+quartil_contribuidores,Contribuidores (quartis),lead_time_a,Lead time por release (RQ 02 a),Q1,Q1: 8-223 contribuidores,75,414.648,130.97,,22.465,314.47,292.00500000000005
+quartil_contribuidores,Contribuidores (quartis),lead_time_a,Lead time por release (RQ 02 a),Q2,Q2: 225-472 contribuidores,75,876.9627999999999,179.1,,34.900000000000006,566.81,531.91
+quartil_contribuidores,Contribuidores (quartis),lead_time_a,Lead time por release (RQ 02 a),Q3,Q3: 479-1.026 contribuidores,75,1707.6256,221.99,,102.11500000000001,957.4449999999999,855.3299999999999
+quartil_contribuidores,Contribuidores (quartis),lead_time_a,Lead time por release (RQ 02 a),Q4,Q4: 1.047-9.915 contribuidores,75,4712.673466666667,998.3,,313.115,4228.285,3915.17
+quartil_contribuidores,Contribuidores (quartis),lead_time_b,Lead time por commit (RQ 02 b),Q1,Q1: 8-223 contribuidores,75,482.49093333333343,128.68,,44.7,293.675,248.97500000000002
+quartil_contribuidores,Contribuidores (quartis),lead_time_b,Lead time por commit (RQ 02 b),Q2,Q2: 225-472 contribuidores,75,735.9408,170.98,,37.620000000000005,469.745,432.125
+quartil_contribuidores,Contribuidores (quartis),lead_time_b,Lead time por commit (RQ 02 b),Q3,Q3: 479-1.026 contribuidores,75,3125.475066666667,267.33,,105.88,1116.7649999999999,1010.8849999999999
+quartil_contribuidores,Contribuidores (quartis),lead_time_b,Lead time por commit (RQ 02 b),Q4,Q4: 1.047-9.915 contribuidores,75,4261.513866666665,1834.81,,395.98,5572.75,5176.77
+quartil_contribuidores,Contribuidores (quartis),cfr_a,CFR proxy de CI (RQ 03 a),Q1,Q1: 8-223 contribuidores,75,0.07616666666666667,0.0411,0.0,0.0122,0.10700000000000001,0.09480000000000001
+quartil_contribuidores,Contribuidores (quartis),cfr_a,CFR proxy de CI (RQ 03 a),Q2,Q2: 225-472 contribuidores,75,0.08227066666666667,0.05,0.0,0.0191,0.1081,0.089
+quartil_contribuidores,Contribuidores (quartis),cfr_a,CFR proxy de CI (RQ 03 a),Q3,Q3: 479-1.026 contribuidores,75,0.10948933333333334,0.0448,0.1658,0.0278,0.1373,0.10950000000000001
+quartil_contribuidores,Contribuidores (quartis),cfr_a,CFR proxy de CI (RQ 03 a),Q4,Q4: 1.047-9.915 contribuidores,75,0.095124,0.0549,0.0267,0.0267,0.11080000000000001,0.08410000000000001
+quartil_contribuidores,Contribuidores (quartis),cfr_b,CFR proxy de entrega (RQ 03 b),Q1,Q1: 8-223 contribuidores,75,0.265012,0.2222,0.0,0.1,0.4216,0.3216
+quartil_contribuidores,Contribuidores (quartis),cfr_b,CFR proxy de entrega (RQ 03 b),Q2,Q2: 225-472 contribuidores,75,0.261684,0.2,0.0,0.0706,0.39390000000000003,0.32330000000000003
+quartil_contribuidores,Contribuidores (quartis),cfr_b,CFR proxy de entrega (RQ 03 b),Q3,Q3: 479-1.026 contribuidores,75,0.2742906666666667,0.2,0.0,0.08245,0.4504,0.36795
+quartil_contribuidores,Contribuidores (quartis),cfr_b,CFR proxy de entrega (RQ 03 b),Q4,Q4: 1.047-9.915 contribuidores,74,0.3106135135135135,0.2672,0.0,0.099425,0.536925,0.4375
+quartil_contribuidores,Contribuidores (quartis),recuperacao,Tempo de recuperacao (RQ 04),Q1,Q1: 8-223 contribuidores,70,12.294571428571428,1.73,0.3,0.7224999999999999,9.25,8.5275
+quartil_contribuidores,Contribuidores (quartis),recuperacao,Tempo de recuperacao (RQ 04),Q2,Q2: 225-472 contribuidores,68,9.150735294117647,2.475,0.51,0.915,5.055,4.14
+quartil_contribuidores,Contribuidores (quartis),recuperacao,Tempo de recuperacao (RQ 04),Q3,Q3: 479-1.026 contribuidores,72,10.154861111111112,3.475,1.08,1.1875,7.67,6.4825
+quartil_contribuidores,Contribuidores (quartis),recuperacao,Tempo de recuperacao (RQ 04),Q4,Q4: 1.047-9.915 contribuidores,74,6.42581081081081,2.365,1.58,1.14,4.17,3.0300000000000002
+quartil_idade,Idade do repositorio (quartis),frequencia,Deployment frequency (RQ 01),Q1,"Q1: 0,2-2,5 anos",75,1.8436533333333338,0.9205,0.1534,0.48905,2.4547999999999996,1.9657499999999997
+quartil_idade,Idade do repositorio (quartis),frequencia,Deployment frequency (RQ 01),Q2,"Q2: 2,5-6,4 anos",75,1.59766,0.6137,0.2301,0.2397,1.3329,1.0932
+quartil_idade,Idade do repositorio (quartis),frequencia,Deployment frequency (RQ 01),Q3,"Q3: 6,4-10,8 anos",75,1.3749413333333333,0.3836,0.0959,0.1918,0.92055,0.72875
+quartil_idade,Idade do repositorio (quartis),frequencia,Deployment frequency (RQ 01),Q4,"Q4: 10,9-18,5 anos",75,0.6055200000000001,0.3836,0.0959,0.211,0.7575000000000001,0.5465000000000001
+quartil_idade,Idade do repositorio (quartis),lead_time_a,Lead time por release (RQ 02 a),Q1,"Q1: 0,2-2,5 anos",75,154.476,55.42,,12.105,148.36,136.25500000000002
+quartil_idade,Idade do repositorio (quartis),lead_time_a,Lead time por release (RQ 02 a),Q2,"Q2: 2,5-6,4 anos",75,496.67600000000004,208.05,,64.85,437.93,373.08000000000004
+quartil_idade,Idade do repositorio (quartis),lead_time_a,Lead time por release (RQ 02 a),Q3,"Q3: 6,4-10,8 anos",75,1772.0765333333331,458.4,,168.73,1148.23,979.5
+quartil_idade,Idade do repositorio (quartis),lead_time_a,Lead time por release (RQ 02 a),Q4,"Q4: 10,9-18,5 anos",75,5288.681333333334,1058.88,,323.685,4719.34,4395.655
+quartil_idade,Idade do repositorio (quartis),lead_time_b,Lead time por commit (RQ 02 b),Q1,"Q1: 0,2-2,5 anos",75,125.92813333333334,65.73,,25.740000000000002,145.70499999999998,119.96499999999997
+quartil_idade,Idade do repositorio (quartis),lead_time_b,Lead time por commit (RQ 02 b),Q2,"Q2: 2,5-6,4 anos",75,680.6393333333332,220.82,,79.495,531.375,451.88
+quartil_idade,Idade do repositorio (quartis),lead_time_b,Lead time por commit (RQ 02 b),Q3,"Q3: 6,4-10,8 anos",75,2168.9872,582.42,,179.685,1870.53,1690.845
+quartil_idade,Idade do repositorio (quartis),lead_time_b,Lead time por commit (RQ 02 b),Q4,"Q4: 10,9-18,5 anos",75,5629.865999999999,1746.94,,374.435,7841.66,7467.224999999999
+quartil_idade,Idade do repositorio (quartis),cfr_a,CFR proxy de CI (RQ 03 a),Q1,"Q1: 0,2-2,5 anos",75,0.09486666666666667,0.0605,0.0,0.024,0.1196,0.09559999999999999
+quartil_idade,Idade do repositorio (quartis),cfr_a,CFR proxy de CI (RQ 03 a),Q2,"Q2: 2,5-6,4 anos",75,0.09536933333333332,0.0531,0.0,0.03185,0.1099,0.07805
+quartil_idade,Idade do repositorio (quartis),cfr_a,CFR proxy de CI (RQ 03 a),Q3,"Q3: 6,4-10,8 anos",75,0.10018800000000001,0.0417,0.0,0.01675,0.13390000000000002,0.11715000000000002
+quartil_idade,Idade do repositorio (quartis),cfr_a,CFR proxy de CI (RQ 03 a),Q4,"Q4: 10,9-18,5 anos",75,0.07262666666666667,0.0397,0.0,0.0203,0.1004,0.0801
+quartil_idade,Idade do repositorio (quartis),cfr_b,CFR proxy de entrega (RQ 03 b),Q1,"Q1: 0,2-2,5 anos",75,0.33761199999999997,0.3137,0.0,0.13524999999999998,0.52935,0.3941
+quartil_idade,Idade do repositorio (quartis),cfr_b,CFR proxy de entrega (RQ 03 b),Q2,"Q2: 2,5-6,4 anos",75,0.28692,0.2581,0.0,0.12129999999999999,0.42845,0.30715000000000003
+quartil_idade,Idade do repositorio (quartis),cfr_b,CFR proxy de entrega (RQ 03 b),Q3,"Q3: 6,4-10,8 anos",74,0.2518283783783784,0.2,0.0,0.0556,0.383225,0.327625
+quartil_idade,Idade do repositorio (quartis),cfr_b,CFR proxy de entrega (RQ 03 b),Q4,"Q4: 10,9-18,5 anos",75,0.234456,0.1667,0.0,0.0,0.39445,0.39445
+quartil_idade,Idade do repositorio (quartis),recuperacao,Tempo de recuperacao (RQ 04),Q1,"Q1: 0,2-2,5 anos",71,10.339859154929577,1.42,0.54,0.625,4.725,4.1
+quartil_idade,Idade do repositorio (quartis),recuperacao,Tempo de recuperacao (RQ 04),Q2,"Q2: 2,5-6,4 anos",71,8.681690140845069,2.39,0.51,0.96,7.67,6.71
+quartil_idade,Idade do repositorio (quartis),recuperacao,Tempo de recuperacao (RQ 04),Q3,"Q3: 6,4-10,8 anos",72,9.981111111111112,3.4000000000000004,5.04,1.1275,7.7299999999999995,6.602499999999999
+quartil_idade,Idade do repositorio (quartis),recuperacao,Tempo de recuperacao (RQ 04),Q4,"Q4: 10,9-18,5 anos",70,8.862285714285713,3.08,2.15,1.5275,5.3475,3.8200000000000003
+tipo_projeto,Tipo do projeto,frequencia,Deployment frequency (RQ 01),aplicacao/servico,aplicacao/servico,24,1.4711125,0.88215,0.4411,0.4411,1.54385,1.10275
+tipo_projeto,Tipo do projeto,frequencia,Deployment frequency (RQ 01),biblioteca/framework,biblioteca/framework,21,3.6721428571428567,0.9589,0.9589,0.537,1.7644,1.2273999999999998
+tipo_projeto,Tipo do projeto,frequencia,Deployment frequency (RQ 01),ferramenta CLI,ferramenta CLI,11,1.2082272727272727,0.8247,0.8247,0.374,1.8890500000000001,1.51505
+tipo_projeto,Tipo do projeto,frequencia,Deployment frequency (RQ 01),outro,outro,4,1.3903999999999999,0.56575,,0.23492500000000002,1.721225,1.4863
+tipo_projeto,Tipo do projeto,lead_time_a,Lead time por release (RQ 02 a),aplicacao/servico,aplicacao/servico,24,1539.195,265.32500000000005,,101.245,597.625,496.38
+tipo_projeto,Tipo do projeto,lead_time_a,Lead time por release (RQ 02 a),biblioteca/framework,biblioteca/framework,21,3290.2738095238096,196.78,,100.18,1057.85,957.6699999999998
+tipo_projeto,Tipo do projeto,lead_time_a,Lead time por release (RQ 02 a),ferramenta CLI,ferramenta CLI,11,263.0536363636364,165.69,,16.675,409.94,393.265
+tipo_projeto,Tipo do projeto,lead_time_a,Lead time por release (RQ 02 a),outro,outro,4,5229.6849999999995,48.82,,16.3775,5262.1275,5245.75
+tipo_projeto,Tipo do projeto,lead_time_b,Lead time por commit (RQ 02 b),aplicacao/servico,aplicacao/servico,24,1541.3791666666668,218.54500000000002,,92.8925,426.865,333.9725
+tipo_projeto,Tipo do projeto,lead_time_b,Lead time por commit (RQ 02 b),biblioteca/framework,biblioteca/framework,21,3775.898095238096,259.79,,54.61,1746.94,1692.3300000000002
+tipo_projeto,Tipo do projeto,lead_time_b,Lead time por commit (RQ 02 b),ferramenta CLI,ferramenta CLI,11,316.36545454545455,110.28,,17.54,234.63,217.09
+tipo_projeto,Tipo do projeto,lead_time_b,Lead time por commit (RQ 02 b),outro,outro,4,3356.085,87.095,,20.400000000000002,3422.7799999999997,3402.3799999999997
+tipo_projeto,Tipo do projeto,cfr_a,CFR proxy de CI (RQ 03 a),aplicacao/servico,aplicacao/servico,24,0.1140875,0.06725,,0.03285,0.1015,0.06865000000000002
+tipo_projeto,Tipo do projeto,cfr_a,CFR proxy de CI (RQ 03 a),biblioteca/framework,biblioteca/framework,21,0.1265047619047619,0.0436,0.0,0.0231,0.1331,0.11
+tipo_projeto,Tipo do projeto,cfr_a,CFR proxy de CI (RQ 03 a),ferramenta CLI,ferramenta CLI,11,0.10694545454545455,0.0088,,0.0057,0.16720000000000002,0.1615
+tipo_projeto,Tipo do projeto,cfr_a,CFR proxy de CI (RQ 03 a),outro,outro,4,0.0571,0.057449999999999994,,0.0056,0.10894999999999999,0.10335
+tipo_projeto,Tipo do projeto,cfr_b,CFR proxy de entrega (RQ 03 b),aplicacao/servico,aplicacao/servico,24,0.31575000000000003,0.28345,0.0833,0.08465,0.4979,0.41325
+tipo_projeto,Tipo do projeto,cfr_b,CFR proxy de entrega (RQ 03 b),biblioteca/framework,biblioteca/framework,21,0.31211904761904763,0.3333,0.0,0.1429,0.4096,0.26670000000000005
+tipo_projeto,Tipo do projeto,cfr_b,CFR proxy de entrega (RQ 03 b),ferramenta CLI,ferramenta CLI,11,0.2598181818181818,0.2143,0.0,0.09365000000000001,0.42915000000000003,0.3355
+tipo_projeto,Tipo do projeto,cfr_b,CFR proxy de entrega (RQ 03 b),outro,outro,4,0.21057499999999998,0.1769,,0.130325,0.25715,0.126825
+tipo_projeto,Tipo do projeto,recuperacao,Tempo de recuperacao (RQ 04),aplicacao/servico,aplicacao/servico,24,4.602083333333333,1.4849999999999999,,0.6075,3.5925,2.985
+tipo_projeto,Tipo do projeto,recuperacao,Tempo de recuperacao (RQ 04),biblioteca/framework,biblioteca/framework,19,6.206315789473685,4.58,,1.99,7.17,5.18
+tipo_projeto,Tipo do projeto,recuperacao,Tempo de recuperacao (RQ 04),ferramenta CLI,ferramenta CLI,10,3.696,1.63,,0.6275000000000001,3.4925,2.865
+tipo_projeto,Tipo do projeto,recuperacao,Tempo de recuperacao (RQ 04),outro,outro,4,5.41,1.09,,0.8525,5.647499999999999,4.794999999999999
