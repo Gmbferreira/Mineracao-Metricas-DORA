@@ -91,6 +91,13 @@ do dataset que eles publicaram.
 
 ## Problemas encontrados
 
+Cada problema virou uma issue no repositório do grupo:
+[#251](https://github.com/Victorgabrielcruz/lab-medicao-e-experimentacao-de-software/issues/251),
+[#252](https://github.com/Victorgabrielcruz/lab-medicao-e-experimentacao-de-software/issues/252),
+[#253](https://github.com/Victorgabrielcruz/lab-medicao-e-experimentacao-de-software/issues/253) e
+[#254](https://github.com/Victorgabrielcruz/lab-medicao-e-experimentacao-de-software/issues/254),
+na ordem abaixo.
+
 1. **O README não explica como rodar o pipeline numa lista definida de
    repositórios.** Ele documenta a coleta completa (busca pela Search API), o
    `--piloto 100` e o `pipeline.integrado --alvo`, mas a replicação pede uma
