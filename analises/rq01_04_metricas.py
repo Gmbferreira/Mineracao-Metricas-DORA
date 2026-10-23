@@ -266,16 +266,23 @@ def _cortes(eixo, cortes):
 def grafico_distribuicao(dataset, caminho):
     """Boxplot das quatro metricas, com a media marcada e os cortes das faixas."""
     figura, eixos = plt.subplots(2, 2, figsize=(7.5, 5.0))
+    # o titulo vem do painel, e nao da primeira metrica: em (b) e (c) a caixa
+    # das duas variantes divide o mesmo eixo. Painel de uma caixa so (rotulos
+    # None) mostra quantos repositorios entram nela
     paineis = (
-        (eixos[0][0], ("frequencia",), ("mediana",), "releases por semana (log)"),
-        (eixos[0][1], ("lead_time_a", "lead_time_b"),
+        (eixos[0][0], "Deployment frequency", ("frequencia",), None,
+         "releases por semana (log)"),
+        (eixos[0][1], "Lead time for changes", ("lead_time_a", "lead_time_b"),
          ("(a) por release", "(b) por commit"), "horas (log)"),
-        (eixos[1][0], ("cfr_a", "cfr_b"), ("(a) proxy de CI", "(b) proxy de entrega"), "proporção"),
-        (eixos[1][1], ("recuperacao",), ("mediana",), "horas (log)"),
+        (eixos[1][0], "Change failure rate", ("cfr_a", "cfr_b"),
+         ("(a) proxy de CI", "(b) proxy de entrega"), "proporção"),
+        (eixos[1][1], "Tempo de recuperação", ("recuperacao",), None, "horas (log)"),
     )
     especificacoes = {metrica[0]: metrica for metrica in METRICAS}
-    for i, (eixo, chaves, rotulos, titulo_y) in enumerate(paineis):
+    for i, (eixo, titulo, chaves, rotulos, titulo_y) in enumerate(paineis):
         dados = [coluna(dataset, especificacoes[chave][2]) for chave in chaves]
+        if rotulos is None:
+            rotulos = [f"{len(valores)} repositórios" for valores in dados]
         if any(len(dados) for dados in dados):
             _caixa(eixo, dados, rotulos)
         _cortes(eixo, especificacoes[chaves[0]][5])
@@ -287,8 +294,7 @@ def grafico_distribuicao(dataset, caminho):
             eixo.yaxis.set_major_formatter(FuncFormatter(virgula))
             eixo.set_ylim(-0.02, 1.02)
         eixo.set_ylabel(titulo_y, fontsize=7.5, color=TINTA)
-        eixo.set_title(f"({'abcd'[i]}) {especificacoes[chaves[0]][1].split(' (RQ')[0]}",
-                       fontsize=8, color=TINTA)
+        eixo.set_title(f"({'abcd'[i]}) {titulo}", fontsize=8, color=TINTA)
         eixo_limpo(eixo)
     figura.tight_layout()
     figura.savefig(caminho, dpi=200)
