@@ -297,7 +297,7 @@ O relatório tem formato de **artigo científico**, no [template da SBC (Overlea
 6. **Replicação cruzada:** o relato da seção 9.
 7. Link do repositório/GitHub Projects do grupo.
 
-Link do repositório/GitHub Projects: `<preencher>`
+Link do repositório/GitHub Projects: <https://github.com/Gmbferreira/Mineracao-Metricas-DORA> e <https://github.com/users/Gmbferreira/projects/2/views/1>
 
 ### 9. Replicação cruzada (entrega final)
 

@@ -3,7 +3,14 @@
 Pipeline que seleciona repositórios populares com GitHub Actions, coleta
 releases, commits entre releases e workflow runs do default branch, e calcula
 as métricas DORA (Issues #1, #2, #4, #5 e #6 do GitHub Projects). Na Sprint 02
-entram a amostra final, o CFR (b) e a validação manual (Issues #7 a #13).
+entram a amostra final, o CFR (b) e a validação manual (Issues #7 a #13); na
+Sprint 03, as variantes e as análises das RQ 01 a RQ 08 (Issues #14 a #20); e
+na entrega final, a replicação cruzada do pipeline de outro grupo e o artigo
+completo (Issues #21 a #27).
+
+- GitHub Projects: <https://github.com/users/Gmbferreira/projects/2/views/1>
+- Artigo (template SBC, 10 páginas): [`artigo/`](artigo/)
+- Resultados das análises: [`analises/resultados/`](analises/resultados/)
 
 [![testes](https://github.com/Gmbferreira/Mineracao-Metricas-DORA/actions/workflows/testes.yml/badge.svg)](https://github.com/Gmbferreira/Mineracao-Metricas-DORA/actions/workflows/testes.yml)
 
