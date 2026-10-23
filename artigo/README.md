@@ -12,7 +12,8 @@ Artigo no Overleaf (leitura): <https://www.overleaf.com/read/rxydywpnvjym#6b20e1
 | Arquivo | Papel |
 |---|---|
 | `main.tex` | Documento principal |
-| `figuras/` | Figuras geradas pelas análises (`analises/resultados/`) |
+| `figuras/` | Figuras geradas pelas análises (`analises/resultados/`); o artigo usa `rq01_04_distribuicao.png`, `rq05_dispersao.png` e `rq07_classes_e_unidades.png` |
+| `artigo.zip` | Tudo o que o Overleaf precisa: `main.tex`, bibliografia, estilos e as três figuras usadas |
 | `referencias.bib` | Bibliografia (DORA, Accelerate, Wohlin, SemVer, bibliotecas de análise) |
 | `sbc-template.sty` | Estilo oficial da SBC (v2017) |
 | `sbc.bst` | Estilo bibliográfico da SBC |
@@ -42,19 +43,22 @@ pdflatex main
 
 ## Conteúdo atual
 
-- Introdução e hipóteses informais das RQ 01 a RQ 07, redigidas **antes** da
-  análise dos dados (RQ 08 é bônus, sem hipótese).
-- Metodologia: fonte de dados e funil de seleção, janela e definições
-  operacionais, variantes obrigatórias, protocolo e resultado da validação
-  manual. Os rótulos e o desempate da amostra-ouro foram feitos com apoio de
-  modelos de linguagem, com autorização da disciplina.
-- Resultados das RQ 01 a RQ 08: métricas e classificação DORA (RQ 01-04),
-  relação velocidade × estabilidade (RQ 05), características associadas ao
-  desempenho (RQ 06), análise de sensibilidade (RQ 07) e \emph{rework rate}
-  (RQ 08).
-- Discussão confrontando as hipóteses com os resultados (RQ 01-07).
+- Introdução, com as questões de pesquisa e as hipóteses informais das RQ 01 a
+  RQ 07, redigidas **antes** da análise dos dados (a RQ 08 é bônus, sem
+  hipótese).
+- Metodologia: fonte de dados e funil de seleção, janela, definições
+  operacionais, variantes da RQ 07, protocolo e resultado da validação manual.
+  Os rótulos e o desempate da amostra-ouro foram feitos com apoio de modelos de
+  linguagem, com autorização da disciplina.
+- Resultados das RQ 01 a RQ 08, com média, mediana, moda, IQR e classificação
+  DORA em tabelas, e três gráficos (RQ 01 a 04, RQ 05 e RQ 07).
+- Discussão confrontando as hipóteses com os resultados (RQ 01 a RQ 08).
 - Ameaças à Validade nas quatro categorias (Issue #25).
-- A Replicação Cruzada entra pela Issue #26.
+- Replicação Cruzada (Issue #26) e Conclusão.
+
+A revisão final é a Issue #27. Compilado, o artigo ocupa as 10 páginas
+permitidas pelo enunciado, então qualquer acréscimo precisa ser compensado com
+um corte.
 
 ## Observações
 

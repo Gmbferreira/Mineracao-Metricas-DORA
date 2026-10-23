@@ -158,8 +158,8 @@ deploy), a data de autor dos commits e os runs de \texttt{push}; um run com
 \texttt{startup\_failure} é falha, e os demais (426.873) são ignorados. Eventos
 sem desfecho até o fim da janela são censurados: ficam fora da mediana e são
 contados. A frequência é o número de releases dividido por 52,1 semanas. A
-recuperação é medida por workflow, da primeira falha após um sucesso até o
-próximo sucesso, e o repositório fica com a mediana dos episódios. A
+recuperação é medida por workflow, do início da primeira falha após um sucesso
+até o fim do próximo sucesso, e o repositório fica com a mediana dos episódios. A
 classificação usa as faixas da Tabela~\ref{tab:faixas}, adaptadas dos relatórios
 DORA \cite{dorastate}; a classe geral é a mediana das notas (4 a 1) das quatro
 métricas, arredondada para baixo.
@@ -189,10 +189,11 @@ commits. Ficam fora, e são contadas, as releases sem anterior (60), com
 \textbf{Taxa de falha.} O CFR (a), proxy de CI, é a proporção de runs com falha
 entre falhas e sucessos. No CFR (b), proxy de entrega, uma release falha se a
 próxima da mesma linha (mesmo prefixo de tag, o que separa pacotes de monorepos)
-sair em até 7 dias e for corretiva, o que é decidido por uma heurística que
-combina a versão SemVer \cite{semver} com palavras de correção nos commits e
-nas \emph{release notes}; as releases dos últimos 7 dias ficam fora do
-denominador.
+sair em até 7 dias e for corretiva, e a taxa é a proporção de releases que
+falharam entre as avaliadas; as releases dos últimos 7 dias ficam fora do
+denominador. Na heurística usada (v6, Seção~\ref{sec:validacao}), corretiva é a
+release de \emph{patch} no SemVer \cite{semver} cujas \emph{release notes}
+falam de correção pelo menos tanto quanto de funcionalidade.
 \textbf{Unidade de deploy (RQ~07).} Além da release, usamos release +
 pré-release e tag, datada pelo commit apontado, nas combinações C1 (referência:
 release, \emph{lead time} (a) e CFR (a)), C2 (release + pré-release, (b) e (b))
@@ -376,8 +377,8 @@ alguma.
 Trocar a unidade aumenta as entregas: a mediana passa de 27 releases para 34
 com as pré-releases e 47 tags, e a frequência mediana, de 0,52 para 0,65 e 0,90
 por semana (Figura~\ref{fig:rq07-unidades}b). Entre as combinações, de 22\% a
-31\% dos repositórios mudam de classe geral, com kappa de Cohen ponderado
-\cite{cohen1968,pedregosa2011} de 0,53 a 0,68 (Tabela~\ref{tab:rq07}), e nove
+31\% dos repositórios mudam de classe geral, com kappa de Cohen de pesos
+lineares \cite{cohen1968,pedregosa2011} de 0,53 a 0,68 (Tabela~\ref{tab:rq07}), e nove
 em cada dez mudanças são para uma faixa vizinha. A C2 é a mais severa (22\%
 descem, e a classe mais comum passa a \emph{Medium},
 Figura~\ref{fig:rq07-unidades}a); a C3, a mais generosa (17\% sobem). Por
@@ -431,13 +432,13 @@ defeitos antigos.
   \caption{RQ 08: \emph{rework rate} e CFR (b) por repositório.}
   \label{tab:rq08}
   \footnotesize
-  \begin{tabular}{@{}lrrrrrr@{}}
+  \begin{tabular}{@{}lrrrrrrr@{}}
     \toprule
-    Métrica & $n$ & Média & Mediana & Moda & Q1 & Q3 \\
+    Métrica & $n$ & Média & Mediana & Moda & Q1 & Q3 & IQR \\
     \midrule
-    \emph{Rework rate} & 300 & 0,49 & 0,48 & 0 & 0,28 & 0,70 \\
-    CFR (b) & 299 & 0,28 & 0,22 & 0 & 0,08 & 0,44 \\
-    Diferença pareada & 299 & 0,21 & 0,12 & 0 & 0,02 & 0,33 \\
+    \emph{Rework rate} & 300 & 0,49 & 0,48 & 0 & 0,28 & 0,70 & 0,41 \\
+    CFR (b) & 299 & 0,28 & 0,22 & 0 & 0,08 & 0,44 & 0,36 \\
+    Diferença pareada & 299 & 0,21 & 0,12 & 0 & 0,02 & 0,33 & 0,31 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -462,9 +463,9 @@ conta qualquer correção rápida como falha. A recuperação ficou em horas, e 
 abaixo de uma hora, e quase não houve censura: falhas de CI costumam ser
 consertadas no mesmo dia.
 
-\textbf{RQ 05.} A correlação, que esperávamos perto de zero, é positiva, o que à
-primeira vista contradiz o DORA, para quem velocidade e estabilidade não formam
-um \emph{trade-off} \cite{forsgren2018}. No CFR (b), boa parte vem da
+\textbf{RQ 05.} A maior surpresa foi a correlação positiva, que esperávamos
+perto de zero: à primeira vista, ela contradiz o DORA, para quem velocidade e
+estabilidade não formam um \emph{trade-off} \cite{forsgren2018}. No CFR (b), boa parte vem da
 definição: quem publica menos de uma vez por mês raramente tem outra release em
 sete dias e fica com taxa zero mesmo quando corrige algo. No CFR (a), que não
 depende da cadência, a correlação é fraca. Como correlação não implica
@@ -477,8 +478,8 @@ grande, e não pequeno: projetos antigos têm base de código e processo de rele
 mais pesados. O tipo do projeto não teve efeito, mas foi rotulado só em 60
 repositórios, o que reduz o poder do teste.
 
-\textbf{RQ 07 e RQ 08.} A mudança de classe ficou na faixa prevista, mas o fator
-principal foi o proxy de CFR, e não a unidade: a classe geral é a mediana de
+\textbf{RQ 07 e RQ 08.} A mudança de classe ficou na faixa prevista, mas, ao
+contrário do esperado, o fator principal foi o proxy de CFR, e não a unidade: a classe geral é a mediana de
 quatro notas, e a unidade melhora uma ou duas sem mover a mediana. Para as
 RQ~01 a 06, a classe geral é razoavelmente robusta; a classe por frequência
 concorda bem entre as unidades (kappa de 0,66 a 0,86); o \emph{lead time}
@@ -555,7 +556,10 @@ separação de pacotes em monorepos e a evolução das métricas no tempo.
 \section*{Link do Repositório e do GitHub Projects}
 
 \noindent Repositório: \url{https://github.com/Gmbferreira/Mineracao-Metricas-DORA}\\
-GitHub Projects: \url{https://github.com/users/Gmbferreira/projects/2/views/1}
+GitHub Projects: \url{https://github.com/users/Gmbferreira/projects/2/views/1}\\
+O dataset (\texttt{data/dataset.csv}, com dicionário de dados) e os resultados
+completos de cada RQ, em tabelas e gráficos (\texttt{analises/resultados}), estão
+no repositório.
 
 \bibliographystyle{sbc}
 \bibliography{referencias}

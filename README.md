@@ -492,7 +492,8 @@ artigo/           artigo no template SBC
 O relatório final segue o template da SBC e é escrito aos poucos, uma seção por
 sprint: Introdução e hipóteses na Sprint 01 (Issue #3), Metodologia na Sprint
 02 (Issue #13), Resultados e Discussão na Sprint 03 (Issues #19 e #20) e
-Ameaças à Validade e Replicação Cruzada na entrega final (Issues #25 e #26).
+Ameaças à Validade, Replicação Cruzada e Conclusão na entrega final (Issues
+#25, #26 e #27). Compilado, o artigo tem 10 páginas, o limite do enunciado.
 Veja [`artigo/README.md`](artigo/README.md) para instruções de Overleaf e
 compilação.
 
